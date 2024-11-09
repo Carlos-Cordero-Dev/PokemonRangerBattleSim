@@ -1,3 +1,16 @@
+#premake stuff
+**/.vs/
+**/bin/
+.gitvs/
+*.sln
+*.vcxproj
+*.vcxproj.user
+obj/
+build/
+bin/
+tmp/
+*.ini
+
 # Ignore generated files
 # ...
 
