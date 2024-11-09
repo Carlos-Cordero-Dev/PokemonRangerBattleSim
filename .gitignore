@@ -51,6 +51,7 @@ packages/
 *.o
 *.exe
 *.a
+*.lib
 *.bc
 *.so
 *.so.*
