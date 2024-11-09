@@ -5,11 +5,17 @@
 *.sln
 *.vcxproj
 *.vcxproj.user
+*.vcxproj.filters
 obj/
 build/
 bin/
 tmp/
 *.ini
+
+#switch stuff
+*.elf
+*.nacp
+*.nro
 
 # Ignore generated files
 # ...

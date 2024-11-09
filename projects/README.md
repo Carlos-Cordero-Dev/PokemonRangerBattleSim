@@ -1,18 +1,17 @@
-## raylib PROJECT TEMPLATES
+For this to work some hard coded variables have to be changed:
 
-This folder contains raylib templates for some common IDEs.
+premake5.lua: 		"D:/DevkitPro/libnx/include", --libnx headers
+Makefile: 	RAYLIB_NX=D:/PokemonRangerBattleSim 		(its just the root of the project, replace D: for whatever)
 
-IDE | Platform(s) | Source | Example(s)
-----| ------------| :-------: | :-----:
-[4coder](http://4coder.net/) | Windows | ❌ | ✔️
-[Builder](https://wiki.gnome.org/Apps/Builder) | Linux | ❌ | ✔️
-[CMake](https://cmake.org/) | Windows, Linux, macOS, Web | ✔️ | ✔️
-[CodeBlocks](http://www.codeblocks.org/) | Windows, Linux, macOS | ❌ | ✔️
-[Geany](https://www.geany.org/) | Windows, Linux | ✔️ | ✔️
-[Notepad++](https://notepad-plus-plus.org/) | Windows | ✔️ | ✔️
-[SublimeText](https://www.sublimetext.com/) | Windows, Linux, macOS | ✔️ | ✔️
-[VS2019](https://www.visualstudio.com) | Windows | ✔️ | ✔️
-[VSCode](https://code.visualstudio.com/) | Windows, macOS | ❌ | ✔️
-scripts | Windows, Linux, macOS | ✔️ | ✔️
 
- *New IDEs config files are welcome!*
+Note: 
+for the whole thing to work:
+
+libraylib.a has to be located at rootofthisproject/src , which is generated doing make PLATFORM=PLATFORM_NX
+raylib_win.lib has to be located at rootofthisproject/sr, which is generated doing:
+(from the root of the project):
+-mkdir build cd build
+(THE FOLLOWING STEP MUST BE DONE FROM Visual Studio Developer Command Prompt, in this case for VS2019 and the propper generators)
+-cmake -G "Visual Studio 16 2019" -A x64 -DPLATFORM=Desktop -DBUILD_SHARED_LIBS=OFF ..
+-open raylib.sln and compile
+-the "raylib.lib" at \build\raylib\Debug or Release have to be renamed to raylib_win_d(debug in this case).lib and moved to src/
