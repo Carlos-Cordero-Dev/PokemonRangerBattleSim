@@ -6,13 +6,13 @@ workspace "MyProject"
 
 -- Project configuration
 project "MyProject"
-    kind "Makefile"
+	kind "Makefile"
 	architecture "x64"
-    language "C"
+    language "C++"
     targetdir "bin/%{cfg.buildcfg}"  -- Output directory for binaries
 
     -- Project source and include files
-    files { "source/**.c", "include/**.h" }
+    files { "source/**.c", "source/**.cpp", "include/**.h" }
 
     -- Include directories
     includedirs {
@@ -22,6 +22,7 @@ project "MyProject"
 
     -- Filter for Switch configuration
     filter "configurations:Switch"
+	    kind "Makefile"
 		system "linux"           -- Set as Linux-like environment for make
 		defines { "SWITCH_BUILD" }
 
@@ -46,8 +47,8 @@ project "MyProject"
 		defines { "WINDOWS_BUILD" , "DEBUG"}
         symbols "On"	--debug for now
 		
+		cppdialect "C++17"
 		cdialect "C99"
-        cppdialect "C++17"
 
 		
 		includedirs {
@@ -61,4 +62,4 @@ project "MyProject"
 				"../src", -- windows raylib libs (.lib)
 		}
 		links { "raylib_win_d", "winmm", "gdi32" }
-
+		buildoptions { "/TP" } -- For MSVC to treat all files as C++ bc if not everything c++ breaks

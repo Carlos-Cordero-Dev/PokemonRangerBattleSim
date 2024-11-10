@@ -9,22 +9,23 @@
 *
 ********************************************************************************************/
 
-#define TMPDEFINE 0
-
-#if TMPDEFINE
+#ifdef SWITCH_BUILD
 #include <switch.h>
 #endif // TMPDEFINE 
 
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
-#if TMPDEFINE 
+#ifdef SWITCH_BUILD 
 #include "raygui.h"
 #else 
 #include "raygui_win.h"
 #endif
 
+#include "test.h"
+
 int main(void)
 {
+    MyClass* h = new MyClass();
 
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -48,14 +49,14 @@ int main(void)
         //----------------------------------------------------------------------------------
         static int frame = 0;
         frame++;
-		printf("frame %d\n",frame);
+		//printf("frame %d\n",frame);
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
-            if (GuiTextBox((Rectangle){ 25, 215, 125, 30 }, textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
+            if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
 
             DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
 
