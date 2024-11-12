@@ -60,8 +60,22 @@ int main(void)
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D texture;// = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
-    loadTexturesFromFolder("romfs:/resources/sprites");
-    texture = textures[0].texture;
+    //loadTexturesFromFolder("romfs:/resources/sprites");
+    //texture = textures[0].texture;
+	SpriteAnimation* garchompAnim0 = new SpriteAnimation();
+    garchompAnim0->advanceRate = 500;
+	SpriteAnimation* garchompAnim1 = new SpriteAnimation();
+	SpriteAnimation* garchompAnim2 = new SpriteAnimation();
+	SpriteAnimation* garchompAnim3 = new SpriteAnimation();
+
+	SpriteAnimation** garchompAnims = new SpriteAnimation*[4];
+	garchompAnims[0] = garchompAnim0;
+	garchompAnims[1] = garchompAnim1;
+	garchompAnims[2] = garchompAnim2;
+	garchompAnims[3] = garchompAnim3;
+    
+    loadTexturesFromFolder("romfs/resources/sprites/garchomp/attack", garchompAnims, 4, 6, "garchomp_attack");
+    texture = garchompAnims[0]->textures[0].texture;
     //---------------------------------------------------------------------------------------
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -81,7 +95,9 @@ int main(void)
 
             if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
 
-            DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
+            //DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
+            garchompAnim0->Draw(screenWidth / 2 - texture.width / 2, screenHeight / 2 - texture.height / 2);
+            garchompAnim0->advanceFrame(frame);
 
             DrawText("this IS a texture!", 360, 370, 10, GRAY);
 
