@@ -22,6 +22,27 @@
 #endif
 
 #include "test.h"
+#include "sprites.h"
+
+/*
+what do I need man:
+
+
+-touchscreen support
+-importing sprites + anims
+-spiny thingy
+
+AI:
+- movement
+- atacks: single hitboxes + 
+
+
+-special player atacks
+-terrains?
+
+-menu
+-level selector
+*/
 
 int main(void)
 {
@@ -38,7 +59,9 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture2D texture = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
+    Texture2D texture;// = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
+    loadTexturesFromFolder("romfs:/resources/sprites");
+    texture = textures[0].texture;
     //---------------------------------------------------------------------------------------
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
