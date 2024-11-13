@@ -9,6 +9,8 @@
 *
 ********************************************************************************************/
 
+#include <stdlib.h>
+
 #ifdef SWITCH_BUILD
 #include <switch.h>
 #endif // TMPDEFINE 
@@ -23,7 +25,7 @@
 
 #include "test.h"
 #include "sprites.h"
-
+#include "timer.h"
 /*
 what do I need man:
 
@@ -57,13 +59,14 @@ int main(void)
     bool textBoxEditMode = false;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
+	printf("\n=====================damnson1=================================\n");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D texture;// = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
     //loadTexturesFromFolder("romfs:/resources/sprites");
     //texture = textures[0].texture;
 	SpriteAnimation* garchompAnim0 = new SpriteAnimation();
-    garchompAnim0->advanceRate = 500;
+    garchompAnim0->advanceRate = 5;
 	SpriteAnimation* garchompAnim1 = new SpriteAnimation();
 	SpriteAnimation* garchompAnim2 = new SpriteAnimation();
 	SpriteAnimation* garchompAnim3 = new SpriteAnimation();
@@ -74,18 +77,23 @@ int main(void)
 	garchompAnims[2] = garchompAnim2;
 	garchompAnims[3] = garchompAnim3;
     
-    loadTexturesFromFolder("romfs/resources/sprites/garchomp/attack", garchompAnims, 4, 6, "garchomp_attack");
+    loadTexturesFromFolder("sprites/garchomp/attack", garchompAnims, 4, 6, "garchomp_attack");
     texture = garchompAnims[0]->textures[0].texture;
+    printf("\ndamnson2=================================\n");
     //---------------------------------------------------------------------------------------
     // Main game loop
+
+    Timer timer;
+
+    std::string text = "Frame ";
+
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        // Update
-        //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
-        static int frame = 0;
-        frame++;
+        
+        //input code should be decoupled from render 60fps limit
+
+        timer.Update();
+
 		//printf("frame %d\n",frame);
         // Draw
         //----------------------------------------------------------------------------------
@@ -97,13 +105,16 @@ int main(void)
 
             //DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
             garchompAnim0->Draw(screenWidth / 2 - texture.width / 2, screenHeight / 2 - texture.height / 2);
-            garchompAnim0->advanceFrame(frame);
+            garchompAnim0->advanceFrame(timer.frame);
 
-            DrawText("this IS a texture!", 360, 370, 10, GRAY);
+            DrawText((text + std::to_string(timer.frame)).c_str() , 360, 370, 40, GRAY);
+			DrawText(("Time " + std::to_string(timer.get_time_ms()) + " deltaTime " + std::to_string(timer.get_delta_time())).c_str(),
+                360, 230, 40, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
-
+		//wait or end of frame
+		timer.FrameSleep();
     }
 
     // De-Initialization

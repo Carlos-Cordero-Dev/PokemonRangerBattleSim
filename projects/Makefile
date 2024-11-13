@@ -49,7 +49,7 @@ SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
 ROMFS		:=	romfs
-
+DEFINES		:=  -DSWITCH_BUILD
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
