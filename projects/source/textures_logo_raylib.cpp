@@ -13,7 +13,7 @@
 
 #ifdef SWITCH_BUILD
 #include <switch.h>
-#endif // TMPDEFINE 
+#endif
 
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
@@ -23,9 +23,9 @@
 #include "raygui_win.h"
 #endif
 
-#include "test.h"
 #include "sprites.h"
 #include "timer.h"
+#include "controls.h"
 /*
 what do I need man:
 
@@ -48,8 +48,6 @@ AI:
 
 int main(void)
 {
-    MyClass* h = new MyClass();
-
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 1280;
@@ -87,6 +85,9 @@ int main(void)
 
     std::string text = "Frame ";
 
+
+	void SetGesturesEnabled(unsigned int flags);      // Enable a set of gestures using flags
+
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         
@@ -107,6 +108,10 @@ int main(void)
             garchompAnim0->Draw(screenWidth / 2 - texture.width / 2, screenHeight / 2 - texture.height / 2);
             garchompAnim0->advanceFrame(timer.frame);
 
+
+            prbs::Vector2 touch = GetTouch();
+
+			DrawText(("touch " + std::to_string(touch.x) + " " +std::to_string(touch.y)).c_str(), 360, 200, 40, GRAY);
             DrawText((text + std::to_string(timer.frame)).c_str() , 360, 370, 40, GRAY);
 			DrawText(("Time " + std::to_string(timer.get_time_ms()) + " deltaTime " + std::to_string(timer.get_delta_time())).c_str(),
                 360, 230, 40, GRAY);
