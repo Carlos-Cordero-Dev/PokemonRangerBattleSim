@@ -1,13 +1,3 @@
-/*******************************************************************************************
-*
-*   raylib [textures] example - Texture loading and drawing
-*
-*   This example has been created using raylib 1.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
-*
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
-*
-********************************************************************************************/
 
 #include <stdlib.h>
 
@@ -26,12 +16,14 @@
 #include "sprites.h"
 #include "timer.h"
 #include "controls.h"
+#include "FIFO.h"
+#include "player_polygon.h"
 /*
 what do I need man:
 
 
--touchscreen support
--importing sprites + anims
+-touchscreen support [x]
+-importing sprites + anims [x]
 -spiny thingy
 
 AI:
@@ -85,8 +77,7 @@ int main(void)
 
     std::string text = "Frame ";
 
-
-	void SetGesturesEnabled(unsigned int flags);      // Enable a set of gestures using flags
+	Coord* stack = nullptr;
 
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -102,25 +93,57 @@ int main(void)
 
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
-            if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
+
+            prbs::Vector2 touch = GetTouch();
+            
+            if (touch.x == 0 && touch.y == 0)
+            {
+                if (stack != nullptr)
+                {
+                    DestroyStack(&stack); stack = nullptr;
+                }
+            }
+            else
+            {
+                InsertCoord(&stack, touch.x, touch.y);
+            }
+            // == DRAWING ==
+
+			DrawCurrentPolygon(stack);
+
+            //===============
 
             //DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
             garchompAnim0->Draw(screenWidth / 2 - texture.width / 2, screenHeight / 2 - texture.height / 2);
             garchompAnim0->advanceFrame(timer.frame);
 
 
-            prbs::Vector2 touch = GetTouch();
-
+            //======================
 			DrawText(("touch " + std::to_string(touch.x) + " " +std::to_string(touch.y)).c_str(), 360, 200, 40, GRAY);
             DrawText((text + std::to_string(timer.frame)).c_str() , 360, 370, 40, GRAY);
 			DrawText(("Time " + std::to_string(timer.get_time_ms()) + " deltaTime " + std::to_string(timer.get_delta_time())).c_str(),
                 360, 230, 40, GRAY);
 
+            //========== 
+
+            if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
+
         EndDrawing();
+
+        static int lastTime = 0;
+		if (timer.get_time_ms() > lastTime + 1000/50) {
+
+			Coord* lastCoord = ExtractFIFO(&stack);
+			free(lastCoord); lastCoord = nullptr;
+			lastTime = timer.get_time_ms();
+		}
+
         //----------------------------------------------------------------------------------
 		//wait or end of frame
 		timer.FrameSleep();
     }
+
+	DestroyStack(&stack); stack = nullptr;
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
