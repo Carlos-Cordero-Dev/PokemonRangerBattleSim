@@ -56,7 +56,7 @@ Coord *TopStack(Coord *stack)
 
 Coord *ExtractFIFO(Coord **stack)
 {
-  Coord *aux;
+  Coord *aux = nullptr;
 
   if(*stack == nullptr){ /*printf("NO QUEDA COORD\n")*/;return NULL;}
   else if((*stack)->nextCoord == nullptr)

@@ -73,18 +73,21 @@ int main(void)
     //---------------------------------------------------------------------------------------
     // Main game loop
 
-    Timer timer;
 
     std::string text = "Frame ";
+    SetTargetFPS(60);
 
 	Coord* stack = nullptr;
+    int frame = 0;
+    double currTime = 0.0;
+	double lastTime = 0;
 
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         
         //input code should be decoupled from render 60fps limit
 
-        timer.Update();
+        //timer.Update();
 
 		//printf("frame %d\n",frame);
         // Draw
@@ -115,32 +118,42 @@ int main(void)
 
             //DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
             garchompAnim0->Draw(screenWidth / 2 - texture.width / 2, screenHeight / 2 - texture.height / 2);
-            garchompAnim0->advanceFrame(timer.frame);
+            garchompAnim0->advanceFrame(frame);
 
 
             //======================
-			DrawText(("touch " + std::to_string(touch.x) + " " +std::to_string(touch.y)).c_str(), 360, 200, 40, GRAY);
-            DrawText((text + std::to_string(timer.frame)).c_str() , 360, 370, 40, GRAY);
-			DrawText(("Time " + std::to_string(timer.get_time_ms()) + " deltaTime " + std::to_string(timer.get_delta_time())).c_str(),
+			DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
+			DrawText(("touch " + std::to_string(touch.x) + " " +std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
+            DrawText((text + std::to_string(frame)).c_str() , 360, 370, 40, GRAY);
+			DrawText(("Time " + std::to_string(currTime) + " deltaTime " + std::to_string(GetFrameTime())).c_str(),
                 360, 230, 40, GRAY);
 
             //========== 
 
             if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
 
+            //=========================
+            //timer related stuff
+
+			frame++;
+            currTime += GetFrameTime();
+			
+            if (currTime > lastTime + 0.017) {
+
+				Coord* lastCoord = ExtractFIFO(&stack);
+				if (lastCoord != nullptr)
+				{
+					free(lastCoord); lastCoord = nullptr;
+				}
+				lastTime = currTime;
+			}
+
         EndDrawing();
 
-        static int lastTime = 0;
-		if (timer.get_time_ms() > lastTime + 1000/50) {
-
-			Coord* lastCoord = ExtractFIFO(&stack);
-			free(lastCoord); lastCoord = nullptr;
-			lastTime = timer.get_time_ms();
-		}
 
         //----------------------------------------------------------------------------------
 		//wait or end of frame
-		timer.FrameSleep();
+		//timer.FrameSleep();
     }
 
 	DestroyStack(&stack); stack = nullptr;
