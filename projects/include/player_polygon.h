@@ -8,6 +8,8 @@ void DrawCircle(int radius,int x, int y);
 
 void DrawCurrentPolygon(Coord *stack);
 
+void DrawCurrentPolygonOnlyLines(Coord* stack);
+
 bool IsPolygonClosed(Coord *stack, int x,int y);
 
 #endif

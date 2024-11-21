@@ -14,6 +14,7 @@ void ShowStack(Coord *stack);
 
 int GetStackCount(Coord *stack);
 
+//mode: 0 = goes up until the last coord, -1= goes to the one before last coord, so lastcoord -1
 Coord *BotStack(Coord *stack,int mode);
 
 Coord *TopStack(Coord *stack);

@@ -18,6 +18,7 @@
 #include "controls.h"
 #include "FIFO.h"
 #include "player_polygon.h"
+#include "ranger_top.h"
 /*
 what do I need man:
 
@@ -77,7 +78,7 @@ int main(void)
     std::string text = "Frame ";
     SetTargetFPS(60);
 
-	Coord* stack = nullptr;
+    Top top;
     int frame = 0;
     double currTime = 0.0;
 	double lastTime = 0;
@@ -90,6 +91,22 @@ int main(void)
         //timer.Update();
 
 		//printf("frame %d\n",frame);
+        
+
+		prbs::Vector2 touch = GetTouch();
+
+		if (touch.x == 0 && touch.y == 0)
+		{
+			if (top.stack != nullptr)
+			{
+				ResetTop(&top);
+			}
+		}
+		else
+		{
+			InsertTopCoord(&top, touch.x, touch.y);
+		}
+        ForceTopDistanceLimit(&top);
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -97,22 +114,16 @@ int main(void)
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
 
-            prbs::Vector2 touch = GetTouch();
-            
-            if (touch.x == 0 && touch.y == 0)
+        
+
+            if (IsPolygonClosed(top.stack, touch.x, touch.y))
             {
-                if (stack != nullptr)
-                {
-                    DestroyStack(&stack); stack = nullptr;
-                }
-            }
-            else
-            {
-                InsertCoord(&stack, touch.x, touch.y);
+                printf("closed circle\n");
+                ResetTop(&top);
             }
             // == DRAWING ==
 
-			DrawCurrentPolygon(stack);
+            DrawCurrentPolygonOnlyLines(top.stack);
 
             //===============
 
@@ -138,15 +149,15 @@ int main(void)
 			frame++;
             currTime += GetFrameTime();
 			
-            if (currTime > lastTime + 0.017) {
+   //         if (currTime > lastTime + 0.017) {
 
-				Coord* lastCoord = ExtractFIFO(&stack);
-				if (lastCoord != nullptr)
-				{
-					free(lastCoord); lastCoord = nullptr;
-				}
-				lastTime = currTime;
-			}
+			//	Coord* lastCoord = ExtractFIFO(&stack);
+			//	if (lastCoord != nullptr)
+			//	{
+			//		free(lastCoord); lastCoord = nullptr;
+			//	}
+			//	lastTime = currTime;
+			//}
 
         EndDrawing();
 
@@ -156,7 +167,7 @@ int main(void)
 		//timer.FrameSleep();
     }
 
-	DestroyStack(&stack); stack = nullptr;
+	ResetTop(&top);
 
     // De-Initialization
     //--------------------------------------------------------------------------------------

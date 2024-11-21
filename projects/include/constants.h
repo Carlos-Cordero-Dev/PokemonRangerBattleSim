@@ -8,5 +8,5 @@
 #endif
 
 constexpr int KFPS = 60;
-constexpr int KMarginToClosePoly = 40;
+constexpr int KMarginToClosePoly = 80;
 constexpr int KHealthbarPosX = 10, KHealthbarPosY = 10;

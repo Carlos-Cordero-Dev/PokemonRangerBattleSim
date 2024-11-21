@@ -29,6 +29,19 @@ void DrawCurrentPolygon(Coord *stack)
   }
 }
 
+void DrawCurrentPolygonOnlyLines(Coord* stack)
+{
+	if (stack != nullptr && stack->nextCoord != NULL)
+	{
+		Coord* aux;
+		for (aux = stack; aux->nextCoord != nullptr; aux = aux->nextCoord)
+		{
+			DrawLine(aux->x, aux->y, aux->nextCoord->x, aux->nextCoord->y, RED);
+            DrawCircle(aux->x, aux->y, 5, GREEN);
+		}
+	}
+}
+
 bool IsPolygonClosed(Coord *stack, int x,int y)
 {
   if(stack!=nullptr && stack->nextCoord!=nullptr)
