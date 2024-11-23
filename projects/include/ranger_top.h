@@ -15,10 +15,15 @@
 -touching pokemon or recieving atack completely deletes top
 -having top destroyed forces to click again 
 
+-figure out sound
 */
 
 #include "FIFO.h"
+
 #include "raymath.h"
+
+#include <algorithm>
+
 
 struct Top
 {
@@ -28,12 +33,19 @@ struct Top
 
 void InsertTopCoord(Top* top, int x, int y)
 {
+	//dont insert duplicated coords if they user is holding stylus in place
+	if (top->stack && (top->stack->x == x && top->stack->y == y))
+	{
+		printf("skiped exsisting %d %d\n", x, y);
+		return;
+	}
 	InsertCoord(&top->stack, x, y);
 	if (top->stack->nextCoord != nullptr)
 	{
 		Coord* next = top->stack->nextCoord;
 		float dist =  Vector2Distance({ (float)x,(float)y }, { (float)next->x,(float)next->y });
 		top->distance += dist;
+		top->stack->distance_at_point = top->distance;
 		printf("new dist %f\n", top->distance);
 	}
 }
@@ -46,7 +58,7 @@ void ForceTopDistanceLimit(Top* top)
 	while (top->distance > kMaxDistance)
 	{
 		if (top->stack == nullptr || top->stack->nextCoord == nullptr) {
-			printf("Insufficient coordinates in stack.\n");
+			//printf("Insufficient coordinates in stack.\n");
 			return;
 		}
 		Coord* lastMinusOneCoord = BotStack(top->stack, -1);
@@ -54,7 +66,7 @@ void ForceTopDistanceLimit(Top* top)
 
 		if (lastCoord == nullptr || lastMinusOneCoord == nullptr)
 		{
-			printf("Null pointer encountered in stack.\n");
+			//printf("Null pointer encountered in stack.\n");
 			return;
 		}
 
@@ -79,7 +91,7 @@ void ForceTopDistanceLimit(Top* top)
 
 		top->distance -= dist;
 
-		printf("deleted %f curr dist %f\n", dist, top->distance);
+		//printf("deleted %f curr dist %f\n", dist, top->distance);
 
 		if (lastCoord != nullptr)
 		{
@@ -94,4 +106,80 @@ void ResetTop(Top* top)
 {
 	DestroyStack(&top->stack); top->stack = nullptr;
 	top->distance = 0;
+}
+
+//======= intersection stuff  =============================================
+
+// Check if point r is on segment pq
+bool onSegment(Coord* p, Coord* q, Coord* r) {
+	return r->x <= std::max(p->x, q->x) && r->x >= std::min(p->x, q->x) &&
+		r->y <= std::max(p->y, q->y) && r->y >= std::min(p->y, q->y);
+}
+
+// Determine the orientation of the triplet (p, q, r)
+// 0 -> collinear, 1 -> clockwise, 2 -> counterclockwise
+int orientation(Coord* p, Coord* q, Coord* r) {
+	int val = (q->y - p->y) * (r->x - q->x) -
+		(q->x - p->x) * (r->y - q->y);
+	if (val == 0) return 0;           // Collinear
+	return (val > 0) ? 1 : 2;         // Clockwise or Counterclockwise
+}
+
+// Check if two segments p1q1 and p2q2 intersect
+bool doIntersect(Coord* p1, Coord* q1, Coord* p2, Coord* q2) {
+	// Find the orientations
+	int o1 = orientation(p1, q1, p2);
+	int o2 = orientation(p1, q1, q2);
+	int o3 = orientation(p2, q2, p1);
+	int o4 = orientation(p2, q2, q1);
+
+	// General case
+	if (o1 != o2 && o3 != o4) return true;
+
+	// Special Cases
+	if (o1 == 0 && onSegment(p1, q1, p2)) return true;
+	if (o2 == 0 && onSegment(p1, q1, q2)) return true;
+	if (o3 == 0 && onSegment(p2, q2, p1)) return true;
+	if (o4 == 0 && onSegment(p2, q2, q1)) return true;
+
+	return false; // Doesn't fall in any of the cases
+}
+
+// Main function to check for intersection
+const int kMinDepth = 10;
+const int kMinDistance = 80;
+
+bool checkSnakeIntersection(Top* top) {
+	Coord* head = top->stack;
+	if (head == nullptr) return false;
+	if (head->nextCoord == nullptr) return false;
+
+	Coord* headNext = head->nextCoord;
+
+	// starts at the kMinDepth point cause you can intersect with your adjacent segment
+	Coord* current = headNext;
+	while (current && current->nextCoord) {
+		if (doIntersect(head, headNext, current, current->nextCoord)) {
+
+			//printf("tried intersect %d %d %d %d\n", head->depth, headNext->depth, current->depth, current->nextCoord->depth);
+			int depth = headNext->depth - current->depth;
+			//TODO: distance hard to implement bc you are deleting nodes buddy
+			//int distance = head->distance_at_point - current->distance_at_point;
+			if ((depth < kMinDepth) /*|| (distance < kMinDistance)*/)
+			{
+				current = current->nextCoord;
+				continue;
+			}
+
+			head->intersected = true;
+			headNext->intersected = true;
+			current->intersected = true;
+			current->nextCoord->intersected = true;
+			//printf("intersected %d %d %d %d distance %d point2point \n", head->depth, headNext->depth, 
+			//	current->depth, current->nextCoord->depth, distance);
+			return true;
+		}
+		current = current->nextCoord;
+	}
+	return false;
 }

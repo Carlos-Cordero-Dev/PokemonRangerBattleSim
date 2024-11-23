@@ -107,20 +107,28 @@ int main(void)
 			InsertTopCoord(&top, touch.x, touch.y);
 		}
         ForceTopDistanceLimit(&top);
+
+		if (checkSnakeIntersection(&top) == true)
+		{
+			//printf("INTERSECTED\n");
+		}
+
+        
+
+		//if (IsPolygonClosed(top.stack, touch.x, touch.y))
+		//{
+		//	printf("closed circle\n");
+		//	ResetTop(&top);
+		//}
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+            //ClearBackground(GRAY);
 
-
-        
-
-            if (IsPolygonClosed(top.stack, touch.x, touch.y))
-            {
-                printf("closed circle\n");
-                ResetTop(&top);
-            }
+            
             // == DRAWING ==
 
             DrawCurrentPolygonOnlyLines(top.stack);

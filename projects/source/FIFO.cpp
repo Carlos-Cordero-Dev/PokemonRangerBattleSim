@@ -7,12 +7,18 @@
 
 #include "FIFO.h"
 
+int currDepth = 0;
+
 void InsertCoord(Coord **stack, int x, int y)
 {
   Coord* aux;
   aux = (Coord*) malloc(sizeof(Coord));
   aux->x = x;
   aux->y = y;
+  aux->intersected = false;
+  aux->depth = currDepth;
+  currDepth++;
+  //printf("depth %d\n", currDepth);
 
   if(*stack!=nullptr)
   { //stack contains something
@@ -64,12 +70,14 @@ Coord *ExtractFIFO(Coord **stack)
     // printf("QUEDA UNA COORD\n");
     aux = &**stack;
      *stack = nullptr;
+	 currDepth--;
     return aux;
   }
   else
   {
     aux = BotStack(*stack,0);
     BotStack(*stack,-1)->nextCoord = nullptr;
+	currDepth--;
     return aux;
   }
 }
@@ -77,4 +85,5 @@ Coord *ExtractFIFO(Coord **stack)
 void DestroyStack(Coord **stack)
 {
   while(TopStack(*stack)!= nullptr) free(ExtractFIFO(&*stack));
+  currDepth = 0;
 }

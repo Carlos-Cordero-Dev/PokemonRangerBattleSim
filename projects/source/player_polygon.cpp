@@ -2,6 +2,7 @@
 #include "player_polygon.h"
 
 #include <math.h>
+#include <stdio.h>
 
 #include "raylib.h"
 
@@ -36,8 +37,15 @@ void DrawCurrentPolygonOnlyLines(Coord* stack)
 		Coord* aux;
 		for (aux = stack; aux->nextCoord != nullptr; aux = aux->nextCoord)
 		{
-			DrawLine(aux->x, aux->y, aux->nextCoord->x, aux->nextCoord->y, RED);
-            DrawCircle(aux->x, aux->y, 5, GREEN);
+
+            if (aux->intersected && aux->nextCoord->intersected)
+            {
+				DrawLine(aux->x, aux->y, aux->nextCoord->x, aux->nextCoord->y, GREEN);
+            }
+            else {
+                DrawLine(aux->x, aux->y, aux->nextCoord->x, aux->nextCoord->y, RED);
+            }
+            //DrawCircle(aux->x, aux->y, 5, GREEN);
 		}
 	}
 }
