@@ -2,19 +2,21 @@
 #pragma once
 
 /*
-
+[TODO]-update code so it doesnt change line direction when intersecting (maybe add a node)
 -doesnt retract with time
 -only retracts with distance
 -retracts distance each frame, doesnt retract x units per frame, but updates in the current frame:
 	if you moved and now the you are at 91 length and the max is 80, in that same frame it will go to 80 forcefully
 	if you were at 82 it will only move 2 , so it isnt fixed rate
 -for the above to work you have to have a history every single point youve been in so update of points should be instant
--closing a circle is done when intersection with your own line (dot product > x maybe)
+[x]-closing a circle is done when intersection with your own line (dot product > x maybe)
 -really low threshold to consider a circle done you can almost do circles in a 5x5 pixels
--on circle done not reset but top is placed on intersection and updates length
+[x]-on circle done not reset but top is placed on intersection 
+	and updates length
 -touching pokemon or recieving atack completely deletes top
 -having top destroyed forces to click again 
 
+[x]-get intersection point
 -figure out sound
 */
 
@@ -39,6 +41,7 @@ void InsertTopCoord(Top* top, int x, int y)
 		printf("skiped exsisting %d %d\n", x, y);
 		return;
 	}
+
 	InsertCoord(&top->stack, x, y);
 	if (top->stack->nextCoord != nullptr)
 	{
@@ -49,10 +52,22 @@ void InsertTopCoord(Top* top, int x, int y)
 		printf("new dist %f\n", top->distance);
 	}
 }
+
+inline float Dist(Coord* c1, Coord* c2)
+{
+	Vector2 v1 = { (float)c1->x,(float)c1->y };
+	Vector2 v2 = { (float)c2->x,(float)c2->y };
+
+	float dist = Vector2Distance(v1, v2);
+	return dist;
+}
+
 constexpr float kMaxDistance = 700.0f;
 //constexpr float kMinStep = 1.0f;
 //constexpr float kMaxStep = 15.0f;
 
+
+//TODO: REWORK
 void ForceTopDistanceLimit(Top* top)
 {
 	while (top->distance > kMaxDistance)
@@ -70,24 +85,7 @@ void ForceTopDistanceLimit(Top* top)
 			return;
 		}
 
-
-		Vector2 lastVec = { (float)lastCoord->x,(float)lastCoord->y };
-		Vector2 lastMinusOneVec = { (float)lastMinusOneCoord->x,(float)lastMinusOneCoord->y };
-
-		float dist = Vector2Distance(lastMinusOneVec,lastVec);
-
-		//nope for now
-		//if (dist > kMaxStep)
-		//{
-		//	dist = kMaxStep;
-
-		//	//calculate position of lastMinusOneCoord for the top to correctly jump to that spot at kMaxStep distnace from lastCoord
-		//	Vector2 dir = Vector2Normalize({ lastMinusOneVec.x - lastVec.x , lastMinusOneVec.y - lastVec.y } );
-		//	Vector2 newLastMinusOneLocation =  Vector2Add(lastVec, Vector2Scale(dir,kMaxStep));
-
-		//	lastMinusOneCoord->x = newLastMinusOneLocation.x;
-		//	lastMinusOneCoord->y = newLastMinusOneLocation.y;
-		//}
+		float dist = Dist(lastCoord, lastMinusOneCoord);
 
 		top->distance -= dist;
 
@@ -145,9 +143,51 @@ bool doIntersect(Coord* p1, Coord* q1, Coord* p2, Coord* q2) {
 	return false; // Doesn't fall in any of the cases
 }
 
-// Main function to check for intersection
+bool getIntersectionPoint(Coord* p1, Coord* q1, Coord* p2, Coord* q2, Coord& intersection) {
+	// Line equations: p1 + t1 * (q1 - p1) = p2 + t2 * (q2 - p2)
+	int a1 = q1->y - p1->y;
+	int b1 = p1->x - q1->x;
+	int c1 = a1 * p1->x + b1 * p1->y;
+
+	int a2 = q2->y - p2->y;
+	int b2 = p2->x - q2->x;
+	int c2 = a2 * p2->x + b2 * p2->y;
+
+	int determinant = a1 * b2 - a2 * b1;
+
+	if (determinant == 0) return false; // Parallel lines
+
+	// Calculate intersection point
+	intersection.x = (b2 * c1 - b1 * c2) / determinant;
+	intersection.y = (a1 * c2 - a2 * c1) / determinant;
+	return true;
+}
+
+// Shoelace formula to calculate the area of a polygon
+double calculatePolygonArea(Coord* start, Coord* end) {
+	if (!start || !end) return 0.0;
+
+	double area = 0.0;
+	Coord* current = start;
+	Coord* next = nullptr;
+
+	// Traverse from start to end (inclusive) and apply the Shoelace formula
+	while (current != end) {
+		next = current->nextCoord;
+		if (!next) break;
+
+		area += current->x * next->y - current->y * next->x;
+		current = next;
+	}
+
+	// Add the last segment (end to start) to close the polygon
+	area += current->x * start->y - current->y * start->x;
+
+	return fabs(area) / 2.0;
+}
+
 const int kMinDepth = 10;
-const int kMinDistance = 80;
+const double kMinArea = 1000;
 
 bool checkSnakeIntersection(Top* top) {
 	Coord* head = top->stack;
@@ -171,12 +211,51 @@ bool checkSnakeIntersection(Top* top) {
 				continue;
 			}
 
+			//check if area is big enough
+			Coord intersection;
+			if (!getIntersectionPoint(head, headNext, current, current->nextCoord,intersection))
+			{
+				current = current->nextCoord;
+				continue;
+			}
+			int oldHeadX = head->x;
+			int oldHeadY = head->y;
+			int oldcurrentX = current->x;
+			int oldcurrentY = current->y;
+
+			head->x = intersection.x;
+			head->y = intersection.y;
+			current->x = intersection.x;
+			current->y = intersection.y;
+
+			double area = calculatePolygonArea(head, current);
+
+			head->x = oldHeadX;
+			head->y = oldHeadY;
+			current->x = oldcurrentX;
+			current->y = oldcurrentY;
+
+			if (area < kMinArea)
+			{
+				current = current->nextCoord;
+				continue;
+			}
+
 			head->intersected = true;
 			headNext->intersected = true;
 			current->intersected = true;
 			current->nextCoord->intersected = true;
-			//printf("intersected %d %d %d %d distance %d point2point \n", head->depth, headNext->depth, 
-			//	current->depth, current->nextCoord->depth, distance);
+			printf("intersected %d %d %d %d  point %d %d area %f\n", head->depth, headNext->depth,
+				current->depth, current->nextCoord->depth, intersection.x, intersection.y, area);
+
+			//printf("depth headnext %d current %d \n", headNext->depth, current->depth);
+			freeCoordsBackward(headNext,current);
+
+			current->nextCoord->x = intersection.x;
+			current->nextCoord->y = intersection.y;
+
+			head->nextCoord = current->nextCoord;
+
 			return true;
 		}
 		current = current->nextCoord;

@@ -106,7 +106,7 @@ int main(void)
 		{
 			InsertTopCoord(&top, touch.x, touch.y);
 		}
-        ForceTopDistanceLimit(&top);
+        //ForceTopDistanceLimit(&top);
 
 		if (checkSnakeIntersection(&top) == true)
 		{

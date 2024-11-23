@@ -87,3 +87,32 @@ void DestroyStack(Coord **stack)
   while(TopStack(*stack)!= nullptr) free(ExtractFIFO(&*stack));
   currDepth = 0;
 }
+
+void freeCoordsBackward(Coord* start, Coord* end) {
+	if (!start || !end) return;
+
+	Coord* aux = start;
+	Coord* nextToFree = nullptr;
+
+	// Traverse the list up to end->nextCoord to find the last node
+	while (aux && aux->nextCoord != end->nextCoord) {
+		nextToFree = aux;    // Save the last valid node
+		aux = aux->nextCoord;
+	}
+	//int freed = 0;
+	// Traverse backward, freeing nodes
+	while (nextToFree) {
+		Coord* prev = start;
+
+		// Find the node just before `nextToFree`
+		while (prev->nextCoord != nextToFree && prev != nextToFree) {
+			prev = prev->nextCoord;
+		}
+
+		free(nextToFree);
+		//freed++;
+		nextToFree = (prev == nextToFree) ? nullptr : prev; // Update to the previous node
+	}
+	//printf("freed %d\n", freed);
+
+}
