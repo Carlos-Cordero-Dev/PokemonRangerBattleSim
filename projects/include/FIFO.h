@@ -9,7 +9,7 @@ struct Coord
   Coord *nextCoord;
   bool intersected = false;
   int depth = 0;
-  int distance_at_point = 0;
+  float distance_at_point = 0.0f;
 };
 
 void InsertCoord(Coord **stack, int x, int y);

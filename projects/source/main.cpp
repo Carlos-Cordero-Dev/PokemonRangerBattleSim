@@ -38,9 +38,13 @@ AI:
 -menu
 -level selector
 */
+#include <crtdbg.h>
 
 int main(void)
 {
+    //memory leaks check
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 1280;
@@ -107,6 +111,8 @@ int main(void)
 			InsertTopCoord(&top, touch.x, touch.y);
 		}
         //ForceTopDistanceLimit(&top);
+        ComputeAndUpdateDistance(&top);
+        ForceTopDistanceLimit(&top);
 
 		if (checkSnakeIntersection(&top) == true)
 		{

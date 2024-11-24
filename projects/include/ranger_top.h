@@ -38,19 +38,11 @@ void InsertTopCoord(Top* top, int x, int y)
 	//dont insert duplicated coords if they user is holding stylus in place
 	if (top->stack && (top->stack->x == x && top->stack->y == y))
 	{
-		printf("skiped exsisting %d %d\n", x, y);
+		//printf("skiped exsisting %d %d\n", x, y);
 		return;
 	}
 
 	InsertCoord(&top->stack, x, y);
-	if (top->stack->nextCoord != nullptr)
-	{
-		Coord* next = top->stack->nextCoord;
-		float dist =  Vector2Distance({ (float)x,(float)y }, { (float)next->x,(float)next->y });
-		top->distance += dist;
-		top->stack->distance_at_point = top->distance;
-		printf("new dist %f\n", top->distance);
-	}
 }
 
 inline float Dist(Coord* c1, Coord* c2)
@@ -66,8 +58,28 @@ constexpr float kMaxDistance = 700.0f;
 //constexpr float kMinStep = 1.0f;
 //constexpr float kMaxStep = 15.0f;
 
+float ComputeAndUpdateDistance(Top* top)
+{
+	if (top->stack == nullptr || top->stack->nextCoord == nullptr) {
+		//printf("Insufficient coordinates in stack.\n");
+		return 0.0f;
+	}
 
-//TODO: REWORK
+	float totalDistance = 0.0f;
+	top->stack->distance_at_point = 0;
+	for (Coord* aux = top->stack; aux->nextCoord != nullptr; aux = aux->nextCoord)
+	{
+		float dist = Dist(aux, aux->nextCoord);
+		aux->nextCoord->distance_at_point = dist + aux->distance_at_point;
+		totalDistance += dist;
+		//printf(" %f ", aux->distance_at_point);
+	}
+
+	top->distance = totalDistance;
+	//printf("total distance %f\n", totalDistance);
+	return totalDistance;
+}
+
 void ForceTopDistanceLimit(Top* top)
 {
 	while (top->distance > kMaxDistance)
@@ -85,16 +97,35 @@ void ForceTopDistanceLimit(Top* top)
 			return;
 		}
 
-		float dist = Dist(lastCoord, lastMinusOneCoord);
+		float distBetweenLastAndLastMinusOne = lastCoord->distance_at_point - lastMinusOneCoord->distance_at_point;
 
-		top->distance -= dist;
-
-		//printf("deleted %f curr dist %f\n", dist, top->distance);
-
-		if (lastCoord != nullptr)
+		//if last minus one is still too far destroy last and try again
+		if (lastMinusOneCoord->distance_at_point > kMaxDistance)
 		{
 			lastMinusOneCoord->nextCoord = nullptr;
 			free(lastCoord); lastCoord = nullptr;
+			top->distance -= distBetweenLastAndLastMinusOne;
+			continue;
+			//printf("too far\n");
+		}
+
+		//force to kMaxdistance if the step is too big by moving lastCoord to the kMaxDistance point
+		if (lastMinusOneCoord->distance_at_point < kMaxDistance)
+		{
+			Vector2 lastCoordVec = { (float)lastCoord->x,(float)lastCoord->y };
+			Vector2 lastMinusOneCoordVec = { (float)lastMinusOneCoord->x,(float)lastMinusOneCoord->y };
+			Vector2 lastMinusOneToLastVec = Vector2Subtract(lastCoordVec, lastMinusOneCoordVec);
+
+			float distLeftToCover = kMaxDistance - lastMinusOneCoord->distance_at_point;
+			Vector2 vecToMaxDist = Vector2Scale(Vector2Normalize(lastMinusOneToLastVec), distLeftToCover);
+
+			Vector2 newLastPosVec =  Vector2Add(lastMinusOneCoordVec, vecToMaxDist);
+
+			lastCoord->x = newLastPosVec.x;
+			lastCoord->y = newLastPosVec.y;
+			lastCoord->distance_at_point = kMaxDistance;
+			top->distance = kMaxDistance;
+			//printf("near\n");
 		}
 	}
 
