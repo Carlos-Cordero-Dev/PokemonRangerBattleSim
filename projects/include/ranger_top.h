@@ -251,10 +251,10 @@ bool checkSnakeIntersection(Top* top) {
 			//printf("depth headnext %d current %d \n", headNext->depth, current->depth);
 			freeCoordsBackward(headNext,current);
 
-			current->nextCoord->x = intersection.x;
-			current->nextCoord->y = intersection.y;
+			current->x = intersection.x;
+			current->y = intersection.y;
 
-			head->nextCoord = current->nextCoord;
+			head->nextCoord = current;
 
 			return true;
 		}
