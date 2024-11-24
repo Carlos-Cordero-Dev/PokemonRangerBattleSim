@@ -2,22 +2,23 @@
 #pragma once
 
 /*
-[TODO]-update code so it doesnt change line direction when intersecting (maybe add a node)
--doesnt retract with time
--only retracts with distance
--retracts distance each frame, doesnt retract x units per frame, but updates in the current frame:
+[X]-update code so it doesnt change line direction when intersecting (maybe add a node)
+[x]-doesnt retract with time
+[x]-only retracts with distance
+[x]-retracts distance each frame, doesnt retract x units per frame, but updates in the current frame:
 	if you moved and now the you are at 91 length and the max is 80, in that same frame it will go to 80 forcefully
 	if you were at 82 it will only move 2 , so it isnt fixed rate
--for the above to work you have to have a history every single point youve been in so update of points should be instant
+[x]-for the above to work you have to have a history every single point youve been in so update of points should be instant
 [x]-closing a circle is done when intersection with your own line (dot product > x maybe)
 -really low threshold to consider a circle done you can almost do circles in a 5x5 pixels
 [x]-on circle done not reset but top is placed on intersection 
-	and updates length
+[x]	and updates length
+[x]-get intersection point
+
 -touching pokemon or recieving atack completely deletes top
 -having top destroyed forces to click again 
-
-[x]-get intersection point
 -figure out sound
+
 */
 
 #include "FIFO.h"

@@ -11,6 +11,7 @@
 #include "raygui.h"
 #else 
 #include "raygui_win.h"
+#include <crtdbg.h> //memory leaks check
 #endif
 
 #include "sprites.h"
@@ -38,12 +39,14 @@ AI:
 -menu
 -level selector
 */
-#include <crtdbg.h>
 
 int main(void)
 {
+
+#ifdef WINDOWS_BUILD 
     //memory leaks check
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
 
     // Initialization
     //--------------------------------------------------------------------------------------
