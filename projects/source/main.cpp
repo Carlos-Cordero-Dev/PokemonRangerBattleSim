@@ -60,9 +60,11 @@ int main(void)
 	printf("\n=====================damnson1=================================\n");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture2D texture;// = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
+    Texture2D texture;
+    // texture = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
     //loadTexturesFromFolder("romfs:/resources/sprites");
     //texture = textures[0].texture;
+
 	SpriteAnimation* garchompAnim0 = new SpriteAnimation();
     garchompAnim0->advanceRate = 5;
 	SpriteAnimation* garchompAnim1 = new SpriteAnimation();
@@ -113,7 +115,7 @@ int main(void)
 		{
 			InsertTopCoord(&top, touch.x, touch.y);
 		}
-        //ForceTopDistanceLimit(&top);
+
         ComputeAndUpdateDistance(&top);
         ForceTopDistanceLimit(&top);
 
@@ -150,6 +152,7 @@ int main(void)
 
 
             //======================
+
 			DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
 			DrawText(("touch " + std::to_string(touch.x) + " " +std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
             DrawText((text + std::to_string(frame)).c_str() , 360, 370, 40, GRAY);
