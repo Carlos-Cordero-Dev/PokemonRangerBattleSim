@@ -1,14 +1,17 @@
 
 #pragma once
 
-class BoundingBox
-{
-	int topLeft = 0;
-	int topRight = 0;
-	int botLeft = 0;
-	int botRight = 0;
 
-};
+//Redefinition bc raylib already has it??
+
+//class BoundingBox
+//{
+//	int topLeft = 0;
+//	int topRight = 0;
+//	int botLeft = 0;
+//	int botRight = 0;
+//
+//};
 
 /*
 

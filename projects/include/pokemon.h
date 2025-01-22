@@ -6,6 +6,6 @@
 
 class Pokemon
 {
-	BoundingBox bbox;
+	//BoundingBox bbox;
 	//possible SpriteSheet* 
 };

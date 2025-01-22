@@ -14,6 +14,9 @@
 #include <crtdbg.h> //memory leaks check
 #endif
 
+#define GLSL_VERSION 330
+
+#include "constants.h"
 #include "sprites.h"
 #include "timer.h"
 #include "controls.h"
@@ -58,6 +61,11 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
 	printf("\n=====================damnson1=================================\n");
+
+	std::string shader_path = "shaders/grayscale.fs";
+	std::string absolute_shader_path = RESOURCES_FOLDER + shader_path;
+	Shader testShader = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
+
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D texture;
@@ -145,11 +153,13 @@ int main(void)
             DrawCurrentPolygonOnlyLines(top.stack);
 
             //===============
+			BeginShaderMode(testShader);
 
             //DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
             garchompAnim0->Draw(screenWidth / 2 - texture.width / 2, screenHeight / 2 - texture.height / 2);
             garchompAnim0->advanceFrame(frame);
 
+			EndShaderMode();
 
             //======================
 
@@ -191,6 +201,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadShader(testShader);
     UnloadTexture(texture);       // Texture unloading
 
     CloseWindow();                // Close window and OpenGL context
