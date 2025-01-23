@@ -6,6 +6,8 @@
 #endif
 
 #include "raylib.h"
+#include "rlgl.h" //rlFramebuffer
+
 #define RAYGUI_IMPLEMENTATION
 #ifdef SWITCH_BUILD 
 #include "raygui.h"
@@ -62,10 +64,25 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
 	printf("\n=====================damnson1=================================\n");
 
-	std::string shader_path = "shaders/grayscale.fs";
+	std::string shader_path = "shaders/stylus_tail.fs";
 	std::string absolute_shader_path = RESOURCES_FOLDER + shader_path;
 	Shader testShader = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
 
+	unsigned int framebuffer = rlLoadFramebuffer();
+
+	rlEnableFramebuffer(framebuffer);
+    unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+    rlActiveDrawBuffers(1);
+	rlFramebufferAttach(framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+
+	// Make sure our framebuffer is complete.
+    // NOTE: rlFramebufferComplete() automatically unbinds the framebuffer, so we don't have
+    // to rlDisableFramebuffer() here.
+	if (!rlFramebufferComplete(framebuffer))
+	{
+		printf("Framebuffer is not complete");
+		CloseWindow();
+	}
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D texture;
@@ -90,7 +107,6 @@ int main(void)
     printf("\ndamnson2=================================\n");
     //---------------------------------------------------------------------------------------
     // Main game loop
-
 
     std::string text = "Frame ";
     SetTargetFPS(60);
@@ -139,10 +155,19 @@ int main(void)
 		//	printf("closed circle\n");
 		//	ResetTop(&top);
 		//}
+		BeginShaderMode(testShader);
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
+
+            // ==== 
+	        // Draw to the geometry buffer by first activating it
+	        rlEnableFramebuffer(framebuffer);
+	        rlClearColor(0, 0, 0, 0);
+	        rlClearScreenBuffers();
+            // ==== 
+
 
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
             //ClearBackground(GRAY);
@@ -153,13 +178,11 @@ int main(void)
             DrawCurrentPolygonOnlyLines(top.stack);
 
             //===============
-			BeginShaderMode(testShader);
 
             //DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
             garchompAnim0->Draw(screenWidth / 2 - texture.width / 2, screenHeight / 2 - texture.height / 2);
             garchompAnim0->advanceFrame(frame);
 
-			EndShaderMode();
 
             //======================
 
@@ -189,8 +212,13 @@ int main(void)
 			//	lastTime = currTime;
 			//}
 
+		// Go back to the default framebuffer (0) and draw our deferred shading.
+		rlDisableFramebuffer();
+		rlClearScreenBuffers(); // Clear color & depth buffer
+    
         EndDrawing();
 
+		EndShaderMode();
 
         //----------------------------------------------------------------------------------
 		//wait or end of frame
