@@ -66,7 +66,18 @@ int main(void)
 
 	std::string shader_path = "shaders/stylus_tail.fs";
 	std::string absolute_shader_path = RESOURCES_FOLDER + shader_path;
-	Shader testShader = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
+	Shader stylus_shader = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
+
+	int stylusTexLocation = GetShaderLocation(stylus_shader, "tailTexture_in");
+	int startLocation = GetShaderLocation(stylus_shader, "start");
+	int endLocation = GetShaderLocation(stylus_shader, "end");
+	int topLeftLocation = GetShaderLocation(stylus_shader, "topLeft");
+	int topRightLocation = GetShaderLocation(stylus_shader, "topRight");
+	int botLeftLocation = GetShaderLocation(stylus_shader, "botLeft");
+	int botRightLocation = GetShaderLocation(stylus_shader, "botRight");
+
+	int stylusTexUnitPosition = 0;
+	SetShaderValue(stylus_shader, stylusTexLocation, &stylusTexUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
 
 	unsigned int main_framebuffer = rlLoadFramebuffer();
 	unsigned int stylus_framebuffer = rlLoadFramebuffer();
@@ -77,7 +88,7 @@ int main(void)
 	unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
     rlActiveDrawBuffers(2);
 	rlFramebufferAttach(main_framebuffer, main_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
-	rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL1, RL_ATTACHMENT_TEXTURE2D, 0);
+	rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
 
 	// Make sure our framebuffer is complete.
     // NOTE: rlFramebufferComplete() automatically unbinds the framebuffer, so we don't have
@@ -94,6 +105,8 @@ int main(void)
 		CloseWindow();
 	}
 #endif
+
+
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D texture;
     // texture = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
@@ -126,15 +139,15 @@ int main(void)
     double currTime = 0.0;
 	double lastTime = 0;
 
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        
-        //input code should be decoupled from render 60fps limit
+	while (!WindowShouldClose())    // Detect window close button or ESC key
+	{
 
-        //timer.Update();
+		//input code should be decoupled from render 60fps limit
+
+		//timer.Update();
 
 		//printf("frame %d\n",frame);
-        
+
 
 		prbs::Vector2 touch = GetTouch();
 
@@ -150,15 +163,15 @@ int main(void)
 			InsertTopCoord(&top, touch.x, touch.y);
 		}
 
-        ComputeAndUpdateDistance(&top);
-        ForceTopDistanceLimit(&top);
+		ComputeAndUpdateDistance(&top);
+		ForceTopDistanceLimit(&top);
 
 		if (checkSnakeIntersection(&top) == true)
 		{
 			//printf("INTERSECTED\n");
 		}
 
-        
+
 
 		//if (IsPolygonClosed(top.stack, touch.x, touch.y))
 		//{
@@ -167,20 +180,58 @@ int main(void)
 		//}
 
 
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
+		// Draw
+		//----------------------------------------------------------------------------------
+		BeginDrawing();
 
 
 
-            // === STYLUS TEXTURE === 
-			rlEnableFramebuffer(stylus_framebuffer);
-			rlClearColor(0, 1, 0, 1);
-			rlClearScreenBuffers();
-			rlDisableColorBlend();
+		// === STYLUS TEXTURE === 
 
-			BeginShaderMode(testShader);
+		rlEnableFramebuffer(stylus_framebuffer);
+		rlClearColor(0, 1, 0, 1);
+		rlClearScreenBuffers();
+		rlDisableColorBlend();
+
+		if (touch.x == 0 && touch.y == 0)
+		{
+		}
+		else 
+		{
+			float start[2] = { top.stack->x, top.stack->y };
+			Coord* botStack = BotStack(top.stack, 0);
+			float end[2] = { botStack->x, botStack->y };
+
+			float topLeft[2] = { top.stack->x, top.stack->y };
+			float topRight[2] = { top.stack->x, top.stack->y };
+			float botLeft[2] = { top.stack->x, top.stack->y };
+			float botRight[2] = { top.stack->x, top.stack->y };
+
+			SetShaderValue(stylus_shader, startLocation, start, SHADER_UNIFORM_VEC2);
+			SetShaderValue(stylus_shader, endLocation, end, SHADER_UNIFORM_VEC2);
+			SetShaderValue(stylus_shader, topLeftLocation, topLeft, SHADER_UNIFORM_VEC2);
+			SetShaderValue(stylus_shader, topRightLocation, topRight, SHADER_UNIFORM_VEC2);
+			SetShaderValue(stylus_shader, botLeftLocation, botLeft, SHADER_UNIFORM_VEC2);
+			SetShaderValue(stylus_shader, botRightLocation, botRight, SHADER_UNIFORM_VEC2);
+		}
+
+
+			BeginShaderMode(stylus_shader);
+
+			//
+
+			rlActiveTextureSlot(stylusTexUnitPosition);
+			rlEnableTexture(stylus_texture);
+
+			//
+
+			//rlActiveTextureSlot(texUnitPosition);
+			//rlEnableTexture(gBuffer.positionTexture);
+
 			DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+			//rlLoadDrawQuad();
+
+
 			EndShaderMode();
 
 			rlEnableColorBlend();
@@ -249,7 +300,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(testShader);
+    UnloadShader(stylus_shader);
     UnloadTexture(texture);       // Texture unloading
 
     CloseWindow();                // Close window and OpenGL context
