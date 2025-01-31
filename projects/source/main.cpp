@@ -68,22 +68,32 @@ int main(void)
 	std::string absolute_shader_path = RESOURCES_FOLDER + shader_path;
 	Shader testShader = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
 
-	unsigned int framebuffer = rlLoadFramebuffer();
+	unsigned int main_framebuffer = rlLoadFramebuffer();
+	unsigned int stylus_framebuffer = rlLoadFramebuffer();
 
-	rlEnableFramebuffer(framebuffer);
-    unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
-    rlActiveDrawBuffers(1);
-	rlFramebufferAttach(framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+	rlEnableFramebuffer(main_framebuffer);
+	rlEnableFramebuffer(stylus_framebuffer);
+	unsigned int main_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+	unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+    rlActiveDrawBuffers(2);
+	rlFramebufferAttach(main_framebuffer, main_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+	rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL1, RL_ATTACHMENT_TEXTURE2D, 0);
 
 	// Make sure our framebuffer is complete.
     // NOTE: rlFramebufferComplete() automatically unbinds the framebuffer, so we don't have
     // to rlDisableFramebuffer() here.
-	if (!rlFramebufferComplete(framebuffer))
+#ifndef SWITCH_BUILD
+	if (!rlFramebufferComplete(main_framebuffer))
 	{
 		printf("Framebuffer is not complete");
 		CloseWindow();
 	}
-
+	if (!rlFramebufferComplete(stylus_framebuffer))
+	{
+		printf("Framebuffer is not complete");
+		CloseWindow();
+	}
+#endif
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D texture;
     // texture = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
@@ -155,26 +165,36 @@ int main(void)
 		//	printf("closed circle\n");
 		//	ResetTop(&top);
 		//}
-		BeginShaderMode(testShader);
+
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            // ==== 
-	        // Draw to the geometry buffer by first activating it
-	        rlEnableFramebuffer(framebuffer);
-	        rlClearColor(0, 0, 0, 0);
-	        rlClearScreenBuffers();
-            // ==== 
 
+
+            // === STYLUS TEXTURE === 
+			rlEnableFramebuffer(stylus_framebuffer);
+			rlClearColor(0, 1, 0, 1);
+			rlClearScreenBuffers();
+			rlDisableColorBlend();
+
+			BeginShaderMode(testShader);
+			DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+			EndShaderMode();
+
+			rlEnableColorBlend();
+
+			rlDisableFramebuffer();
+
+			// =======================
+
+			// === MAIN TEXTURE ===
+
+			rlEnableFramebuffer(main_framebuffer);
 
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-            //ClearBackground(GRAY);
-
             
-            // == DRAWING ==
-
             DrawCurrentPolygonOnlyLines(top.stack);
 
             //===============
@@ -212,13 +232,13 @@ int main(void)
 			//	lastTime = currTime;
 			//}
 
-		// Go back to the default framebuffer (0) and draw our deferred shading.
-		rlDisableFramebuffer();
-		rlClearScreenBuffers(); // Clear color & depth buffer
-    
-        EndDrawing();
 
-		EndShaderMode();
+			// Go back to the default framebuffer (0) and draw our deferred shading.
+			rlDisableFramebuffer();
+			rlClearScreenBuffers();
+
+		EndDrawing();
+
 
         //----------------------------------------------------------------------------------
 		//wait or end of frame
