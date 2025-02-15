@@ -10,3 +10,4 @@
 constexpr int KFPS = 60;
 constexpr int KMarginToClosePoly = 80;
 constexpr int KHealthbarPosX = 10, KHealthbarPosY = 10;
+constexpr int MAX_TOP_POINTS = 512;

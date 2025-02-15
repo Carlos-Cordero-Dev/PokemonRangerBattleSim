@@ -27,6 +27,7 @@ Coord *ExtractFIFO(Coord **stack);
 
 void DestroyStack(Coord **stack);
 
+int GetStackDepth(Coord* stack);
 
 void freeCoordsBackward(Coord* start, Coord* end);
 

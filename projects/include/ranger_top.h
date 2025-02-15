@@ -235,8 +235,7 @@ bool checkSnakeIntersection(Top* top) {
 
 			//printf("tried intersect %d %d %d %d\n", head->depth, headNext->depth, current->depth, current->nextCoord->depth);
 			int depth = headNext->depth - current->depth;
-			//TODO: distance hard to implement bc you are deleting nodes buddy
-			//int distance = head->distance_at_point - current->distance_at_point;
+
 			if ((depth < kMinDepth) /*|| (distance < kMinDistance)*/)
 			{
 				current = current->nextCoord;
@@ -287,6 +286,9 @@ bool checkSnakeIntersection(Top* top) {
 			current->y = intersection.y;
 
 			head->nextCoord = current;
+
+			//TODO: distance hard to implement bc you are deleting nodes buddy
+			//UpdateStackDepths(head);
 
 			return true;
 		}

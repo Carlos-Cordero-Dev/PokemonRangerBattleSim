@@ -99,7 +99,10 @@ void freeCoordsBackward(Coord* start, Coord* end) {
 		nextToFree = aux;    // Save the last valid node
 		aux = aux->nextCoord;
 	}
-	//int freed = 0;
+	
+	int intersectionDepth = end->depth;
+
+
 	// Traverse backward, freeing nodes
 	while (nextToFree) {
 		Coord* prev = start;
@@ -115,4 +118,28 @@ void freeCoordsBackward(Coord* start, Coord* end) {
 	}
 	//printf("freed %d\n", freed);
 
+
+	// Reset depth values starting from the intersection
+	aux = end;
+	int newDepth = intersectionDepth;
+	while (aux) {
+		aux->depth = newDepth++;
+		aux = aux->nextCoord;
+	}
+
+	// Update global depth tracker
+	currDepth = newDepth;
+}
+
+int GetStackDepth(Coord* stack)
+{
+	int count = 0;
+	Coord* current = stack;
+
+	while (current) {
+		count++;
+		current = current->nextCoord;
+	}
+
+	return count;
 }

@@ -65,3 +65,52 @@ bool IsPolygonClosed(Coord *stack, int x,int y)
   }
   else return false;
 }
+
+// TMP LOCATION FOR THIS 
+
+#include <cmath>
+
+const int RECTANGLE_WIDE = 10;
+
+void ComputeRectangle(float start[2], float end[2], float topLeft[2], float topRight[2], float botLeft[2], float botRight[2]) {
+	// Compute direction vector
+	float dx = end[0] - start[0];
+	float dy = end[1] - start[1];
+
+	// Normalize the direction vector
+	float length = sqrt(dx * dx + dy * dy);
+	if (length == 0) return;  // Avoid division by zero
+
+	float dirNormX = dx / length;
+	float dirNormY = dy / length;
+
+	// Compute perpendicular vector (rotated 90 degrees counterclockwise)
+	float perpX = -dirNormY;
+	float perpY = dirNormX;
+
+	// Scale perpendicular vector to half of the rectangle width
+	float halfWidth = RECTANGLE_WIDE / 2.0f;
+	float offsetX = perpX * halfWidth;
+	float offsetY = perpY * halfWidth;
+
+	// Compute rectangle corners
+	topLeft[0] = start[0] + offsetX;
+	topLeft[1] = start[1] + offsetY;
+
+	topRight[0] = end[0] + offsetX;
+	topRight[1] = end[1] + offsetY;
+
+	botLeft[0] = start[0] - offsetX;
+	botLeft[1] = start[1] - offsetY;
+
+	botRight[0] = end[0] - offsetX;
+	botRight[1] = end[1] - offsetY;
+}
+
+void PopulateTopPoints(TopPointData* topPointData, int numberOfPoints)
+{
+	for (int i = 0; i < numberOfPoints -1; i++)
+	{
+		ComputeRectangle(topPointData[i].start, topPointData[i].end, topPointData[i].topLeft, topPointData[i].topRight, topPointData[i].botLeft, topPointData[i].botRight);
+	}
+}

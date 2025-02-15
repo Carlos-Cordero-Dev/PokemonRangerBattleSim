@@ -16,7 +16,7 @@
 #include <crtdbg.h> //memory leaks check
 #endif
 
-#define GLSL_VERSION 330
+#define GLSL_VERSION 430
 
 #include "constants.h"
 #include "sprites.h"
@@ -69,12 +69,24 @@ int main(void)
 	Shader stylus_shader = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
 
 	int stylusTexLocation = GetShaderLocation(stylus_shader, "tailTexture_in");
-	int startLocation = GetShaderLocation(stylus_shader, "start");
-	int endLocation = GetShaderLocation(stylus_shader, "end");
-	int topLeftLocation = GetShaderLocation(stylus_shader, "topLeft");
-	int topRightLocation = GetShaderLocation(stylus_shader, "topRight");
-	int botLeftLocation = GetShaderLocation(stylus_shader, "botLeft");
-	int botRightLocation = GetShaderLocation(stylus_shader, "botRight");
+
+	// =======================
+	//int startLocation = GetShaderLocation(stylus_shader, "start");
+	//int endLocation = GetShaderLocation(stylus_shader, "end");
+	//int topLeftLocation = GetShaderLocation(stylus_shader, "topLeft");
+	//int topRightLocation = GetShaderLocation(stylus_shader, "topRight");
+	//int botLeftLocation = GetShaderLocation(stylus_shader, "botLeft");
+	//int botRightLocation = GetShaderLocation(stylus_shader, "botRight");
+
+	//pre allocate max points
+	TopPointData* topPointData = (TopPointData*)calloc(MAX_TOP_POINTS, sizeof(TopPointData));
+
+	unsigned int ssbo = rlLoadShaderBuffer(sizeof(TopPointData) * MAX_TOP_POINTS, NULL, RL_STREAM_DRAW);
+
+	rlBindShaderBuffer(ssbo, 1);
+
+	//======================================
+	int nodeCountLocation = GetShaderLocation(stylus_shader, "node_count");
 
 	int stylusTexUnitPosition = 0;
 	SetShaderValue(stylus_shader, stylusTexLocation, &stylusTexUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
@@ -192,31 +204,49 @@ int main(void)
 		rlClearColor(0, 1, 0, 1);
 		rlClearScreenBuffers();
 		rlDisableColorBlend();
+		rlEnableShader(stylus_shader.id);
 
 		if (touch.x == 0 && touch.y == 0)
 		{
 		}
 		else 
 		{
-			float start[2] = { top.stack->x, top.stack->y };
-			Coord* botStack = BotStack(top.stack, 0);
-			float end[2] = { botStack->x, botStack->y };
 
-			float topLeft[2] = { top.stack->x, top.stack->y };
-			float topRight[2] = { top.stack->x, top.stack->y };
-			float botLeft[2] = { top.stack->x, top.stack->y };
-			float botRight[2] = { top.stack->x, top.stack->y };
+			int numberOfNodes = GetStackDepth(top.stack);
 
-			SetShaderValue(stylus_shader, startLocation, start, SHADER_UNIFORM_VEC2);
-			SetShaderValue(stylus_shader, endLocation, end, SHADER_UNIFORM_VEC2);
-			SetShaderValue(stylus_shader, topLeftLocation, topLeft, SHADER_UNIFORM_VEC2);
-			SetShaderValue(stylus_shader, topRightLocation, topRight, SHADER_UNIFORM_VEC2);
-			SetShaderValue(stylus_shader, botLeftLocation, botLeft, SHADER_UNIFORM_VEC2);
-			SetShaderValue(stylus_shader, botRightLocation, botRight, SHADER_UNIFORM_VEC2);
+
+			printf("num of nodes: %d\n", numberOfNodes);
+
+			if (numberOfNodes > 2)
+			{
+				Coord* current = top.stack;
+				Coord* next = top.stack->nextCoord;
+
+				for (int i = 0; i < numberOfNodes - 1; i++)
+				{
+
+					topPointData[i].start[0] = current->x;
+					topPointData[i].start[1] = current->y;
+
+					topPointData[i].end[0] = next->x;
+					topPointData[i].end[1] = next->y;
+
+					current = next;
+					next = next->nextCoord;
+				}
+
+				PopulateTopPoints(topPointData, numberOfNodes);
+				
+				rlUpdateShaderBuffer(ssbo, topPointData, numberOfNodes * sizeof(TopPointData), 0);
+				rlBindShaderBuffer(ssbo, 1);
+
+			}
+
+			SetShaderValue(stylus_shader, nodeCountLocation, &numberOfNodes, SHADER_UNIFORM_INT);
 		}
 
 
-			BeginShaderMode(stylus_shader);
+		BeginShaderMode(stylus_shader);
 
 			//
 
@@ -227,7 +257,6 @@ int main(void)
 
 			//rlActiveTextureSlot(texUnitPosition);
 			//rlEnableTexture(gBuffer.positionTexture);
-
 			DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
 			//rlLoadDrawQuad();
 
