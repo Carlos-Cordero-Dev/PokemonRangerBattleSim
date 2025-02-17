@@ -64,32 +64,30 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
 	printf("\n=====================damnson1=================================\n");
 
-	std::string shader_path = "shaders/stylus_tail.fs";
+	std::string shader_path = "shaders/stylus_first_pass.fs";
 	std::string absolute_shader_path = RESOURCES_FOLDER + shader_path;
-	Shader stylus_shader = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
+	Shader stylus_shader_first_pass = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
 
-	int stylusTexLocation = GetShaderLocation(stylus_shader, "tailTexture_in");
+	shader_path = "shaders/stylus_second_pass.fs";
+	absolute_shader_path = RESOURCES_FOLDER + shader_path;
+	//Shader stylus_shader_second_pass = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
 
-	// =======================
-	//int startLocation = GetShaderLocation(stylus_shader, "start");
-	//int endLocation = GetShaderLocation(stylus_shader, "end");
-	//int topLeftLocation = GetShaderLocation(stylus_shader, "topLeft");
-	//int topRightLocation = GetShaderLocation(stylus_shader, "topRight");
-	//int botLeftLocation = GetShaderLocation(stylus_shader, "botLeft");
-	//int botRightLocation = GetShaderLocation(stylus_shader, "botRight");
 
-	//pre allocate max points
+	// === ssbo === 
+	int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
+
 	TopPointData* topPointData = (TopPointData*)calloc(MAX_TOP_POINTS, sizeof(TopPointData));
 
 	unsigned int ssbo = rlLoadShaderBuffer(sizeof(TopPointData) * MAX_TOP_POINTS, NULL, RL_STREAM_DRAW);
 
 	rlBindShaderBuffer(ssbo, 1);
 
-	//======================================
-	int nodeCountLocation = GetShaderLocation(stylus_shader, "node_count");
+	// === ==== ===
+
+	int nodeCountLocation = GetShaderLocation(stylus_shader_first_pass, "node_count");
 
 	int stylusTexUnitPosition = 0;
-	SetShaderValue(stylus_shader, stylusTexLocation, &stylusTexUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
+	SetShaderValue(stylus_shader_first_pass, stylusTexLocation, &stylusTexUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
 
 	unsigned int main_framebuffer = rlLoadFramebuffer();
 	unsigned int stylus_framebuffer = rlLoadFramebuffer();
@@ -204,7 +202,7 @@ int main(void)
 		rlClearColor(0, 1, 0, 1);
 		rlClearScreenBuffers();
 		rlDisableColorBlend();
-		rlEnableShader(stylus_shader.id);
+		rlEnableShader(stylus_shader_first_pass.id);
 
 		if (touch.x == 0 && touch.y == 0)
 		{
@@ -225,11 +223,11 @@ int main(void)
 				for (int i = 0; i < numberOfNodes - 1; i++)
 				{
 
-					topPointData[i].start[0] = current->x;
-					topPointData[i].start[1] = current->y;
+					topPointData[i].start[0] = (int)std::round(current->x);
+					topPointData[i].start[1] = (int)std::round(current->y);
 
-					topPointData[i].end[0] = next->x;
-					topPointData[i].end[1] = next->y;
+					topPointData[i].end[0] = (int)std::round(next->x);
+					topPointData[i].end[1] = (int)std::round(next->y);
 
 					current = next;
 					next = next->nextCoord;
@@ -240,13 +238,15 @@ int main(void)
 				rlUpdateShaderBuffer(ssbo, topPointData, numberOfNodes * sizeof(TopPointData), 0);
 				rlBindShaderBuffer(ssbo, 1);
 
+				ClearPointData(topPointData, numberOfNodes);
+
 			}
 
-			SetShaderValue(stylus_shader, nodeCountLocation, &numberOfNodes, SHADER_UNIFORM_INT);
+			SetShaderValue(stylus_shader_first_pass, nodeCountLocation, &numberOfNodes, SHADER_UNIFORM_INT);
 		}
 
 
-		BeginShaderMode(stylus_shader);
+		BeginShaderMode(stylus_shader_first_pass);
 
 			//
 
@@ -257,7 +257,7 @@ int main(void)
 
 			//rlActiveTextureSlot(texUnitPosition);
 			//rlEnableTexture(gBuffer.positionTexture);
-			DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+			DrawRectangle(0, 0, screenWidth, -screenHeight, WHITE);
 			//rlLoadDrawQuad();
 
 
@@ -329,7 +329,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(stylus_shader);
+    UnloadShader(stylus_shader_first_pass);
     UnloadTexture(texture);       // Texture unloading
 
     CloseWindow();                // Close window and OpenGL context

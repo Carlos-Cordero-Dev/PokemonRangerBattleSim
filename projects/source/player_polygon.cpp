@@ -72,7 +72,7 @@ bool IsPolygonClosed(Coord *stack, int x,int y)
 
 const int RECTANGLE_WIDE = 10;
 
-void ComputeRectangle(float start[2], float end[2], float topLeft[2], float topRight[2], float botLeft[2], float botRight[2]) {
+void ComputeRectangle(int start[2], int end[2], int topLeft[2], int topRight[2], int botLeft[2], int botRight[2]) {
 	// Compute direction vector
 	float dx = end[0] - start[0];
 	float dy = end[1] - start[1];
@@ -94,17 +94,17 @@ void ComputeRectangle(float start[2], float end[2], float topLeft[2], float topR
 	float offsetY = perpY * halfWidth;
 
 	// Compute rectangle corners
-	topLeft[0] = start[0] + offsetX;
-	topLeft[1] = start[1] + offsetY;
+	topLeft[0] = (int)std::round(start[0] + offsetX);
+	topLeft[1] = (int)std::round(start[1] + offsetY);
 
-	topRight[0] = end[0] + offsetX;
-	topRight[1] = end[1] + offsetY;
+	topRight[0] = (int)std::round(end[0] + offsetX);
+	topRight[1] = (int)std::round(end[1] + offsetY);
 
-	botLeft[0] = start[0] - offsetX;
-	botLeft[1] = start[1] - offsetY;
+	botLeft[0] = (int)std::round(start[0] - offsetX);
+	botLeft[1] = (int)std::round(start[1] - offsetY);
 
-	botRight[0] = end[0] - offsetX;
-	botRight[1] = end[1] - offsetY;
+	botRight[0] = (int)std::round(end[0] - offsetX);
+	botRight[1] = (int)std::round(end[1] - offsetY);
 }
 
 void PopulateTopPoints(TopPointData* topPointData, int numberOfPoints)
@@ -112,5 +112,13 @@ void PopulateTopPoints(TopPointData* topPointData, int numberOfPoints)
 	for (int i = 0; i < numberOfPoints -1; i++)
 	{
 		ComputeRectangle(topPointData[i].start, topPointData[i].end, topPointData[i].topLeft, topPointData[i].topRight, topPointData[i].botLeft, topPointData[i].botRight);
+	}
+}
+
+void ClearPointData(TopPointData* topPointData, int numberOfPoints)
+{
+	for (int i = 0; i < numberOfPoints; i++)
+	{
+		topPointData[i] = { {0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
 	}
 }

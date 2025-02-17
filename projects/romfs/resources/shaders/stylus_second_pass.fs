@@ -6,20 +6,6 @@ layout (location = 0) out vec3 tailTexture_out;
 in vec2 fragTexCoord;
 in vec4 fragColor;
 
-
-struct TopPointData {
-    vec2 start;
-    vec2 end;
-    vec2 topLeft;
-    vec2 topRight;
-    vec2 botLeft;
-    vec2 botRight;
-};
-
-layout(std430, binding = 1) buffer PointBuffer {
-    TopPointData points[];
-};
-
 // Input uniform values
 uniform sampler2D tailTexture_in;
 uniform int node_count; 
