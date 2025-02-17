@@ -257,7 +257,7 @@ int main(void)
 
 			//rlActiveTextureSlot(texUnitPosition);
 			//rlEnableTexture(gBuffer.positionTexture);
-			DrawRectangle(0, 0, screenWidth, -screenHeight, WHITE);
+			DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
 			//rlLoadDrawQuad();
 
 
