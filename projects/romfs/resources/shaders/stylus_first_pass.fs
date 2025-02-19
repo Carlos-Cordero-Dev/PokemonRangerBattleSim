@@ -57,6 +57,14 @@ bool pointInTriangle(ivec2 p, ivec2 v0, ivec2 v1, ivec2 v2) {
     return (area1 * area >= 0 && area2 * area >= 0 && area3 * area >= 0);
 }
 
+bool pointInQuad(ivec2 p, ivec2 v0, ivec2 v1, ivec2 v2, ivec2 v3) {
+
+	//vec2 fp = vec2(p);  
+    return pointInTriangle(p, v0, v1, v2) ||
+           pointInTriangle(p, v0, v2, v3);
+
+}
+
 float pointToSegmentDist(vec2 p, vec2 a, vec2 b) {
     vec2 ab = b - a;
     vec2 ap = p - a;
@@ -67,12 +75,19 @@ float pointToSegmentDist(vec2 p, vec2 a, vec2 b) {
     return length(p - closestPoint);
 }
 
-bool pointInQuad(ivec2 p, ivec2 v0, ivec2 v1, ivec2 v2, ivec2 v3) {
+vec3 ComputeGradient(ivec2 p, TopPointData curr)
+{
+	// Compute distance from the current segment
+	float distToSegment = pointToSegmentDist(vec2(p), vec2(curr.start), vec2(curr.end));
 
-	//vec2 fp = vec2(p);  
-    return pointInTriangle(p, v0, v1, v2) ||
-           pointInTriangle(p, v0, v2, v3);
+	// Define max distance for gradient effect
+	float maxDist = distance(vec2(curr.topLeft), vec2(curr.botLeft));  // Approximate segment width
 
+	// Compute gradient factor (0 = white, 1 = blue)
+	float gradientFactor = clamp(distToSegment / maxDist, 0.0, 1.0);
+
+	// Interpolate color from white (center) to blue (edges)
+	return mix(vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 1.0), gradientFactor);
 }
 
 void main()
@@ -98,13 +113,16 @@ void main()
 	{
 		for (int i = 0; i < node_count - 1; i++) {
 		
+		
 		    if (i == node_count - 2) {
-				// Last segment: Just fill it normally
+		
+				// edge case for last segment
+				
 				TopPointData curr = points[i];
 				if (pointInQuad(p, curr.topLeft, curr.topRight, curr.botRight, curr.botLeft)) {
-					tailTexture_out = blackColor;
+					tailTexture_out = ComputeGradient(p,curr);
 				}
-				break; // No need to continue the loop
+				break; 
 			}
 		
             TopPointData curr = points[i];
@@ -112,7 +130,8 @@ void main()
 			
 			// Fill the current rectangle
             if (pointInQuad(p, curr.topLeft, next.topLeft, next.botLeft, curr.botLeft)) {
-                tailTexture_out = blackColor;
+			
+                tailTexture_out = ComputeGradient(p,curr);;
             }
 			
 			if((x == curr.start.x && y == curr.start.y) || 
