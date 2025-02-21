@@ -68,11 +68,7 @@ int main(void)
 	std::string absolute_shader_path = RESOURCES_FOLDER + shader_path;
 	Shader stylus_shader_first_pass = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
 
-	shader_path = "shaders/stylus_second_pass.fs";
-	absolute_shader_path = RESOURCES_FOLDER + shader_path;
-	//Shader stylus_shader_second_pass = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
-
-
+	// ==== STYLUS SHADER ====
 	// === ssbo === 
 	int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
 
@@ -89,16 +85,29 @@ int main(void)
 	int stylusTexUnitPosition = 0;
 	SetShaderValue(stylus_shader_first_pass, stylusTexLocation, &stylusTexUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
 
-	unsigned int main_framebuffer = rlLoadFramebuffer();
+	// ========== END OF STYLUS SHADER==================
+
+
 	unsigned int stylus_framebuffer = rlLoadFramebuffer();
+	unsigned int main_framebuffer = rlLoadFramebuffer();
 
 	rlEnableFramebuffer(main_framebuffer);
 	rlEnableFramebuffer(stylus_framebuffer);
 	unsigned int main_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
-	unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+	unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8/*important for transparency*/, 1);
+
     rlActiveDrawBuffers(2);
 	rlFramebufferAttach(main_framebuffer, main_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
 	rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+
+	//texture of stylus shader in Texture2D version to be able to do DrawTexture
+	Texture2D stylusOverlay;
+	stylusOverlay.id = stylus_texture;
+	stylusOverlay.width = screenWidth;
+	stylusOverlay.height = screenHeight;
+	stylusOverlay.mipmaps = 1;
+	stylusOverlay.format = RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
 
 	// Make sure our framebuffer is complete.
     // NOTE: rlFramebufferComplete() automatically unbinds the framebuffer, so we don't have
@@ -194,7 +203,7 @@ int main(void)
 		//----------------------------------------------------------------------------------
 		BeginDrawing();
 
-
+		rlDisableDepthTest();
 
 		// === STYLUS TEXTURE === 
 
@@ -204,10 +213,7 @@ int main(void)
 		rlDisableColorBlend();
 		rlEnableShader(stylus_shader_first_pass.id);
 
-		if (touch.x == 0 && touch.y == 0)
-		{
-		}
-		else 
+		if(touch.x != 0 && touch.y != 0)
 		{
 
 			int numberOfNodes = GetStackDepth(top.stack);
@@ -296,7 +302,12 @@ int main(void)
 
             if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
 
-            //=========================
+
+			if (touch.x != 0 && touch.y != 0)
+			{
+				DrawTexture(stylusOverlay, 0, 0, WHITE);
+			}
+			//=========================
             //timer related stuff
 
 			frame++;
@@ -312,8 +323,6 @@ int main(void)
 			//	lastTime = currTime;
 			//}
 
-
-			// Go back to the default framebuffer (0) and draw our deferred shading.
 			rlDisableFramebuffer();
 			rlClearScreenBuffers();
 

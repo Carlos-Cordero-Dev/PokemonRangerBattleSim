@@ -1,6 +1,6 @@
 #version 430
 
-layout (location = 0) out vec3 tailTexture_out;
+layout (location = 0) out vec4 tailTexture_out;
 
 // Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
@@ -99,11 +99,12 @@ void main()
 	
     vec4 texelColor = texture(tailTexture_in, vec2(x,y));
 
-	vec3 blackColor = vec3(0.0,0.0,0.0);
-	vec3 redColor = vec3(1.0,0.0,0.0);
-	vec3 purpleColor = vec3(1.0,0.0,1.0);
-	vec3 whiteColor = vec3(1.0,1.0,1.0);
-	vec3 blueColor = vec3(0.0, 0.0, 1.0);
+	vec4 blackColor = vec4(0.0,0.0,0.0,0.0);
+	vec4 whiteColor = vec4(1.0,1.0,1.0,0.0);
+
+	vec4 redColor = vec4(1.0,0.0,0.0,1.0);
+	vec4 purpleColor = vec4(1.0,0.0,1.0,1.0);
+	vec4 blueColor = vec4(0.0, 0.0, 1.0,1.0);
 
 	tailTexture_out = whiteColor;
 	
@@ -120,9 +121,9 @@ void main()
 				
 				TopPointData curr = points[i];
 				if (pointInQuad(p, curr.topLeft, curr.topRight, curr.botRight, curr.botLeft)) {
-					tailTexture_out = ComputeGradient(p,curr);
+					tailTexture_out = vec4(ComputeGradient(p,curr),1.0);
 				}
-				break; 
+				return; 
 			}
 		
             TopPointData curr = points[i];
@@ -131,7 +132,7 @@ void main()
 			// Fill the current rectangle
             if (pointInQuad(p, curr.topLeft, next.topLeft, next.botLeft, curr.botLeft)) {
 			
-                tailTexture_out = ComputeGradient(p,curr);;
+                tailTexture_out = vec4(ComputeGradient(p,curr),1.0);
             }
 			
 			if((x == curr.start.x && y == curr.start.y) || 
