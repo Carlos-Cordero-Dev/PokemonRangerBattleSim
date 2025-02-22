@@ -16,8 +16,6 @@
 #include <crtdbg.h> //memory leaks check
 #endif
 
-#define GLSL_VERSION 430
-
 #include "constants.h"
 #include "sprites.h"
 #include "timer.h"
@@ -69,14 +67,36 @@ int main(void)
 	Shader stylus_shader_first_pass = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
 
 	// ==== STYLUS SHADER ====
-	// === ssbo === 
+	
 	int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
 
 	TopPointData* topPointData = (TopPointData*)calloc(MAX_TOP_POINTS, sizeof(TopPointData));
 
-	unsigned int ssbo = rlLoadShaderBuffer(sizeof(TopPointData) * MAX_TOP_POINTS, NULL, RL_STREAM_DRAW);
+	// === ssbo === 
 
-	rlBindShaderBuffer(ssbo, 1);
+	//unsigned int ssbo = rlLoadShaderBuffer(sizeof(TopPointData) * MAX_TOP_POINTS, NULL, RL_STREAM_DRAW);
+
+	//rlBindShaderBuffer(ssbo, 1);
+
+	// === vbo ===
+
+	int a_startLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_start");
+	int a_endLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_end");
+	int a_topLeftLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_topLeft");
+	int a_topRightLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_topRight");
+	int a_botLeftLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_botLeft");
+	int a_botRightLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_botRight");
+
+	rlSetVertexAttribute(a_startLoc,2, 0x1404 /*GL_INT*/, false, 0, 0);
+	rlSetVertexAttribute(a_endLoc, 2, 0x1404 /*GL_INT*/, false, 0, 0);
+	rlSetVertexAttribute(a_topLeftLoc, 2, 0x1404 /*GL_INT*/, false, 0, 0);
+	rlSetVertexAttribute(a_topRightLoc, 2, 0x1404 /*GL_INT*/, false, 0, 0);
+	rlSetVertexAttribute(a_botLeftLoc, 2, 0x1404 /*GL_INT*/, false, 0, 0);
+	rlSetVertexAttribute(a_botRightLoc, 2, 0x1404 /*GL_INT*/, false, 0, 0);
+
+	std::vector<float> vertexData;
+	unsigned int vbo;
+	vbo = rlLoadVertexBuffer(vertexData.data(), vertexData.size() * sizeof(float), true/*false = GL_STATIC_DRAW, true = DYNAMIC*/);
 
 	// === ==== ===
 
@@ -241,8 +261,8 @@ int main(void)
 
 				PopulateTopPoints(topPointData, numberOfNodes);
 				
-				rlUpdateShaderBuffer(ssbo, topPointData, numberOfNodes * sizeof(TopPointData), 0);
-				rlBindShaderBuffer(ssbo, 1);
+				//rlUpdateShaderBuffer(ssbo, topPointData, numberOfNodes * sizeof(TopPointData), 0);
+				//rlBindShaderBuffer(ssbo, 1);
 
 				ClearPointData(topPointData, numberOfNodes);
 
