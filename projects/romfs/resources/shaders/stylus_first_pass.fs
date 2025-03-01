@@ -88,7 +88,7 @@ void main()
 	highp int x = int(gl_FragCoord.x);
 	highp int y = int(gl_FragCoord.y);
 	
-    //vec4 texelColor = texture(tailTexture_in, vec2(x,y));
+    vec4 texelColor = texture2D(topPointDataTexture, vec2(x,y));
 
 	vec4 blackColor = vec4(0.0,0.0,0.0,0.0);
 	vec4 whiteColor = vec4(1.0,1.0,1.0,0.0);
@@ -97,6 +97,6 @@ void main()
 	vec4 purpleColor = vec4(1.0,0.0,1.0,1.0);
 	vec4 blueColor = vec4(0.0, 0.0, 1.0,1.0);
 
-	gl_FragColor  = whiteColor;
+	gl_FragColor  = texelColor;
 	
 }

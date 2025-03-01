@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <cmath>
 
 #ifdef SWITCH_BUILD
 #include <switch.h>
@@ -68,42 +69,23 @@ int main(void)
 
 	// ==== STYLUS SHADER ====
 	
-	int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
-
 	TopPointData* topPointData = (TopPointData*)calloc(MAX_TOP_POINTS, sizeof(TopPointData));
+	
+	int topPointDataSqrtSize = std::ceil<int>(std::sqrt<int>(MAX_TOP_POINTS));
 
-	// === ssbo === 
+	unsigned int topPointDataTexture = rlLoadTexture(NULL, topPointDataSqrtSize, topPointDataSqrtSize, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8/*important for transparency*/, 1);
 
-	//unsigned int ssbo = rlLoadShaderBuffer(sizeof(TopPointData) * MAX_TOP_POINTS, NULL, RL_STREAM_DRAW);
+	rlEnableShader(stylus_shader_first_pass.id);
 
-	//rlBindShaderBuffer(ssbo, 1);
+		//point data texture
+		int topPointDataTextureLoc = GetShaderLocation(stylus_shader_first_pass, "topPointDataTexture");
+		int texTopPointUnit = 1;
+		SetShaderValue(stylus_shader_first_pass, topPointDataTextureLoc, &texTopPointUnit, RL_SHADER_UNIFORM_SAMPLER2D);
 
-	// === vbo ===
+		//node count
+		int nodeCountLocation = GetShaderLocation(stylus_shader_first_pass, "node_count");
 
-	int a_startLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_start");
-	int a_endLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_end");
-	int a_topLeftLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_topLeft");
-	int a_topRightLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_topRight");
-	int a_botLeftLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_botLeft");
-	int a_botRightLoc = rlGetLocationAttrib(stylus_shader_first_pass.id, "a_botRight");
-
-	rlSetVertexAttribute(a_startLoc,2, 0x1404 /*GL_INT*/, false, 0, 0);
-	rlSetVertexAttribute(a_endLoc, 2, 0x1404 /*GL_INT*/, false, 0, 0);
-	rlSetVertexAttribute(a_topLeftLoc, 2, 0x1404 /*GL_INT*/, false, 0, 0);
-	rlSetVertexAttribute(a_topRightLoc, 2, 0x1404 /*GL_INT*/, false, 0, 0);
-	rlSetVertexAttribute(a_botLeftLoc, 2, 0x1404 /*GL_INT*/, false, 0, 0);
-	rlSetVertexAttribute(a_botRightLoc, 2, 0x1404 /*GL_INT*/, false, 0, 0);
-
-	std::vector<float> vertexData;
-	unsigned int vbo;
-	vbo = rlLoadVertexBuffer(vertexData.data(), vertexData.size() * sizeof(float), true/*false = GL_STATIC_DRAW, true = DYNAMIC*/);
-
-	// === ==== ===
-
-	int nodeCountLocation = GetShaderLocation(stylus_shader_first_pass, "node_count");
-
-	int stylusTexUnitPosition = 0;
-	SetShaderValue(stylus_shader_first_pass, stylusTexLocation, &stylusTexUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
+	rlDisableShader();
 
 	// ========== END OF STYLUS SHADER==================
 
@@ -119,6 +101,7 @@ int main(void)
     rlActiveDrawBuffers(2);
 	rlFramebufferAttach(main_framebuffer, main_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
 	rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+	//rlFramebufferAttach(stylus_framebuffer, topPointDataTexture, RL_ATTACHMENT_COLOR_CHANNEL1, RL_ATTACHMENT_TEXTURE2D, 0);
 
 	//texture of stylus shader in Texture2D version to be able to do DrawTexture
 	Texture2D stylusOverlay;
@@ -264,6 +247,9 @@ int main(void)
 				//rlUpdateShaderBuffer(ssbo, topPointData, numberOfNodes * sizeof(TopPointData), 0);
 				//rlBindShaderBuffer(ssbo, 1);
 
+				UpdateTexture(topPointDataTexture, topPointDataSqrtSize, topPointData, numberOfNodes);
+				//SetShaderValue(stylus_shader_first_pass, topPointDataTextureLoc,&topPointDataTexture , SHADER_UNIFORM_SAMPLER2D);
+
 				ClearPointData(topPointData, numberOfNodes);
 
 			}
@@ -276,9 +262,11 @@ int main(void)
 
 			//
 
-			rlActiveTextureSlot(stylusTexUnitPosition);
+			rlActiveTextureSlot(0);
 			rlEnableTexture(stylus_texture);
 
+			rlActiveTextureSlot(texTopPointUnit);
+			rlEnableTexture(topPointDataTexture);
 			//
 
 			//rlActiveTextureSlot(texUnitPosition);
