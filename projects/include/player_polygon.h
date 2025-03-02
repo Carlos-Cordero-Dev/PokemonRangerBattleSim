@@ -29,6 +29,6 @@ void PopulateTopPoints(TopPointData* topPointData, int numberOfPoints);
 void ClearPointData(TopPointData* topPointData, int numberOfPoints);
 
 void UpdateTexture(int textureId, int sideSize, TopPointData* data, int currentPoints);
-inline void PackIntToRGBA8(int value, unsigned char* rawTexData, int startIndex);
+inline void PackVec2ToRGBA8(const int vec2[2], unsigned char* rawTexData, int startIndex);
 
 #endif

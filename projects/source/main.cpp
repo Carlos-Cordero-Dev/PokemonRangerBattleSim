@@ -71,9 +71,9 @@ int main(void)
 	
 	TopPointData* topPointData = (TopPointData*)calloc(MAX_TOP_POINTS, sizeof(TopPointData));
 	
-	int topPointDataSqrtSize = std::ceil<int>(std::sqrt<int>(MAX_TOP_POINTS));
+	int topPointDataSize = MAX_TOP_POINTS * 6/*because each texels contais info of one vec2, so 6 for the TopPointData struct*/;
 
-	unsigned int topPointDataTexture = rlLoadTexture(NULL, topPointDataSqrtSize, topPointDataSqrtSize, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8/*important for transparency*/, 1);
+	unsigned int topPointDataTexture = rlLoadTexture(NULL, topPointDataSize, 1, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8/*important for transparency*/, 1);
 
 	rlEnableShader(stylus_shader_first_pass.id);
 
@@ -84,6 +84,9 @@ int main(void)
 
 		//node count
 		int nodeCountLocation = GetShaderLocation(stylus_shader_first_pass, "node_count");
+		//texture width (should be a constant in the shader but oh well)
+		int textureWidthLocation = GetShaderLocation(stylus_shader_first_pass, "textureWidth");
+		SetShaderValue(stylus_shader_first_pass, textureWidthLocation, &topPointDataSize, SHADER_UNIFORM_INT);
 
 	rlDisableShader();
 
@@ -247,7 +250,7 @@ int main(void)
 				//rlUpdateShaderBuffer(ssbo, topPointData, numberOfNodes * sizeof(TopPointData), 0);
 				//rlBindShaderBuffer(ssbo, 1);
 
-				UpdateTexture(topPointDataTexture, topPointDataSqrtSize, topPointData, numberOfNodes);
+				UpdateTexture(topPointDataTexture, topPointDataSize, topPointData, numberOfNodes);
 				//SetShaderValue(stylus_shader_first_pass, topPointDataTextureLoc,&topPointDataTexture , SHADER_UNIFORM_SAMPLER2D);
 
 				ClearPointData(topPointData, numberOfNodes);

@@ -131,10 +131,10 @@ void UpdateTexture(int textureId, int sideSize,TopPointData* data,int currentPoi
 	
 	int numPoints = currentPoints;
 
-	static unsigned char* rawTextureData = (unsigned char*)calloc(MAX_TOP_POINTS * 4 /* 4 bytes casue (RGBA8)*/,sizeof(unsigned char));
+	static unsigned char* rawTextureData = (unsigned char*)calloc(MAX_TOP_POINTS * 6* 4 /* 4 bytes casue (RGBA8)*/,sizeof(unsigned char));
 
 	// Clear texture data
-	memset(rawTextureData, 0, sizeof(char) * currentPoints * 4);
+	memset(rawTextureData, 0, sizeof(char) * currentPoints * 6 * 4);
 
 	// Pack the data into the texture data vector
 	for (int i = 0; i < numPoints; ++i) {
@@ -143,29 +143,23 @@ void UpdateTexture(int textureId, int sideSize,TopPointData* data,int currentPoi
 		// Calculate the starting index in the texture data
 		int startIndex = i * 6 * 4; // 6 ints per TopPointData, 4 bytes per int
 
-		// Pack each int into 4 bytes (RGBA8)
-		PackIntToRGBA8(pointData.start[0], rawTextureData, startIndex);
-		PackIntToRGBA8(pointData.start[1], rawTextureData, startIndex + 4);
-		PackIntToRGBA8(pointData.end[0], rawTextureData, startIndex + 8);
-		PackIntToRGBA8(pointData.end[1], rawTextureData, startIndex + 12);
-		PackIntToRGBA8(pointData.topLeft[0], rawTextureData, startIndex + 16);
-		PackIntToRGBA8(pointData.topLeft[1], rawTextureData, startIndex + 20);
-		PackIntToRGBA8(pointData.topRight[0], rawTextureData, startIndex + 24);
-		PackIntToRGBA8(pointData.topRight[1], rawTextureData, startIndex + 28);
-		PackIntToRGBA8(pointData.botLeft[0], rawTextureData, startIndex + 32);
-		PackIntToRGBA8(pointData.botLeft[1], rawTextureData, startIndex + 36);
-		PackIntToRGBA8(pointData.botRight[0], rawTextureData, startIndex + 40);
-		PackIntToRGBA8(pointData.botRight[1], rawTextureData, startIndex + 44);
+		// Pack a vec2 per texel, rn R and G are (x,y), B A are empty
+		PackVec2ToRGBA8(pointData.start, rawTextureData, startIndex);
+		PackVec2ToRGBA8(pointData.end, rawTextureData, startIndex + 4);
+		PackVec2ToRGBA8(pointData.topLeft, rawTextureData, startIndex + 8);
+		PackVec2ToRGBA8(pointData.topRight, rawTextureData, startIndex + 12);
+		PackVec2ToRGBA8(pointData.botLeft, rawTextureData, startIndex + 16);
+		PackVec2ToRGBA8(pointData.botRight, rawTextureData, startIndex + 20);
 	}
 
 	// Update the texture
-	rlUpdateTexture(textureId, 0,0, sideSize, sideSize, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, rawTextureData);
+	rlUpdateTexture(textureId, 0, 0, sideSize, 1, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, rawTextureData);
 }
 
-// Helper function to pack an int into 4 bytes (RGBA8)
-inline void PackIntToRGBA8(int value, unsigned char* rawTexData, int startIndex) {
-	rawTexData[startIndex] = (value >> 0) & 0xFF;
-	rawTexData[startIndex + 1] = (value >> 8) & 0xFF;
-	rawTexData[startIndex + 2] = (value >> 16) & 0xFF;
-	rawTexData[startIndex + 3] = (value >> 24) & 0xFF;
+// Helper function to pack two ints into a single RGBA8 texel
+inline void PackVec2ToRGBA8(const int vec2[2], unsigned char* rawTexData, int startIndex) {
+	rawTexData[startIndex] = (vec2[0] >> 0) & 0xFF; // Lower byte of X
+	rawTexData[startIndex + 1] = (vec2[1] >> 0) & 0xFF;// Lower byte of Y
+	rawTexData[startIndex + 2] = (vec2[0] >> 8) & 0xFF; // Higher byte of X
+	rawTexData[startIndex + 3] = (vec2[1] >> 8) & 0xFF;// Higher byte of Y
 }

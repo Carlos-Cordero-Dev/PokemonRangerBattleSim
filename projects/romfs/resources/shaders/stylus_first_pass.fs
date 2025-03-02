@@ -1,22 +1,20 @@
 #version 100 //(version used for openglES2)
+
 precision mediump float;
 
 
-//struct TopPointData {
-//    ivec2 start;
-//    ivec2 end;
-//    ivec2 topLeft;
-//    ivec2 topRight;
-//    ivec2 botLeft;
-//    ivec2 botRight;
-//};
-
-//layout(std430, binding = 1) buffer PointBuffer {
-//    TopPointData points[];
-//};
+struct TopPointData {
+    ivec2 start;
+    ivec2 end;
+    ivec2 topLeft;
+    ivec2 topRight;
+    ivec2 botLeft;
+    ivec2 botRight;
+};
 
 // Input uniform values
 uniform sampler2D topPointDataTexture;
+uniform int textureWidth; 
 uniform int node_count; 
 
 //min and max dont work with ints in openglES2, so custom min and max
@@ -80,6 +78,54 @@ float pointToSegmentDist(vec2 p, vec2 a, vec2 b) {
     return length(p - closestPoint);
 }
 
+vec3 ComputeGradient(ivec2 p, TopPointData curr)
+{
+	// Compute distance from the current segment
+	float distToSegment = pointToSegmentDist(vec2(p), vec2(curr.start), vec2(curr.end));
+
+	// Define max distance for gradient effect
+	float maxDist = distance(vec2(curr.topLeft), vec2(curr.botLeft));  // Approximate segment width
+
+	// Compute gradient factor (0 = white, 1 = blue)
+	float gradientFactor = clamp(distToSegment / maxDist, 0.0, 1.0);
+
+	// Interpolate color from white (center) to blue (edges)
+	return mix(vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 1.0), gradientFactor);
+}
+
+ivec2 UnpackRGBA8ToIvec2(vec4 rgba) {
+    int x = int(rgba.r * 255.0) + int(rgba.b * 255.0) * 256;
+    int y = int(rgba.g * 255.0) + int(rgba.a * 255.0) * 256;
+    return ivec2(x, y);
+}
+
+ivec2 GetIvec2FromTexture(int index) {
+    float texelX = float(index) / float(textureWidth);
+    vec4 texel = texture2D(topPointDataTexture, vec2(texelX, 0.0));
+    return UnpackRGBA8ToIvec2(texel);
+}
+
+TopPointData GetTopPointDataFromTexture(int index) {
+    TopPointData pointData;
+    
+    int baseIndex = index * 6; // 6 texels per TopPointData
+
+    pointData.start    = GetIvec2FromTexture(baseIndex);
+    pointData.end      = GetIvec2FromTexture(baseIndex + 1);
+    pointData.topLeft  = GetIvec2FromTexture(baseIndex + 2);
+    pointData.topRight = GetIvec2FromTexture(baseIndex + 3);
+    pointData.botLeft  = GetIvec2FromTexture(baseIndex + 4);
+    pointData.botRight = GetIvec2FromTexture(baseIndex + 5);
+
+    return pointData;
+}
+
+
+vec4 blackColor = vec4(0.0,0.0,0.0,0.0);
+vec4 whiteColor = vec4(1.0,1.0,1.0,0.0);
+vec4 redColor = vec4(1.0,0.0,0.0,1.0);
+vec4 purpleColor = vec4(1.0,0.0,1.0,1.0);
+vec4 blueColor = vec4(0.0, 0.0, 1.0,1.0);
 
 void main()
 {
@@ -88,15 +134,82 @@ void main()
 	highp int x = int(gl_FragCoord.x);
 	highp int y = int(gl_FragCoord.y);
 	
-    vec4 texelColor = texture2D(topPointDataTexture, vec2(x,y));
+    //vec4 texelColor = texture2D(topPointDataTexture, vec2(x,y));
 
-	vec4 blackColor = vec4(0.0,0.0,0.0,0.0);
-	vec4 whiteColor = vec4(1.0,1.0,1.0,0.0);
+	ivec2 p = ivec2(x,y);
 
-	vec4 redColor = vec4(1.0,0.0,0.0,1.0);
-	vec4 purpleColor = vec4(1.0,0.0,1.0,1.0);
-	vec4 blueColor = vec4(0.0, 0.0, 1.0,1.0);
+	gl_FragColor  =  whiteColor;
 
-	gl_FragColor  = texelColor;
-	
+	if(node_count > 1)
+	{
+		//for loop broken down into while to create a pseudo early return with a bool
+		int i = 0;
+		bool colorChosen = false;
+		
+		while (!colorChosen && i < node_count - 2) 
+		{	
+			TopPointData curr = GetTopPointDataFromTexture(i);		
+			TopPointData next = GetTopPointDataFromTexture(i + 1);
+			
+			// Fill the current rectangle
+            if (pointInQuad(p, curr.topLeft, next.topLeft, next.botLeft, curr.botLeft)) {
+			
+				if(!colorChosen) 
+				{
+					gl_FragColor = vec4(ComputeGradient(p,curr),1.0);
+					colorChosen = true;
+				}
+            }
+			
+			if (i == node_count - 2) 
+			{
+		
+				// edge case for last segment
+				
+				if (pointInQuad(p, curr.topLeft, curr.topRight, curr.botRight, curr.botLeft)) {
+					if(!colorChosen) 
+					{
+						gl_FragColor = vec4(ComputeGradient(p,curr),1.0);
+						colorChosen = true;
+					}
+				}
+			}
+			
+			
+			
+			if((x == curr.start.x && y == curr.start.y) || 
+			   (x == curr.end.x && y == curr.end.y))
+			{
+				//color start and end purple
+				if(!colorChosen) 
+				{
+					gl_FragColor = purpleColor;
+					colorChosen = true;
+				}
+			}
+			else 
+			{
+				//color corners red
+				
+				ivec2 pointsArray[4];
+				
+				pointsArray[0] = curr.topLeft;
+				pointsArray[1] = curr.topRight;
+				pointsArray[2] = curr.botLeft;
+				pointsArray[3] = curr.botRight;
+				
+				for (int j = 0; j < 4; j++) {
+					if (x == pointsArray[j].x && y == pointsArray[j].y) {
+						if(!colorChosen) 
+						{
+							gl_FragColor = redColor;
+							colorChosen = true;
+						}
+					}
+				}
+			}
+			
+			i++;
+		}
+	}
 }
