@@ -126,6 +126,14 @@ void ClearPointData(TopPointData* topPointData, int numberOfPoints)
 
 #include <cstring> //memset
 
+int UnpackRGBA8X(const unsigned char* rgba) {
+	int x = rgba[0] + rgba[2] * 256;
+	return x;
+}
+int UnpackRGBA8Y(const unsigned char* rgba) {
+	int y = rgba[1] + rgba[3] * 256;
+	return y;
+}
 // Update the texture each frame :
 void UpdateTexture(int textureId, int sideSize,TopPointData* data,int currentPoints) {
 	
@@ -154,6 +162,22 @@ void UpdateTexture(int textureId, int sideSize,TopPointData* data,int currentPoi
 
 	// Update the texture
 	rlUpdateTexture(textureId, 0, 0, sideSize, 1, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, rawTextureData);
+
+	//unsigned char* readbackData = new unsigned char[currentPoints * 6 * 4];
+	//readbackData = (unsigned char*)rlReadTexturePixels(textureId, sideSize, 1, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+
+	//// Assuming you're testing with the first TopPointData (index 0)
+	//int baseIndex = 0 * 6 * 4; // 6 ivec2s per TopPointData, 4 bytes per ivec2
+
+	//// Unpack end
+	//int unpackedEndX = UnpackRGBA8X(&readbackData[baseIndex + (1 * 4)]);
+	//int unpackedEndY = UnpackRGBA8Y(&readbackData[baseIndex + (1 * 4)]);
+
+	//int unpackedBotLeftX = UnpackRGBA8X(&readbackData[baseIndex + (4 * 4)]);
+	//int unpackedBotLeftY = UnpackRGBA8Y(&readbackData[baseIndex + (4 * 4)]);
+
+	//printf("end %d %d ", unpackedEndX, unpackedEndY);
+	//printf("botleft %d %d\n", unpackedBotLeftX, unpackedBotLeftY);
 }
 
 // Helper function to pack two ints into a single RGBA8 texel

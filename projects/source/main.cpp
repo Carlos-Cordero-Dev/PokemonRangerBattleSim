@@ -292,7 +292,7 @@ int main(void)
 
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
             
-            DrawCurrentPolygonOnlyLines(top.stack);
+            //DrawCurrentPolygonOnlyLines(top.stack);
 
             //===============
 

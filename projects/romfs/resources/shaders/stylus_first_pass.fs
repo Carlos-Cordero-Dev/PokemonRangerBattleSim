@@ -20,11 +20,11 @@ uniform int node_count;
 //min and max dont work with ints in openglES2, so custom min and max
 
 int imin(int a, int b) {
-    return (a < b) ? a : b;
+    return (a <= b) ? a : b;
 }
 
 int imax(int a, int b) {
-    return (a > b) ? a : b;
+    return (a >= b) ? a : b;
 }
 
 bool pointInTriangle(ivec2 p, ivec2 v0, ivec2 v1, ivec2 v2) 
@@ -140,6 +140,7 @@ void main()
 
 	gl_FragColor  =  whiteColor;
 
+	bool colorFound = false;
 	if(node_count > 1)
 	{
 		for (int i = 0; i < node_count - 1; i++) 
@@ -147,29 +148,25 @@ void main()
 			TopPointData curr = GetTopPointDataFromTexture(i);		
 			TopPointData next = GetTopPointDataFromTexture(i + 1);
 
-			if((x == curr.start.x && y == curr.start.y) || 
-			   (x == curr.end.x && y == curr.end.y))
-			{
-				//color start and end purple
-				gl_FragColor = purpleColor;
-			}
-			else 
-			{
-				//color corners red
-				
-				ivec2 pointsArray[4];
-				
-				pointsArray[0] = curr.topLeft;
-				pointsArray[1] = curr.topRight;
-				pointsArray[2] = curr.botLeft;
-				pointsArray[3] = curr.botRight;
-				
-				for (int j = 0; j < 4; j++) {
-					if (x == pointsArray[j].x && y == pointsArray[j].y) {
-						gl_FragColor = redColor;
-					}
-				}
-			}
+            if (pointInQuad(p, curr.topLeft, next.topLeft, next.botLeft, curr.botLeft)) {
+                //gl_FragColor = vec4(ComputeGradient(p, curr), 1.0);
+            }
+
+			
+			if (!colorFound && x == curr.start.x && y == curr.start.y) {
+                //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); colorFound = true; // Red for start
+            } else if (!colorFound &&x == curr.end.x && y == curr.end.y) {
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);colorFound = true; // Green for end
+            } 
+			else if (!colorFound &&x == curr.topLeft.x && y == curr.topLeft.y) {
+                //gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);colorFound = true; // BLACK for topLeft
+            } else if (!colorFound &&x == curr.topRight.x && y == curr.topRight.y) {
+                //gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); colorFound = true;// RED for topRight
+            } else if (!colorFound &&x == curr.botLeft.x && y == curr.botLeft.y) {
+                //gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); colorFound = true;// GREEN for botLeft
+            } else if (!colorFound &&x == curr.botRight.x && y == curr.botRight.y) {
+                //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); colorFound = true;// RED for botRight
+            }
 			
 		}
 	}
