@@ -37,7 +37,8 @@ struct Top
 void InsertTopCoord(Top* top, int x, int y)
 {
 	//dont insert duplicated coords if they user is holding stylus in place
-	if (top->stack && (top->stack->x == x && top->stack->y == y))
+	if (top->stack && Vector2Distance({ (float)top->stack->x, (float)top->stack->y }, { (float)x,(float)y}) < 0.1f
+		&& (top->stack->x == x && top->stack->y == y))
 	{
 		//printf("skiped exsisting %d %d\n", x, y);
 		return;
