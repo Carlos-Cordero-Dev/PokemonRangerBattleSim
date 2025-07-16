@@ -1,4 +1,4 @@
-#version 430
+#version 420
 
 layout (location = 0) out vec4 tailTexture_out;
 
@@ -16,8 +16,10 @@ struct TopPointData {
     ivec2 botRight;
 };
 
-layout(std430, binding = 1) buffer PointBuffer {
-    TopPointData points[];
+const int KMAX_POINTS = 512;
+
+layout(std140, binding = 1) uniform PointBuffer {
+    TopPointData points[KMAX_POINTS];
 };
 
 // Input uniform values

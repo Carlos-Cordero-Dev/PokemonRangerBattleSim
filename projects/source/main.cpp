@@ -6,7 +6,9 @@
 #endif
 
 #include "raylib.h"
+//#define GRAPHICS_API_OPENGL_33
 #include "rlgl.h" //rlFramebuffer
+#include "glad.h" //glBindBuffer
 
 #define RAYGUI_IMPLEMENTATION
 #ifdef SWITCH_BUILD 
@@ -16,7 +18,7 @@
 #include <crtdbg.h> //memory leaks check
 #endif
 
-#define GLSL_VERSION 430
+//#define GLSL_VERSION 430
 
 #include "constants.h"
 #include "sprites.h"
@@ -70,13 +72,24 @@ int main(void)
 
 	// ==== STYLUS SHADER ====
 	// === ssbo === 
+	//int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
+
+	//TopPointData* topPointData = (TopPointData*)calloc(MAX_TOP_POINTS, sizeof(TopPointData));
+
+	//unsigned int ssbo = rlLoadShaderBuffer(sizeof(TopPointData) * MAX_TOP_POINTS, NULL, RL_STREAM_DRAW);
+
+	//rlBindShaderBuffer(ssbo, 1);
+
+	// === ubo ===
 	int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
 
 	TopPointData* topPointData = (TopPointData*)calloc(MAX_TOP_POINTS, sizeof(TopPointData));
 
-	unsigned int ssbo = rlLoadShaderBuffer(sizeof(TopPointData) * MAX_TOP_POINTS, NULL, RL_STREAM_DRAW);
-
-	rlBindShaderBuffer(ssbo, 1);
+	unsigned int ubo = 0;
+	glGenBuffers(1, &ubo);
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(TopPointData) * MAX_TOP_POINTS, topPointData, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	// === ==== ===
 
@@ -241,8 +254,17 @@ int main(void)
 
 				PopulateTopPoints(topPointData, numberOfNodes);
 				
-				rlUpdateShaderBuffer(ssbo, topPointData, numberOfNodes * sizeof(TopPointData), 0);
-				rlBindShaderBuffer(ssbo, 1);
+				//update ssbo
+				
+				//rlUpdateShaderBuffer(ssbo, topPointData, numberOfNodes * sizeof(TopPointData), 0);
+				//rlBindShaderBuffer(ssbo, 1);
+
+				//update ubo
+
+				glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+				glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(TopPointData) * numberOfNodes, topPointData);
+				glBindBuffer(GL_UNIFORM_BUFFER, 0);
+				glBindBufferBase(GL_UNIFORM_BUFFER, 1, ubo);
 
 				ClearPointData(topPointData, numberOfNodes);
 
