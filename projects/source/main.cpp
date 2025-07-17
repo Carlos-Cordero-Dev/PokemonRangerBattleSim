@@ -6,9 +6,10 @@
 #endif
 
 #include "raylib.h"
-//#define GRAPHICS_API_OPENGL_33
+#define GRAPHICS_API_OPENGL_42
 #include "rlgl.h" //rlFramebuffer
-#include "glad.h" //glBindBuffer
+//#include "glad.h" //glBindBuffer
+#include <glad.h>
 
 #define RAYGUI_IMPLEMENTATION
 #ifdef SWITCH_BUILD 
@@ -18,7 +19,7 @@
 #include <crtdbg.h> //memory leaks check
 #endif
 
-//#define GLSL_VERSION 430
+#define GLSL_VERSION 420
 
 #include "constants.h"
 #include "sprites.h"

@@ -65,7 +65,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lraylib -lEGL -lGLESv2 -lglapi -ldrm_nouveau -lnx -lm
+LIBS	:= -lraylib -lEGL -lGLESv2 -lglad -lglapi -ldrm_nouveau -lnx -lm 
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -104,11 +104,11 @@ export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 export OFILES 	:=	$(OFILES_BIN) $(OFILES_SRC)
 export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
 
-export INCLUDE	:=	-I$(RAYLIB_NX)/src -I$(RAYLIB_NX)/src/switch-nx $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
+export INCLUDE	:=	-I$(RAYLIB_NX)/src_nx -I$(RAYLIB_NX)/src_nx/external -I$(RAYLIB_NX)/src_nx/switch-nx $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 			-I$(CURDIR)/$(BUILD)
 
-export LIBPATHS	:=	-L$(RAYLIB_NX)/src -L$(RAYLIB_NX)/src/switch-nx $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+export LIBPATHS	:=	-L$(RAYLIB_NX)/src_nx -L$(RAYLIB_NX)/src_nx/external -L$(RAYLIB_NX)/src_nx/switch-nx $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 ifeq ($(strip $(CONFIG_JSON)),)
 	jsons := $(wildcard *.json)

@@ -16,7 +16,6 @@ project "MyProject"
 
     -- Include directories
     includedirs {
-        "../src",                -- raylib headers
         "include",                -- project headers
     }
 
@@ -31,11 +30,13 @@ project "MyProject"
 		cleancommands { "make clean" }
 
 		libdirs { 
-			"../src",                -- nx raylib libs (.a)
+			"../src_nx",                -- nx raylib libs (.a)
 		}
 
 		links { "raylib" }
 	    includedirs {
+			"../src_nx", 
+			"../src_nx/external", 
 			"D:/DevkitPro/libnx/include", --libnx headers
 		}
 		-- Custom debug command
