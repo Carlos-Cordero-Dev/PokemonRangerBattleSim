@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <string> //memset
 
 #include "raylib.h"
 
@@ -117,8 +118,11 @@ void PopulateTopPoints(TopPointData* topPointData, int numberOfPoints)
 
 void ClearPointData(TopPointData* topPointData, int numberOfPoints)
 {
-	for (int i = 0; i < numberOfPoints; i++)
-	{
-		topPointData[i] = { {0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
-	}
+	//maybe a memeset is better?
+	memset(topPointData, 0, sizeof(TopPointData) * numberOfPoints);
+	 
+	//for (int i = 0; i < numberOfPoints; i++)
+	//{
+	//	topPointData[i] = { {0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
+	//}
 }

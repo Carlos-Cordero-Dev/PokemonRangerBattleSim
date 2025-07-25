@@ -92,6 +92,12 @@ vec3 ComputeGradient(ivec2 p, TopPointData curr)
 	return mix(vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 1.0), gradientFactor);
 }
 
+const vec4 blackColor = vec4(0.0,0.0,0.0,0.0);
+const vec4 whiteColor = vec4(1.0,1.0,1.0,0.0);
+const vec4 redColor = vec4(1.0,0.0,0.0,1.0);
+const vec4 purpleColor = vec4(1.0,0.0,1.0,1.0);
+const vec4 blueColor = vec4(0.0, 0.0, 1.0,1.0);
+
 void main()
 {
     // Texel color fetching from texture sampler
@@ -99,14 +105,7 @@ void main()
 	highp int x = int(gl_FragCoord.x);
 	highp int y = int(gl_FragCoord.y);
 	
-    vec4 texelColor = texture(tailTexture_in, vec2(x,y));
-
-	vec4 blackColor = vec4(0.0,0.0,0.0,0.0);
-	vec4 whiteColor = vec4(1.0,1.0,1.0,0.0);
-
-	vec4 redColor = vec4(1.0,0.0,0.0,1.0);
-	vec4 purpleColor = vec4(1.0,0.0,1.0,1.0);
-	vec4 blueColor = vec4(0.0, 0.0, 1.0,1.0);
+    //vec4 texelColor = texture(tailTexture_in, vec2(x,y));
 
 	tailTexture_out = whiteColor;
 	

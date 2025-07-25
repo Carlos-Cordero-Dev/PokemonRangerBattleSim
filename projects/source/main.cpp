@@ -22,6 +22,7 @@
 #define GLSL_VERSION 420
 
 #include "constants.h"
+#include "geometry_shader_support.h"
 #include "sprites.h"
 #include "timer.h"
 #include "controls.h"
@@ -71,6 +72,17 @@ int main(void)
 	std::string absolute_shader_path = RESOURCES_FOLDER + shader_path;
 	Shader stylus_shader_first_pass = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
 
+
+	shader_path = "shaders/myvertex.vs";
+	std::string vsCode = LoadFileTextToStr(RESOURCES_FOLDER + shader_path);
+	shader_path = "shaders/mygeometry.gs";
+	std::string gsCode = LoadFileTextToStr(RESOURCES_FOLDER + shader_path);
+	shader_path = "shaders/myfragment.fs";
+	std::string fsCode = LoadFileTextToStr(RESOURCES_FOLDER + shader_path);
+
+	Shader stylus_geometry_shader = MyLoadShaderFromMemory(vsCode.c_str(),gsCode.c_str(),fsCode.c_str());
+
+
 	// ==== STYLUS SHADER ====
 	// === ssbo === 
 	//int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
@@ -91,6 +103,31 @@ int main(void)
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(TopPointData) * MAX_TOP_POINTS, topPointData, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	// === VBO for Node Indices ===
+	unsigned int VBO_node_indices = 0;
+
+	// This VBO will hold integer indices (0, 1, 2, ...) to pass to the Vertex Shader,
+	// which then passes them to the Geometry Shader.
+	glGenBuffers(1, &VBO_node_indices);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_node_indices);
+	// Allocate space, but don't fill yet. Max possible indices is KMAX_POINTS-1.
+	glBufferData(GL_ARRAY_BUFFER, sizeof(int) * MAX_TOP_POINTS, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind VBO
+
+	// Prepare an array of node indices (0, 1, 2, ...)
+	int* node_indices_data = (int*)calloc(MAX_TOP_POINTS, sizeof(int));
+	for (int i = 0; i < MAX_TOP_POINTS; ++i) {
+		node_indices_data[i] = i;
+	}
+
+	// === ==== ==
+
+	int inNodeIndexLoc = GetShaderLocationAttrib(stylus_geometry_shader, "in_node_index"); // Get attribute location
+
+	int screenResolutionLocation = GetShaderLocation(stylus_geometry_shader, "screenResolution");
+
+
 
 	// === ==== ===
 
@@ -161,15 +198,15 @@ int main(void)
     loadTexturesFromFolder("sprites/garchomp/attack", garchompAnims, 4, 6, "garchomp_attack");
     texture = garchompAnims[0]->textures[0].texture;
     printf("\ndamnson2=================================\n");
-    //---------------------------------------------------------------------------------------
-    // Main game loop
+	//---------------------------------------------------------------------------------------
+	// Main game loop
 
-    std::string text = "Frame ";
-    SetTargetFPS(60);
+	std::string text = "Frame ";
+	SetTargetFPS(60);
 
-    Top top;
-    int frame = 0;
-    double currTime = 0.0;
+	Top top;
+	int frame = 0;
+	double currTime = 0.0;
 	double lastTime = 0;
 
 	while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -227,7 +264,7 @@ int main(void)
 		rlDisableColorBlend();
 		rlEnableShader(stylus_shader_first_pass.id);
 
-		if(touch.x != 0 && touch.y != 0)
+		if (touch.x != 0 && touch.y != 0)
 		{
 
 			int numberOfNodes = GetStackDepth(top.stack);
@@ -254,9 +291,9 @@ int main(void)
 				}
 
 				PopulateTopPoints(topPointData, numberOfNodes);
-				
+
 				//update ssbo
-				
+
 				//rlUpdateShaderBuffer(ssbo, topPointData, numberOfNodes * sizeof(TopPointData), 0);
 				//rlBindShaderBuffer(ssbo, 1);
 
@@ -277,95 +314,95 @@ int main(void)
 
 		BeginShaderMode(stylus_shader_first_pass);
 
-			//
+		//
 
-			rlActiveTextureSlot(stylusTexUnitPosition);
-			rlEnableTexture(stylus_texture);
+		rlActiveTextureSlot(stylusTexUnitPosition);
+		rlEnableTexture(stylus_texture);
 
-			//
+		//
 
-			//rlActiveTextureSlot(texUnitPosition);
-			//rlEnableTexture(gBuffer.positionTexture);
-			DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
-			//rlLoadDrawQuad();
-
-
-			EndShaderMode();
-
-			rlEnableColorBlend();
-
-			rlDisableFramebuffer();
-
-			// =======================
-
-			// === MAIN TEXTURE ===
-
-			rlEnableFramebuffer(main_framebuffer);
-
-            ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-            
-            DrawCurrentPolygonOnlyLines(top.stack);
-
-            //===============
-
-            //DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
-            garchompAnim0->Draw(screenWidth / 2 - texture.width / 2, screenHeight / 2 - texture.height / 2);
-            garchompAnim0->advanceFrame(frame);
+		//rlActiveTextureSlot(texUnitPosition);
+		//rlEnableTexture(gBuffer.positionTexture);
+		DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+		//rlLoadDrawQuad();
 
 
-            //======================
+		EndShaderMode();
 
-			DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
-			DrawText(("touch " + std::to_string(touch.x) + " " +std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
-            DrawText((text + std::to_string(frame)).c_str() , 360, 370, 40, GRAY);
-			DrawText(("Time " + std::to_string(currTime) + " deltaTime " + std::to_string(GetFrameTime())).c_str(),
-                360, 230, 40, GRAY);
+		rlEnableColorBlend();
 
-            //========== 
+		rlDisableFramebuffer();
 
-            if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
+		// =======================
+
+		// === MAIN TEXTURE ===
+
+		rlEnableFramebuffer(main_framebuffer);
+
+		ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+
+		DrawCurrentPolygonOnlyLines(top.stack);
+
+		//===============
+
+		//DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
+		garchompAnim0->Draw(screenWidth / 2 - texture.width / 2, screenHeight / 2 - texture.height / 2);
+		garchompAnim0->advanceFrame(frame);
 
 
-			if (touch.x != 0 && touch.y != 0)
-			{
-				DrawTexture(stylusOverlay, 0, 0, WHITE);
-			}
-			//=========================
-            //timer related stuff
+		//======================
 
-			frame++;
-            currTime += GetFrameTime();
-			
-   //         if (currTime > lastTime + 0.017) {
+		DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
+		DrawText(("touch " + std::to_string(touch.x) + " " + std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
+		DrawText((text + std::to_string(frame)).c_str(), 360, 370, 40, GRAY);
+		DrawText(("Time " + std::to_string(currTime) + " deltaTime " + std::to_string(GetFrameTime())).c_str(),
+			360, 230, 40, GRAY);
 
-			//	Coord* lastCoord = ExtractFIFO(&stack);
-			//	if (lastCoord != nullptr)
-			//	{
-			//		free(lastCoord); lastCoord = nullptr;
-			//	}
-			//	lastTime = currTime;
-			//}
+		//========== 
 
-			rlDisableFramebuffer();
-			rlClearScreenBuffers();
+		if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
+
+
+		if (touch.x != 0 && touch.y != 0)
+		{
+			DrawTexture(stylusOverlay, 0, 0, WHITE);
+		}
+		//=========================
+		//timer related stuff
+
+		frame++;
+		currTime += GetFrameTime();
+
+		//         if (currTime > lastTime + 0.017) {
+
+				 //	Coord* lastCoord = ExtractFIFO(&stack);
+				 //	if (lastCoord != nullptr)
+				 //	{
+				 //		free(lastCoord); lastCoord = nullptr;
+				 //	}
+				 //	lastTime = currTime;
+				 //}
+
+		rlDisableFramebuffer();
+		rlClearScreenBuffers();
 
 		EndDrawing();
 
 
-        //----------------------------------------------------------------------------------
+		//----------------------------------------------------------------------------------
 		//wait or end of frame
 		//timer.FrameSleep();
-    }
+	}
 
 	ResetTop(&top);
 
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-    UnloadShader(stylus_shader_first_pass);
-    UnloadTexture(texture);       // Texture unloading
+	// De-Initialization
+	//--------------------------------------------------------------------------------------
+	UnloadShader(stylus_shader_first_pass);
+	UnloadTexture(texture);       // Texture unloading
 
-    CloseWindow();                // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
+	CloseWindow();                // Close window and OpenGL context
+	//--------------------------------------------------------------------------------------
 
     return 0;
 }
