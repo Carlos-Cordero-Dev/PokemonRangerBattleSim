@@ -89,5 +89,13 @@ void main() {
     gl_Position = pixelToClip(vec2(curr.botLeft), screenResolution); // Order for triangle strip
     EmitVertex();
 
+	//test quad
+	gl_Position = pixelToClip(vec2(100.0, 100.0), screenResolution); EmitVertex();
+	gl_Position = pixelToClip(vec2(200.0, 100.0), screenResolution); EmitVertex();
+	gl_Position = pixelToClip(vec2(200.0, 200.0), screenResolution); EmitVertex();
+	gl_Position = pixelToClip(vec2(100.0, 200.0), screenResolution); EmitVertex();
+	EndPrimitive();
+
+
     EndPrimitive();
 }

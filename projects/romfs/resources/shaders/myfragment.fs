@@ -39,6 +39,8 @@ void main() {
     // gl_FragCoord.xy provides the current pixel's coordinate in screen space
     vec2 currentPixelPos = gl_FragCoord.xy;
 
+	tailTexture_out = vec4(1.0,0.0,0.0,1.0); //test red
+
     // Compute the gradient using the interpolated segment data and current pixel position
     tailTexture_out = vec4(ComputeGradient(
         currentPixelPos,
@@ -50,4 +52,7 @@ void main() {
              // The gradient itself should probably have an alpha channel from 0 to 1 based on its factor.
              // If you want a solid color, keep 1.0. If you want a fade, use gradientFactor for alpha.
              // e.g., tailTexture_out = vec4(ComputedColor, 1.0 - gradientFactor); or similar.
+			 
+	tailTexture_out = vec4(1.0,0.0,0.0,1.0); //test red
+
 }

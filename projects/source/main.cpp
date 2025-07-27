@@ -82,7 +82,6 @@ int main(void)
 
 	Shader stylus_geometry_shader = MyLoadShaderFromMemory(vsCode.c_str(),gsCode.c_str(),fsCode.c_str());
 
-
 	// ==== STYLUS SHADER ====
 	// === ssbo === 
 	//int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
@@ -94,15 +93,29 @@ int main(void)
 	//rlBindShaderBuffer(ssbo, 1);
 
 	// === ubo ===
-	int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
+	int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_out");
 
 	TopPointData* topPointData = (TopPointData*)calloc(MAX_TOP_POINTS, sizeof(TopPointData));
+
+	// === ubo geometry shader stuff ===
+
+	// Get the UBO index for "PointBuffer" and bind it to binding point 1
+	unsigned int uboIndex = glGetUniformBlockIndex(stylus_geometry_shader.id, "PointBuffer");
+	if (uboIndex == GL_INVALID_INDEX) {
+		printf("ERROR: UBO 'PointBuffer' not found in geometry shader. Check GLSL name and compilation.\n");
+	}
+	else {
+		glUniformBlockBinding(stylus_geometry_shader.id, uboIndex, 1); // Bind to binding point 1
+	}
 
 	unsigned int ubo = 0;
 	glGenBuffers(1, &ubo);
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(TopPointData) * MAX_TOP_POINTS, topPointData, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	int geometryTexLocation = GetShaderLocation(stylus_geometry_shader, "tailTexture_out");
+
 
 	// === VBO for Node Indices ===
 	unsigned int VBO_node_indices = 0;
@@ -126,7 +139,9 @@ int main(void)
 	int inNodeIndexLoc = GetShaderLocationAttrib(stylus_geometry_shader, "in_node_index"); // Get attribute location
 
 	int screenResolutionLocation = GetShaderLocation(stylus_geometry_shader, "screenResolution");
-
+	if (screenResolutionLocation == -1) {
+		printf("WARNING: Uniform 'screenResolution' not found or inactive in geometry shader.\n");
+	}
 
 
 	// === ==== ===
@@ -263,11 +278,14 @@ int main(void)
 		rlClearScreenBuffers();
 		rlDisableColorBlend();
 		rlEnableShader(stylus_shader_first_pass.id);
+		rlEnableShader(stylus_geometry_shader.id);
+
+		int numberOfNodes = 0;
 
 		if (touch.x != 0 && touch.y != 0)
 		{
 
-			int numberOfNodes = GetStackDepth(top.stack);
+			numberOfNodes = GetStackDepth(top.stack);
 
 
 			printf("num of nodes: %d\n", numberOfNodes);
@@ -311,6 +329,47 @@ int main(void)
 			SetShaderValue(stylus_shader_first_pass, nodeCountLocation, &numberOfNodes, SHADER_UNIFORM_INT);
 		}
 
+		// ============ GEOMETRY SHADER
+
+		rlEnableShader(stylus_geometry_shader.id);
+		BeginShaderMode(stylus_geometry_shader);
+
+		float screenRes[2] = { (float)screenWidth, (float)screenHeight };
+		SetShaderValue(stylus_geometry_shader, screenResolutionLocation, &screenRes, SHADER_UNIFORM_VEC2);
+
+
+		// Bind the VBO for node indices
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_node_indices);
+		// Update the VBO with the actual node indices (0, 1, 2, ..., numberOfNodes-1)
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(int) * numberOfNodes, node_indices_data);
+
+		GLuint vao;
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		// Tell OpenGL how to read the 'in_node_index' attribute
+		// This line is critical for linking your VBO_node_indices to the shader attribute
+		glVertexAttribIPointer(inNodeIndexLoc, 1, GL_INT, sizeof(int), (void*)0); // 1 component, type int, stride of int, offset 0
+		glEnableVertexAttribArray(inNodeIndexLoc); // Enable the attribute
+
+		rlActiveTextureSlot(geometryTexLocation);
+		rlEnableTexture(stylus_texture);
+
+		// Draw points. Each point will trigger the geometry shader once.
+		glDrawArrays(GL_POINTS, 0, numberOfNodes);
+
+		DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+
+
+		glDisableVertexAttribArray(inNodeIndexLoc); // Disable the attribute after drawing
+		glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the VBO
+
+		glBindVertexArray(0);
+
+
+		EndShaderMode();
+
+		// ============
 
 		BeginShaderMode(stylus_shader_first_pass);
 
@@ -324,7 +383,6 @@ int main(void)
 		//rlActiveTextureSlot(texUnitPosition);
 		//rlEnableTexture(gBuffer.positionTexture);
 		DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
-		//rlLoadDrawQuad();
 
 
 		EndShaderMode();

@@ -126,6 +126,21 @@ unsigned int MyrlLoadShaderCode(const char* vsCode, const char* gsCode, const ch
 	glAttachShader(id, geometryShaderId);
 	glAttachShader(id, fragmentShaderId);
 	glLinkProgram(id);
+
+
+	GLint linked;
+	glGetProgramiv(id, GL_LINK_STATUS, &linked);
+	if (!linked) {
+		GLint logLength;
+		glGetProgramiv(id, GL_INFO_LOG_LENGTH, &logLength);
+		if (logLength > 0) {
+			char* log = (char*)malloc(logLength);
+			glGetProgramInfoLog(id, logLength, NULL, log);
+			printf("SHADER PROGRAM LINK ERROR:\n%s\n", log);
+			free(log);
+		}
+	}
+
 	glUseProgram(id);
 
 	if (id > 0) glDetachShader(id, vertexShaderId);
