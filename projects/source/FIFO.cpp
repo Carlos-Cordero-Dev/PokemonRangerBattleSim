@@ -47,12 +47,32 @@ int GetStackCount(Coord *stack)
   for(aux=stack;aux!=nullptr;aux=aux->nextCoord) count++;
   return count;
 }
-Coord *BotStack(Coord *stack,int mode)
+
+Coord* BotStack(Coord* stack, int mode)
 {
-  Coord *aux;
-  if(mode == 0)for(aux=stack;aux->nextCoord!=nullptr;aux=aux->nextCoord);
-  else if(mode == -1)for(aux=stack;(aux->nextCoord)->nextCoord!=nullptr;aux=aux->nextCoord);
-  return aux;
+	if (stack == nullptr) {
+		return nullptr; // Empty stack
+	}
+
+	if (mode == 0) { // Get the last element
+		Coord* aux = stack;
+		while (aux->nextCoord != nullptr) {
+			aux = aux->nextCoord;
+		}
+		return aux;
+	}
+	else if (mode == -1) { // Get the second to last element
+	 // Need at least 2 elements for second to last
+		if (stack->nextCoord == nullptr) {
+			return nullptr; // Only one element, no second to last
+		}
+		Coord* aux = stack;
+		while (aux->nextCoord != nullptr && aux->nextCoord->nextCoord != nullptr) {
+			aux = aux->nextCoord;
+		}
+		return aux;
+	}
+	return nullptr; // Invalid mode
 }
 
 Coord *TopStack(Coord *stack)

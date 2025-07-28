@@ -23,7 +23,6 @@ layout(std140, binding = 1) uniform PointBuffer {
 };
 
 // Input uniform values
-uniform sampler2D tailTexture_in;
 uniform int node_count; 
 
 bool pointInTriangle(ivec2 p, ivec2 v0, ivec2 v1, ivec2 v2) {
@@ -105,64 +104,60 @@ void main()
 	highp int x = int(gl_FragCoord.x);
 	highp int y = int(gl_FragCoord.y);
 	
-    //vec4 texelColor = texture(tailTexture_in, vec2(x,y));
-
 	tailTexture_out = whiteColor;
 	
 	ivec2 p = {x,y};
-	
-	if(node_count > 1)
-	{
-		for (int i = 0; i < node_count - 1; i++) {
-		
-		
-		    if (i == node_count - 2) {
-		
-				// edge case for last segment
-				
-				TopPointData curr = points[i];
-				if (pointInQuad(p, curr.topLeft, curr.topRight, curr.botRight, curr.botLeft)) {
-					tailTexture_out = vec4(ComputeGradient(p,curr),1.0);
-				}
-				return; 
-			}
-		
-            TopPointData curr = points[i];
-			TopPointData next = points[i + 1];
-			
-			// Fill the current rectangle
-            if (pointInQuad(p, curr.topLeft, next.topLeft, next.botLeft, curr.botLeft)) {
-			
-                tailTexture_out = vec4(ComputeGradient(p,curr),1.0);
-            }
-			
-			if((x == curr.start.x && y == curr.start.y) || 
-			   (x == curr.end.x && y == curr.end.y))
-			{
-				//color start and end purple
-			
-				tailTexture_out = purpleColor;
-				return;
-			}
-			else 
-			{
-				//color corners red
-				
-				ivec2 pointsArray[4] = ivec2[4](
-					curr.topLeft, 
-					curr.topRight, 
-					curr.botLeft, 
-					curr.botRight
-				);
 
-				for (int j = 0; j < 4; j++) {
-					if (x == pointsArray[j].x && y == pointsArray[j].y) {
-						tailTexture_out = redColor;
-						return;
-					}
+	for (int i = 0; i < node_count - 1; i++) {
+	
+	
+		if (i == node_count - 2) {
+	
+			// edge case for last segment
+			
+			TopPointData curr = points[i];
+			if (pointInQuad(p, curr.topLeft, curr.topRight, curr.botRight, curr.botLeft)) {
+				tailTexture_out = vec4(ComputeGradient(p,curr),1.0);
+			}
+			return; 
+		}
+	
+		TopPointData curr = points[i];
+		TopPointData next = points[i + 1];
+		
+		// Fill the current rectangle
+		if (pointInQuad(p, curr.topLeft, next.topLeft, next.botLeft, curr.botLeft)) {
+		
+			tailTexture_out = vec4(ComputeGradient(p,curr),1.0);
+		}
+		
+		if((x == curr.start.x && y == curr.start.y) || 
+		   (x == curr.end.x && y == curr.end.y))
+		{
+			//color start and end purple
+		
+			tailTexture_out = purpleColor;
+			return;
+		}
+		else 
+		{
+			//color corners red
+			
+			ivec2 pointsArray[4] = ivec2[4](
+				curr.topLeft, 
+				curr.topRight, 
+				curr.botLeft, 
+				curr.botRight
+			);
+
+			for (int j = 0; j < 4; j++) {
+				if (x == pointsArray[j].x && y == pointsArray[j].y) {
+					tailTexture_out = redColor;
+					return;
 				}
 			}
-			
 		}
+			
+		
 	}
 }

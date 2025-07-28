@@ -21,6 +21,10 @@
 
 #define GLSL_VERSION 420
 
+#ifdef DEBUG
+#include "logging_manager.h"
+#endif
+
 #include "constants.h"
 #include "geometry_shader_support.h"
 #include "sprites.h"
@@ -57,6 +61,9 @@ int main(void)
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
+	//initialize logging
+	SetLogFileEX("prbs_log.txt");
+
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 1280;
@@ -67,7 +74,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
 	printf("\n=====================damnson1=================================\n");
-
+	
 	std::string shader_path = "shaders/stylus_first_pass.fs";
 	std::string absolute_shader_path = RESOURCES_FOLDER + shader_path;
 	Shader stylus_shader_first_pass = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
@@ -266,25 +273,30 @@ int main(void)
 
 		if (touch.x != 0 && touch.y != 0)
 		{
+			ClearPointData(topPointData, MAX_TOP_POINTS);
 
 			int numberOfNodes = GetStackDepth(top.stack);
 
-
-			printf("num of nodes: %d\n", numberOfNodes);
+			//printf("num of nodes: %d\n", numberOfNodes);
 
 			if (numberOfNodes > 2)
 			{
 				Coord* current = top.stack;
 				Coord* next = top.stack->nextCoord;
 
-				for (int i = 0; i < numberOfNodes - 1; i++)
+				for (int i = 0; i < numberOfNodes -1; i++)
 				{
+					int current_x_int = (int)std::round(current->x);
+					int current_y_int = (int)std::round(current->y);
+					int next_x_int = (int)std::round(next->x);
+					int next_y_int = (int)std::round(next->y);
 
-					topPointData[i].start[0] = (int)std::round(current->x);
-					topPointData[i].start[1] = (int)std::round(current->y);
+					topPointData[i].start[0] = current_x_int;
+					topPointData[i].start[1] = current_y_int;
 
-					topPointData[i].end[0] = (int)std::round(next->x);
-					topPointData[i].end[1] = (int)std::round(next->y);
+					topPointData[i].end[0] = next_x_int;
+					topPointData[i].end[1] = next_y_int;
+
 
 					current = next;
 					next = next->nextCoord;
@@ -300,15 +312,15 @@ int main(void)
 				//update ubo
 
 				glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-				glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(TopPointData) * numberOfNodes, topPointData);
+				//glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(TopPointData) * numberOfNodes, topPointData);
+				glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(TopPointData) * MAX_TOP_POINTS, topPointData);
+
 				glBindBuffer(GL_UNIFORM_BUFFER, 0);
 				glBindBufferBase(GL_UNIFORM_BUFFER, 1, ubo);
 
-				ClearPointData(topPointData, numberOfNodes);
 
+				SetShaderValue(stylus_shader_first_pass, nodeCountLocation, &numberOfNodes, SHADER_UNIFORM_INT);
 			}
-
-			SetShaderValue(stylus_shader_first_pass, nodeCountLocation, &numberOfNodes, SHADER_UNIFORM_INT);
 		}
 
 

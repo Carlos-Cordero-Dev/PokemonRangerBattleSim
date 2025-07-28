@@ -86,50 +86,66 @@ void ForceTopDistanceLimit(Top* top)
 	while (top->distance > kMaxDistance)
 	{
 		if (top->stack == nullptr || top->stack->nextCoord == nullptr) {
-			//printf("Insufficient coordinates in stack.\n");
 			return;
 		}
-		Coord* lastMinusOneCoord = BotStack(top->stack, -1);
-		Coord* lastCoord = BotStack(top->stack,0);
 
-		if (lastCoord == nullptr || lastMinusOneCoord == nullptr)
-		{
-			//printf("Null pointer encountered in stack.\n");
+		Coord* lastMinusOneCoord = BotStack(top->stack, -1);
+		Coord* lastCoord = BotStack(top->stack, 0);
+
+		if (lastCoord == nullptr || lastMinusOneCoord == nullptr) {
 			return;
 		}
 
 		float distBetweenLastAndLastMinusOne = lastCoord->distance_at_point - lastMinusOneCoord->distance_at_point;
 
-		//if last minus one is still too far destroy last and try again
-		if (lastMinusOneCoord->distance_at_point > kMaxDistance)
+		// This block handles the case where the *entire* last segment is beyond kMaxDistance
+		if (lastMinusOneCoord->distance_at_point >= kMaxDistance - KSegmentLengthEpsilon) // Use an epsilon for float comparison
 		{
+			// Remove the last point if the previous point is already at or beyond the limit.
+			// This prevents adding zero-length segments or pushing points beyond the limit.
 			lastMinusOneCoord->nextCoord = nullptr;
-			free(lastCoord); lastCoord = nullptr;
-			top->distance -= distBetweenLastAndLastMinusOne;
-			continue;
-			//printf("too far\n");
+			free(lastCoord);
+			top->distance = lastMinusOneCoord->distance_at_point; // Update total distance correctly
+			continue; // Re-evaluate with the new last point
 		}
 
-		//force to kMaxdistance if the step is too big by moving lastCoord to the kMaxDistance point
-		if (lastMinusOneCoord->distance_at_point < kMaxDistance)
+		// Now, we are in the case where lastMinusOneCoord->distance_at_point < kMaxDistance
+		// and top->distance (which is lastCoord->distance_at_point) > kMaxDistance.
+		// We need to move lastCoord to the kMaxDistance point.
+
+		Vector2 lastCoordVec = { (float)lastCoord->x, (float)lastCoord->y };
+		Vector2 lastMinusOneCoordVec = { (float)lastMinusOneCoord->x, (float)lastMinusOneCoord->y };
+		Vector2 lastMinusOneToLastVec = Vector2Subtract(lastCoordVec, lastMinusOneCoordVec);
+
+		float distLeftToCover = kMaxDistance - lastMinusOneCoord->distance_at_point;
+
+		// Avoid division by zero or normalizing a zero vector
+		float segmentLengthSq = lastMinusOneToLastVec.x * lastMinusOneToLastVec.x +
+			lastMinusOneToLastVec.y * lastMinusOneToLastVec.y;
+
+		if (segmentLengthSq < KSegmentLengthEpsilon * KSegmentLengthEpsilon) // If the segment is practically a point
 		{
-			Vector2 lastCoordVec = { (float)lastCoord->x,(float)lastCoord->y };
-			Vector2 lastMinusOneCoordVec = { (float)lastMinusOneCoord->x,(float)lastMinusOneCoord->y };
-			Vector2 lastMinusOneToLastVec = Vector2Subtract(lastCoordVec, lastMinusOneCoordVec);
-
-			float distLeftToCover = kMaxDistance - lastMinusOneCoord->distance_at_point;
-			Vector2 vecToMaxDist = Vector2Scale(Vector2Normalize(lastMinusOneToLastVec), distLeftToCover);
-
-			Vector2 newLastPosVec =  Vector2Add(lastMinusOneCoordVec, vecToMaxDist);
-
-			lastCoord->x = newLastPosVec.x;
-			lastCoord->y = newLastPosVec.y;
+			// This means lastMinusOneCoord and lastCoord are already very close or identical.
+			// In this scenario, we should likely just make lastCoord identical to lastMinusOneCoord
+			// and set the distance to kMaxDistance, effectively collapsing the segment.
+			lastCoord->x = (int)std::round(lastMinusOneCoordVec.x);
+			lastCoord->y = (int)std::round(lastMinusOneCoordVec.y);
 			lastCoord->distance_at_point = kMaxDistance;
 			top->distance = kMaxDistance;
-			//printf("near\n");
+			return; // Done
 		}
-	}
 
+		Vector2 normalizedDir = Vector2Normalize(lastMinusOneToLastVec);
+		Vector2 vecToMaxDist = Vector2Scale(normalizedDir, distLeftToCover);
+
+		Vector2 newLastPosVec = Vector2Add(lastMinusOneCoordVec, vecToMaxDist);
+
+		lastCoord->x = (int)std::round(newLastPosVec.x);
+		lastCoord->y = (int)std::round(newLastPosVec.y);
+		lastCoord->distance_at_point = kMaxDistance;
+		top->distance = kMaxDistance;
+		return; // Done
+	}
 }
 
 void ResetTop(Top* top)

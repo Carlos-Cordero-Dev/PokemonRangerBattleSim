@@ -7,6 +7,10 @@
 
 #include "raylib.h"
 
+#ifdef DEBUG
+#include "logging_manager.h"
+#endif
+
 #include "constants.h"
 #include "FIFO.h"
 
@@ -106,13 +110,25 @@ void ComputeRectangle(int start[2], int end[2], int topLeft[2], int topRight[2],
 
 	botRight[0] = (int)std::round(end[0] - offsetX);
 	botRight[1] = (int)std::round(end[1] - offsetY);
+
 }
 
 void PopulateTopPoints(TopPointData* topPointData, int numberOfPoints)
 {
-	for (int i = 0; i < numberOfPoints -1; i++)
+	int offset = 5;
+	for (int i = 0; i < numberOfPoints; i++)
 	{
 		ComputeRectangle(topPointData[i].start, topPointData[i].end, topPointData[i].topLeft, topPointData[i].topRight, topPointData[i].botLeft, topPointData[i].botRight);
+	
+		if (i > numberOfPoints - 5)
+		{
+			//last 5
+			LogEX("index %d start %d,%d  end %d,%d topr %d,%d topl %d,%d botr %d,%d botl %d,%d", i,
+				topPointData[i].start[0], topPointData[i].start[1], topPointData[i].end[0], topPointData[i].end[1],
+				topPointData[i].topRight[0], topPointData[i].topRight[1], topPointData[i].topLeft[0], topPointData[i].topLeft[1],
+				topPointData[i].botRight[0], topPointData[i].botRight[1], topPointData[i].botLeft[0], topPointData[i].botLeft[1]
+			);
+		}
 	}
 }
 

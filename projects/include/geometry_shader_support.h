@@ -28,7 +28,8 @@
 
 char* LoadFileTextToStr(std::string fileName)
 {
-	FILE* file = fopen(fileName.c_str(), "rb");
+	FILE* file;
+	fopen_s(&file,fileName.c_str(), "rb");
 	if (!file)
 	{
 		printf("ERROR: Could not open file: %s\n", fileName.c_str());

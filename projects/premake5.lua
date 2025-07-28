@@ -12,13 +12,15 @@ project "MyProject"
     targetdir "bin/%{cfg.buildcfg}"  -- Output directory for binaries
 
     -- Project source and include files
-    files { "source/**.c", "source/**.cpp", "include/**.h" }
+    files { "source/**.c", "source/**/**.c",
+			"source/**.cpp","source/**/**.cpp",
+			"include/**.h" ,"include/**/**.h"}
 
     -- Include directories
     includedirs {
-        "include",                -- project headers
+        "include", "include/**"                -- project headers
     }
-
+		
     -- Filter for Switch configuration
     filter "configurations:Switch"
 	    kind "Makefile"

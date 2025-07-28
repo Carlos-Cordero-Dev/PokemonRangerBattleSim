@@ -18,7 +18,7 @@ tmp/
 *.nro
 
 # Ignore generated files
-# ...
+prbs_log.txt
 
 # Ignore VIM's backup generated files
 *.swp
