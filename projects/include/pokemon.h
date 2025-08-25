@@ -1,11 +1,12 @@
 
 #pragma once
 
-#include "bounding_box.h"
 #include "sprites.h"
+#include "world_object.h"
 
-class Pokemon
+class Pokemon // : public WorldObject
 {
+	// (BOTH ALREADY IN WORLD OBJECT)
 	//BoundingBox bbox;
 	//possible SpriteSheet* 
 };

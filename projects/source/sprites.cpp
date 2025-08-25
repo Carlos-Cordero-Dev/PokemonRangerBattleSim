@@ -22,6 +22,11 @@ void SpriteAnimation::Draw(int posX, int posY)
 	DrawTexture(textures[currentFrame].texture, posX, posY, WHITE);
 }
 
+void SpriteAnimation::DrawRotScale(int posX, int posY, float rotDeg, float scale)
+{
+	Vector2 pos = { posX, posY };
+	DrawTextureEx(textures[currentFrame].texture, pos, rotDeg, scale , WHITE);
+}
 void loadTexturesFromFolder(const std::string& basePathFromResourceFolder, SpriteAnimation** spriteAnims,
 	int numOfAnimationsInFolder, int numOfTexturesPerAnimation, const std::string& texNamePrefix) {
 

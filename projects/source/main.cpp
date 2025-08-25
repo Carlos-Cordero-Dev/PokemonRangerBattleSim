@@ -6,7 +6,7 @@
 #endif
 
 #include "raylib.h"
-#define GRAPHICS_API_OPENGL_42
+#define GRAPHICS_API_OPENGL_33
 #include "rlgl.h" //rlFramebuffer
 //#include "glad.h" //glBindBuffer
 #include <glad.h>
@@ -22,7 +22,9 @@
 #define GLSL_VERSION 420
 
 #ifdef DEBUG
+#ifdef WINDOWS_BUILD
 #include "logging_manager.h"
+#endif
 #endif
 
 #include "constants.h"
@@ -33,6 +35,9 @@
 #include "FIFO.h"
 #include "player_polygon.h"
 #include "ranger_top.h"
+
+#include "world_object.h"
+
 /*
 what do I need man:
 
@@ -59,10 +64,12 @@ int main(void)
 #ifdef WINDOWS_BUILD 
     //memory leaks check
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
+
 
 	//initialize logging
 	SetLogFileEX("prbs_log.txt");
+#endif
+
 
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -74,97 +81,27 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
 	printf("\n=====================damnson1=================================\n");
-	
-	std::string shader_path = "shaders/stylus_first_pass.fs";
-	std::string absolute_shader_path = RESOURCES_FOLDER + shader_path;
-	Shader stylus_shader_first_pass = LoadShader(0/*null so no vs*/, absolute_shader_path.c_str());
 
 
-	shader_path = "shaders/myvertex.vs";
-	std::string vsCode = LoadFileTextToStr(RESOURCES_FOLDER + shader_path);
-	shader_path = "shaders/mygeometry.gs";
-	std::string gsCode = LoadFileTextToStr(RESOURCES_FOLDER + shader_path);
-	shader_path = "shaders/myfragment.fs";
-	std::string fsCode = LoadFileTextToStr(RESOURCES_FOLDER + shader_path);
+	//unsigned int stylus_framebuffer = rlLoadFramebuffer();
+	//unsigned int main_framebuffer = rlLoadFramebuffer();
 
-	Shader stylus_geometry_shader = MyLoadShaderFromMemory(vsCode.c_str(),gsCode.c_str(),fsCode.c_str());
+	//rlEnableFramebuffer(main_framebuffer);
+	//rlEnableFramebuffer(stylus_framebuffer);
+	//unsigned int main_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+	//unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8/*important for transparency*/, 1);
 
+ //   rlActiveDrawBuffers(2);
+	//rlFramebufferAttach(main_framebuffer, main_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+	//rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
 
-	// ==== STYLUS SHADER ====
-	// === ssbo === 
-	//int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
-
-	//TopPointData* topPointData = (TopPointData*)calloc(MAX_TOP_POINTS, sizeof(TopPointData));
-
-	//unsigned int ssbo = rlLoadShaderBuffer(sizeof(TopPointData) * MAX_TOP_POINTS, NULL, RL_STREAM_DRAW);
-
-	//rlBindShaderBuffer(ssbo, 1);
-
-	// === ubo ===
-	int stylusTexLocation = GetShaderLocation(stylus_shader_first_pass, "tailTexture_in");
-
-	TopPointData* topPointData = (TopPointData*)calloc(MAX_TOP_POINTS, sizeof(TopPointData));
-
-	unsigned int ubo = 0;
-	glGenBuffers(1, &ubo);
-	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(TopPointData) * MAX_TOP_POINTS, topPointData, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-	// === VBO for Node Indices ===
-	unsigned int VBO_node_indices = 0;
-
-	// This VBO will hold integer indices (0, 1, 2, ...) to pass to the Vertex Shader,
-	// which then passes them to the Geometry Shader.
-	glGenBuffers(1, &VBO_node_indices);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_node_indices);
-	// Allocate space, but don't fill yet. Max possible indices is KMAX_POINTS-1.
-	glBufferData(GL_ARRAY_BUFFER, sizeof(int) * MAX_TOP_POINTS, NULL, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind VBO
-
-	// Prepare an array of node indices (0, 1, 2, ...)
-	int* node_indices_data = (int*)calloc(MAX_TOP_POINTS, sizeof(int));
-	for (int i = 0; i < MAX_TOP_POINTS; ++i) {
-		node_indices_data[i] = i;
-	}
-
-	// === ==== ==
-
-	int inNodeIndexLoc = GetShaderLocationAttrib(stylus_geometry_shader, "in_node_index"); // Get attribute location
-
-	int screenResolutionLocation = GetShaderLocation(stylus_geometry_shader, "screenResolution");
-
-
-
-	// === ==== ===
-
-	int nodeCountLocation = GetShaderLocation(stylus_shader_first_pass, "node_count");
-
-	int stylusTexUnitPosition = 0;
-	SetShaderValue(stylus_shader_first_pass, stylusTexLocation, &stylusTexUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
-
-	// ========== END OF STYLUS SHADER==================
-
-
-	unsigned int stylus_framebuffer = rlLoadFramebuffer();
-	unsigned int main_framebuffer = rlLoadFramebuffer();
-
-	rlEnableFramebuffer(main_framebuffer);
-	rlEnableFramebuffer(stylus_framebuffer);
-	unsigned int main_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
-	unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8/*important for transparency*/, 1);
-
-    rlActiveDrawBuffers(2);
-	rlFramebufferAttach(main_framebuffer, main_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
-	rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
-
-	//texture of stylus shader in Texture2D version to be able to do DrawTexture
-	Texture2D stylusOverlay;
-	stylusOverlay.id = stylus_texture;
-	stylusOverlay.width = screenWidth;
-	stylusOverlay.height = screenHeight;
-	stylusOverlay.mipmaps = 1;
-	stylusOverlay.format = RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+	////texture of stylus shader in Texture2D version to be able to do DrawTexture
+	//Texture2D stylusOverlay;
+	//stylusOverlay.id = stylus_texture;
+	//stylusOverlay.width = screenWidth;
+	//stylusOverlay.height = screenHeight;
+	//stylusOverlay.mipmaps = 1;
+	//stylusOverlay.format = RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
 
 	// Make sure our framebuffer is complete.
@@ -185,25 +122,33 @@ int main(void)
 
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture2D texture;
-    // texture = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
+
+	// texture = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
     //loadTexturesFromFolder("romfs:/resources/sprites");
     //texture = textures[0].texture;
 
-	SpriteAnimation* garchompAnim0 = new SpriteAnimation();
-    garchompAnim0->advanceRate = 5;
-	SpriteAnimation* garchompAnim1 = new SpriteAnimation();
-	SpriteAnimation* garchompAnim2 = new SpriteAnimation();
-	SpriteAnimation* garchompAnim3 = new SpriteAnimation();
+	//SpriteAnimation* garchompAnim0 = new SpriteAnimation();
+ //   garchompAnim0->advanceRate = 5;
+	//SpriteAnimation* garchompAnim1 = new SpriteAnimation();
+	//SpriteAnimation* garchompAnim2 = new SpriteAnimation();
+	//SpriteAnimation* garchompAnim3 = new SpriteAnimation();
 
-	SpriteAnimation** garchompAnims = new SpriteAnimation*[4];
-	garchompAnims[0] = garchompAnim0;
-	garchompAnims[1] = garchompAnim1;
-	garchompAnims[2] = garchompAnim2;
-	garchompAnims[3] = garchompAnim3;
-    
-    loadTexturesFromFolder("sprites/garchomp/attack", garchompAnims, 4, 6, "garchomp_attack");
-    texture = garchompAnims[0]->textures[0].texture;
+	//SpriteAnimation** garchompAnims = new SpriteAnimation*[4];
+	//garchompAnims[0] = garchompAnim0;
+	//garchompAnims[1] = garchompAnim1;
+	//garchompAnims[2] = garchompAnim2;
+	//garchompAnims[3] = garchompAnim3;
+ //   
+ //   //loadTexturesFromFolder("sprites/garchomp/attack", garchompAnims, 4, 6, "garchomp_attack");
+
+	//SpriteAnimation* stylusAnim0 = new SpriteAnimation();
+	//stylusAnim0->advanceRate = 5;
+
+	//SpriteAnimation** stylusAnims = new SpriteAnimation * [1];
+	//stylusAnims[0] = stylusAnim0;
+
+	//loadTexturesFromFolder("sprites/stylus/top", stylusAnims, 1, 3, "top_idle_spin");
+
     printf("\ndamnson2=================================\n");
 	//---------------------------------------------------------------------------------------
 	// Main game loop
@@ -212,6 +157,14 @@ int main(void)
 	SetTargetFPS(60);
 
 	Top top;
+
+	//WorldObject* wo = new WorldObject(garchompAnim0);
+	//wo->position = Vector2({ 100, 100 });
+
+	//WorldObject* topObject = new WorldObject(stylusAnim0);
+	//topObject->position = Vector2({ -100, -100 }); //offscreen
+	//topObject->scale = 5.0f;
+
 	int frame = 0;
 	double currTime = 0.0;
 	double lastTime = 0;
@@ -221,182 +174,204 @@ int main(void)
 
 		//input code should be decoupled from render 60fps limit
 
+		// ---------------------------------------------------------------------------------
+		// Update
+		 
+		
 		//timer.Update();
 
 		//printf("frame %d\n",frame);
 
+		//prbs::Vector2 touch = GetTouch();
 
-		prbs::Vector2 touch = GetTouch();
-
-		if (touch.x == 0 && touch.y == 0)
-		{
-			if (top.stack != nullptr)
-			{
-				ResetTop(&top);
-			}
-		}
-		else
-		{
-			InsertTopCoord(&top, touch.x, touch.y);
-		}
-
-		ComputeAndUpdateDistance(&top);
-		ForceTopDistanceLimit(&top);
-
-		if (checkSnakeIntersection(&top) == true)
-		{
-			//printf("INTERSECTED\n");
-		}
-
-
-
-		//if (IsPolygonClosed(top.stack, touch.x, touch.y))
+		//if (touch.x == 0 && touch.y == 0)
 		//{
-		//	printf("closed circle\n");
-		//	ResetTop(&top);
+		//	if (top.stack != nullptr)
+		//	{
+		//		ResetTop(&top);
+
+		//		//TODO: propper disable just in case instead of offscreen
+		//		topObject->position.x = -100;
+		//		topObject->position.y = -100;
+		//	}
+		//}
+		//else
+		//{
+		//	InsertTopCoord(&top, touch.x, touch.y);
+
+		//	topObject->position.x = touch.x;
+		//	topObject->position.y = touch.y;
+		//}
+
+		//ComputeAndUpdateDistance(&top);
+		//ForceTopDistanceLimit(&top);
+
+		//if (checkSnakeIntersection(&top) == true)
+		//{
+		//	//printf("INTERSECTED\n");
+		//}
+
+		////update every single world object
+		//wo->Update();
+
+		//
+		//topObject->Update();
+
+		// End of Update
+		// ---------------------------------------------------------------------------------
+
+
+		//----------------------------------------------------------------------------------
+		// Draw
+
+		BeginDrawing();
+
+		//rlDisableDepthTest();
+
+		//// === STYLUS TEXTURE === 
+
+		//rlEnableFramebuffer(stylus_framebuffer);
+		//rlClearColor(0, 1, 0, 1);
+		//rlClearScreenBuffers();
+		//rlDisableColorBlend();
+
+
+		//DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+
+
+		////draw stlyus tail
+
+		//if (touch.x != 0 && touch.y != 0)
+		//{
+		//	//DrawTexture(stylusOverlay, 0, 0, WHITE);
+
+
+
+		//	int numberOfNodes = GetStackDepth(top.stack);
+
+		//	//printf("num of nodes: %d\n", numberOfNodes);
+		//	float trailThickness = 5.0f;
+
+		//	if (numberOfNodes > 2)
+		//	{
+		//		Coord* current = top.stack;
+		//		Coord* next = top.stack->nextCoord;
+
+		//		for (int i = 0; i < numberOfNodes - 1; i++)
+		//		{
+		//			int current_x_int = (int)std::round(current->x);
+		//			int current_y_int = (int)std::round(current->y);
+		//			int next_x_int = (int)std::round(next->x);
+		//			int next_y_int = (int)std::round(next->y);
+
+		//			Vector2 startPos = { current_x_int, current_y_int };
+		//			Vector2 endPos = { next_x_int, next_y_int };
+
+		//			//trail de fuera
+		//			DrawCircleV(startPos, trailThickness, DARKBLUE);
+		//			DrawLineEx(startPos, endPos, trailThickness * 2.0f, DARKBLUE);
+
+		//			current = next;
+		//			next = next->nextCoord;
+		//		}
+		//		current = top.stack;
+		//		next = top.stack->nextCoord;
+
+		//		for (int i = 0; i < numberOfNodes - 1; i++)
+		//		{
+		//			int current_x_int = (int)std::round(current->x);
+		//			int current_y_int = (int)std::round(current->y);
+		//			int next_x_int = (int)std::round(next->x);
+		//			int next_y_int = (int)std::round(next->y);
+
+		//			Vector2 startPos = { current_x_int, current_y_int };
+		//			Vector2 endPos = { next_x_int, next_y_int };
+
+		//			//trail 2
+		//			DrawCircleV(startPos, trailThickness * 2 / 3, BLUE);
+		//			DrawLineEx(startPos, endPos, trailThickness * 2 / 3 * 2.0f, BLUE);
+
+		//			current = next;
+		//			next = next->nextCoord;
+		//		}
+
+		//		current = top.stack;
+		//		next = top.stack->nextCoord;
+
+		//		for (int i = 0; i < numberOfNodes - 1; i++)
+		//		{
+		//			int current_x_int = (int)std::round(current->x);
+		//			int current_y_int = (int)std::round(current->y);
+		//			int next_x_int = (int)std::round(next->x);
+		//			int next_y_int = (int)std::round(next->y);
+
+		//			Vector2 startPos = { current_x_int, current_y_int };
+		//			Vector2 endPos = { next_x_int, next_y_int };
+
+
+		//			//trail 3
+		//			DrawCircleV(startPos, trailThickness * 1 / 3, WHITE);
+		//			DrawLineEx(startPos, endPos, trailThickness * 1 / 3 * 2.0f, WHITE);
+
+		//			current = next;
+		//			next = next->nextCoord;
+		//		}
+
+		//	}
 		//}
 
 
-		// Draw
-		//----------------------------------------------------------------------------------
-		BeginDrawing();
+		//rlEnableColorBlend();
 
-		rlDisableDepthTest();
-
-		// === STYLUS TEXTURE === 
-
-		rlEnableFramebuffer(stylus_framebuffer);
-		rlClearColor(0, 1, 0, 1);
-		rlClearScreenBuffers();
-		rlDisableColorBlend();
-		rlEnableShader(stylus_shader_first_pass.id);
-
-		if (touch.x != 0 && touch.y != 0)
-		{
-			ClearPointData(topPointData, MAX_TOP_POINTS);
-
-			int numberOfNodes = GetStackDepth(top.stack);
-
-			//printf("num of nodes: %d\n", numberOfNodes);
-
-			if (numberOfNodes > 2)
-			{
-				Coord* current = top.stack;
-				Coord* next = top.stack->nextCoord;
-
-				for (int i = 0; i < numberOfNodes -1; i++)
-				{
-					int current_x_int = (int)std::round(current->x);
-					int current_y_int = (int)std::round(current->y);
-					int next_x_int = (int)std::round(next->x);
-					int next_y_int = (int)std::round(next->y);
-
-					topPointData[i].start[0] = current_x_int;
-					topPointData[i].start[1] = current_y_int;
-
-					topPointData[i].end[0] = next_x_int;
-					topPointData[i].end[1] = next_y_int;
-
-
-					current = next;
-					next = next->nextCoord;
-				}
-
-				PopulateTopPoints(topPointData, numberOfNodes);
-
-				//update ssbo
-
-				//rlUpdateShaderBuffer(ssbo, topPointData, numberOfNodes * sizeof(TopPointData), 0);
-				//rlBindShaderBuffer(ssbo, 1);
-
-				//update ubo
-
-				glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-				//glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(TopPointData) * numberOfNodes, topPointData);
-				glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(TopPointData) * MAX_TOP_POINTS, topPointData);
-
-				glBindBuffer(GL_UNIFORM_BUFFER, 0);
-				glBindBufferBase(GL_UNIFORM_BUFFER, 1, ubo);
-
-
-				SetShaderValue(stylus_shader_first_pass, nodeCountLocation, &numberOfNodes, SHADER_UNIFORM_INT);
-			}
-		}
-
-
-		BeginShaderMode(stylus_shader_first_pass);
-
-		//
-
-		rlActiveTextureSlot(stylusTexUnitPosition);
-		rlEnableTexture(stylus_texture);
-
-		//
-
-		//rlActiveTextureSlot(texUnitPosition);
-		//rlEnableTexture(gBuffer.positionTexture);
-		DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
-		//rlLoadDrawQuad();
-
-
-		EndShaderMode();
-
-		rlEnableColorBlend();
-
-		rlDisableFramebuffer();
+		//rlDisableFramebuffer();
 
 		// =======================
 
 		// === MAIN TEXTURE ===
 
-		rlEnableFramebuffer(main_framebuffer);
+		//rlEnableFramebuffer(main_framebuffer);
 
-		ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+		//ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
-		DrawCurrentPolygonOnlyLines(top.stack);
-
-		//===============
-
-		//DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
-		garchompAnim0->Draw(screenWidth / 2 - texture.width / 2, screenHeight / 2 - texture.height / 2);
-		garchompAnim0->advanceFrame(frame);
+		//DrawCurrentPolygonOnlyLines(top.stack);
 
 
-		//======================
 
-		DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
-		DrawText(("touch " + std::to_string(touch.x) + " " + std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
-		DrawText((text + std::to_string(frame)).c_str(), 360, 370, 40, GRAY);
-		DrawText(("Time " + std::to_string(currTime) + " deltaTime " + std::to_string(GetFrameTime())).c_str(),
-			360, 230, 40, GRAY);
+		//DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
+		//DrawText(("touch " + std::to_string(touch.x) + " " + std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
+		//DrawText((text + std::to_string(frame)).c_str(), 360, 370, 40, GRAY);
+		//DrawText(("Time " + std::to_string(currTime) + " deltaTime " + std::to_string(GetFrameTime())).c_str(),
+		//	360, 230, 40, GRAY);
 
-		//========== 
+		////========== 
 
-		if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
+		//if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
 
 
-		if (touch.x != 0 && touch.y != 0)
-		{
-			DrawTexture(stylusOverlay, 0, 0, WHITE);
-		}
-		//=========================
-		//timer related stuff
+		////draw every world object
 
-		frame++;
-		currTime += GetFrameTime();
+		//wo->Draw(frame);
+		////topObject->Draw(frame);
 
-		//         if (currTime > lastTime + 0.017) {
 
-				 //	Coord* lastCoord = ExtractFIFO(&stack);
-				 //	if (lastCoord != nullptr)
-				 //	{
-				 //		free(lastCoord); lastCoord = nullptr;
-				 //	}
-				 //	lastTime = currTime;
-				 //}
+		////=========================
+		////timer related stuff
 
-		rlDisableFramebuffer();
-		rlClearScreenBuffers();
+		//frame++;
+		//currTime += GetFrameTime();
+
+		////         if (currTime > lastTime + 0.017) {
+
+		//		 //	Coord* lastCoord = ExtractFIFO(&stack);
+		//		 //	if (lastCoord != nullptr)
+		//		 //	{
+		//		 //		free(lastCoord); lastCoord = nullptr;
+		//		 //	}
+		//		 //	lastTime = currTime;
+		//		 //}
+
+		//rlDisableFramebuffer();
+		//rlClearScreenBuffers();
 
 		EndDrawing();
 
@@ -410,8 +385,8 @@ int main(void)
 
 	// De-Initialization
 	//--------------------------------------------------------------------------------------
-	UnloadShader(stylus_shader_first_pass);
-	UnloadTexture(texture);       // Texture unloading
+	//UnloadShader(stylus_shader_first_pass);
+	//UnloadTexture(texture);       // Texture unloading
 
 	CloseWindow();                // Close window and OpenGL context
 	//--------------------------------------------------------------------------------------

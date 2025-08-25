@@ -6,7 +6,7 @@ ifeq ($(strip $(DEVKITPRO)),)
 $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
 endif
 
-RAYLIB_NX=D:/PokemonRangerBattleSim
+RAYLIB_NX=C:/PokemonRangerBattleSim
 
 ifeq ($(strip $(RAYLIB_NX)),)
 $(error "Please set RAYLIB_NX in your environment. export RAYLIB_NX=<path to>/raylib-nx")

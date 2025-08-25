@@ -3,12 +3,14 @@
 
 #include <math.h>
 #include <stdio.h>
-#include <string> //memset
+#include <cstring> //memset
 
 #include "raylib.h"
 
 #ifdef DEBUG
+#ifdef WINDOWS_BUILD
 #include "logging_manager.h"
+#endif
 #endif
 
 #include "constants.h"
@@ -55,21 +57,21 @@ void DrawCurrentPolygonOnlyLines(Coord* stack)
 	}
 }
 
-bool IsPolygonClosed(Coord *stack, int x,int y)
-{
-  if(stack!=nullptr && stack->nextCoord!=nullptr)
-  {
-    if(GetStackCount(stack) > KMarginToClosePoly / 2)
-    {
-      Coord *aux = BotStack(stack,0);
-      if(abs(aux->x - x) <= KMarginToClosePoly && abs (aux->y - y) <= KMarginToClosePoly) return true;
-      else return false;
-    }
-    else return false;
-
-  }
-  else return false;
-}
+//bool IsPolygonClosed(Coord *stack, int x,int y)
+//{
+//  if(stack!=nullptr && stack->nextCoord!=nullptr)
+//  {
+//    if(GetStackCount(stack) > KMarginToClosePoly / 2)
+//    {
+//      Coord *aux = BotStack(stack,0);
+//      if(abs(aux->x - x) <= KMarginToClosePoly && abs (aux->y - y) <= KMarginToClosePoly) return true;
+//      else return false;
+//    }
+//    else return false;
+//
+//  }
+//  else return false;
+//}
 
 // TMP LOCATION FOR THIS 
 
@@ -123,11 +125,13 @@ void PopulateTopPoints(TopPointData* topPointData, int numberOfPoints)
 		if (i > numberOfPoints - 5)
 		{
 			//last 5
+#ifdef WINDOWS_BUILD
 			LogEX("index %d start %d,%d  end %d,%d topr %d,%d topl %d,%d botr %d,%d botl %d,%d", i,
 				topPointData[i].start[0], topPointData[i].start[1], topPointData[i].end[0], topPointData[i].end[1],
 				topPointData[i].topRight[0], topPointData[i].topRight[1], topPointData[i].topLeft[0], topPointData[i].topLeft[1],
 				topPointData[i].botRight[0], topPointData[i].botRight[1], topPointData[i].botLeft[0], topPointData[i].botLeft[1]
 			);
+#endif
 		}
 	}
 }

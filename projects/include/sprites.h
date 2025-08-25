@@ -39,6 +39,7 @@ class SpriteAnimation
 public:
 	void advanceFrame(int frame);
 	void Draw(int posX, int posY);
+	void DrawRotScale(int posX, int posY, float rotDeg, float scale);
 
 	std::string name;
 	std::vector<TextureData> textures;
