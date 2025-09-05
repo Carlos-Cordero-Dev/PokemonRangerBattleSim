@@ -2,11 +2,22 @@
 #pragma once
 
 #include "sprites.h"
-#include "world_object.h"
+#include "enclosable_object.h"
 
-class Pokemon // : public WorldObject
+class Pokemon : public EnclosableObject
 {
-	// (BOTH ALREADY IN WORLD OBJECT)
-	//BoundingBox bbox;
-	//possible SpriteSheet* 
+public:
+	Pokemon(SpriteAnimation** sa);
+
+	void OnEnclosed() override;
+	void Update();
+	void Cleanup();
+
+public:
+	int id = 0;
+
+	// IA COMPONENT STATE MACHINE EXTERNAL TOOL
+	// IA* stateMachine;
+
+
 };

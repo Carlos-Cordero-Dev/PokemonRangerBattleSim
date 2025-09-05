@@ -1,26 +1,4 @@
 
--min angle to be considered sharp turn, otherwise smooth
--order:
-	-points are created
-	-box is created around (taking into account angle)
-	-previous box gets connected to new one
-	
-
-1-drawing between points
-	-only draw along perp line from A to B
-	-hard limit on start and end point
-	-predetermined thickness
-
-2-drawing between last and current area
-	-angle < T: line from corners of last box to
-		first corners of current
-	-angle > T: extend ^ until they cross and that point 
-		
- 
-random:
--sampling starts from bottom left thats maybe why deeper blue on left/down side
--on angle thickness reduced?
-
 SHADERS FOLDER:
 https://github.com/raysan5/raylib/blob/master/examples/shaders/resources/shaders/glsl330/julia_set.fs
 https://www.raylib.com/examples/shaders/loader.html?name=shaders_shapes_textures

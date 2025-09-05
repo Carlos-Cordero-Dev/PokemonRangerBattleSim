@@ -37,14 +37,14 @@
 #include "ranger_top.h"
 
 #include "world_object.h"
-
+#include "pokemon.h"
 /*
 what do I need man:
 
 
 -touchscreen support [x]
 -importing sprites + anims [x]
--spiny thingy
+-spiny thingy [x]
 
 AI:
 - movement
@@ -56,6 +56,14 @@ AI:
 
 -menu
 -level selector
+
+MECHANIC IDEAS:
+-gestures: press a button (maybe time slows down, screen goes gray) 
+and during a duration can make shape which triggers buff etc
+
+-pokemon summon obstacles you have to catch
+-
+
 */
 
 int main(void)
@@ -195,12 +203,18 @@ int main(void)
 
 	Top top;
 
-	WorldObject* wo = new WorldObject(garchompAnim0);
+	WorldObject* wo = new WorldObject(garchompAnims);
 	wo->position = Vector2({ 100, 100 });
 
-	WorldObject* topObject = new WorldObject(stylusAnim0);
+	WorldObject* topObject = new WorldObject(stylusAnims);
 	topObject->position = Vector2({ -100, -100 }); //offscreen
 	topObject->scale = 5.0f;
+
+	Pokemon* p = new Pokemon(garchompAnims);
+	p->position = Vector2({ 500, 100 });
+
+	std::vector<EnclosableObject*> allEnclosableObjs;
+	allEnclosableObjs.emplace_back(p);
 
 	int frame = 0;
 	double currTime = 0.0;
@@ -243,16 +257,19 @@ int main(void)
 		ComputeAndUpdateDistance(&top);
 		ForceTopDistanceLimit(&top);
 
-		if (checkSnakeIntersection(&top) == true)
+		if (checkSnakeIntersection(&top, allEnclosableObjs) == true)
 		{
 			//printf("INTERSECTED\n");
 		}
 
 		//update every single world object
 		wo->Update();
-
-		
 		topObject->Update();
+		p->Update();
+
+		//update pokemon
+
+
 
 		// End of Update
 		// ---------------------------------------------------------------------------------
@@ -263,13 +280,9 @@ int main(void)
 
 		BeginDrawing();
 
-		//rlDisableDepthTest();
+		rlDisableDepthTest();
 
-		//// === STYLUS TEXTURE === 
-
-		//rlEnableFramebuffer(stylus_framebuffer);
-		//rlClearScreenBuffers();
-		//rlClearColor(0, 0, 0, 0); //transparent so the stylus overlay doesnt opaque the main texture
+		// === STYLUS TEXTURE === 
 
 		BeginTextureMode(stylusOverlayRenTex);
 		ClearBackground(BLANK);
@@ -293,8 +306,6 @@ int main(void)
 
 
 			// --- First pass: draw all circles ---
-			rlSetBlendMode(BLEND_CUSTOM);     // enter custom mode
-			rlSetBlendFactors(GL_ONE, GL_ZERO, GL_FUNC_ADD);
 
 			SetShaderValue(stylus_circle_shader, trailThicknessCircleLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
 
@@ -315,8 +326,6 @@ int main(void)
 			// --- Second pass: draw all lines ---
 			current = top.stack;
 			next = current->nextCoord;
-
-			rlSetBlendMode(BLEND_ALPHA);
 
 			SetShaderValue(stylus_line_shader, trailThicknessStylusLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
 			
@@ -340,24 +349,19 @@ int main(void)
 
 		topObject->Draw(frame);
 
-		//rlDisableFramebuffer();
+		//DrawCurrentPolygonOnlyLines(top.stack);
+
 		EndTextureMode();
 
 
 		// =======================
 
 		// === MAIN TEXTURE ===
-
-		//rlEnableFramebuffer(main_framebuffer);
-
-		//ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+		
+		//rlEnableDepthTest();
 
 		BeginTextureMode(mainTexOverlayRenTex);
 		ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-
-		//DrawCurrentPolygonOnlyLines(top.stack);
-
-
 
 		DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
 		DrawText(("touch " + std::to_string(touch.x) + " " + std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
@@ -373,15 +377,13 @@ int main(void)
 		//draw every world object
 
 		wo->Draw(frame);
-
-		////=========================
-		////timer related stuff
+		p->Draw(frame);
+		//=========================
+		//timer related stuff
 
 		frame++;
 		currTime += GetFrameTime();
 
-		//rlDisableFramebuffer();
-		//rlClearScreenBuffers();
 		EndTextureMode();
 
 		// Draw the main texture (flipped vertically to correct for upside-down rendering)

@@ -9,20 +9,21 @@ class WorldObject
 {
 public:
 
-	WorldObject(SpriteAnimation* sa);
+	WorldObject(SpriteAnimation** sa);
 
-	void Draw(int frame); //draw sprite at position
+	void Draw(int frame); //draw sprite at position, defaults at anim 0
+	void Draw(int frame,int animation);
 	void Update();
 	void Cleanup();
 
-	public:
+public:
 
 	Vector2 position;
 	float scale;
 	float rotationDeg;
 
 	Rectangle boundingBox;
-	SpriteAnimation *spriteAnim;
+	SpriteAnimation** spriteAnim;
 };
 
  

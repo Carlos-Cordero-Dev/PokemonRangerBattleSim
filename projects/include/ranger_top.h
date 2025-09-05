@@ -27,6 +27,7 @@
 
 #include <algorithm>
 
+#include "enclosable_object.h"
 
 struct Top
 {
@@ -237,7 +238,7 @@ double calculatePolygonArea(Coord* start, Coord* end) {
 const int kMinDepth = 10;
 const double kMinArea = 1000;
 
-bool checkSnakeIntersection(Top* top) {
+bool checkSnakeIntersection(Top* top, const std::vector<EnclosableObject*>& enclosableObjs) {
 	Coord* head = top->stack;
 	if (head == nullptr) return false;
 	if (head->nextCoord == nullptr) return false;
@@ -294,6 +295,17 @@ bool checkSnakeIntersection(Top* top) {
 			current->nextCoord->intersected = true;
 			printf("intersected %d %d %d %d  point %d %d area %f\n", head->depth, headNext->depth,
 				current->depth, current->nextCoord->depth, intersection.x, intersection.y, area);
+
+			//run enclosed logic
+			for (EnclosableObject* enclosableObj : enclosableObjs)
+			{
+				int centerX = enclosableObj->boundingBox.x + enclosableObj->boundingBox.width / 2;
+				int centerY = enclosableObj->boundingBox.y + enclosableObj->boundingBox.height / 2;
+
+				if (PointInPolygon(current, head, centerX, centerY)) {
+					enclosableObj->OnEnclosed(); // This will call Pokemon::onEnclosed()
+				}
+			}
 
 			//printf("depth headnext %d current %d \n", headNext->depth, current->depth);
 			freeCoordsBackward(headNext,current);
