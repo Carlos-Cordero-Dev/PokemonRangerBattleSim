@@ -29,8 +29,6 @@ void DestroyStack(Coord **stack);
 
 int GetStackDepth(Coord* stack);
 
-bool PointInPolygon(Coord* start, Coord* end, int x, int y);
-
 void freeCoordsBackward(Coord* start, Coord* end);
 
 #endif

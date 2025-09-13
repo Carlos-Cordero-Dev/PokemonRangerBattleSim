@@ -6,6 +6,8 @@
 #endif
 
 #include "raylib.h"
+#include "raymath.h"
+
 #define GRAPHICS_API_OPENGL_33
 #include "rlgl.h" //rlFramebuffer
 //#include "glad.h" //glBindBuffer
@@ -257,10 +259,11 @@ int main(void)
 		ComputeAndUpdateDistance(&top);
 		ForceTopDistanceLimit(&top);
 
-		if (checkSnakeIntersection(&top, allEnclosableObjs) == true)
+		if (checkTopIntersection(&top, allEnclosableObjs) == true)
 		{
 			//printf("INTERSECTED\n");
 		}
+
 
 		//update every single world object
 		wo->Update();
@@ -269,6 +272,7 @@ int main(void)
 
 		//update pokemon
 
+		//check top collision with world objects
 
 
 		// End of Update

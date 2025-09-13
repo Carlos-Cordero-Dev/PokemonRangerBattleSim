@@ -164,30 +164,3 @@ int GetStackDepth(Coord* stack)
 	return count;
 }
 
-bool PointInPolygon(Coord* start, Coord* end, int x,int y) {
-	if (!start) return false;
-
-	bool inside = false;
-	Coord* current = start;
-	Coord* next = nullptr;
-
-	while (current) {
-		next = current->nextCoord ? current->nextCoord : start; // wrap around at end
-
-		// Edge (x1,y1) -> (x2,y2)
-		float x1 = (float)current->x;
-		float y1 = (float)current->y;
-		float x2 = (float)next->x;
-		float y2 = (float)next->y;
-
-		bool intersect = ((y1 > y) != (y2 > y)) &&
-			(x < (x2 - x1) * (y - y1) / (y2 - y1 + 0.00001f) + x1);
-
-		if (intersect) inside = !inside;
-
-		if (current == end) break; // stop at the given end
-		current = current->nextCoord;
-	}
-
-	return inside;
-}
