@@ -74,4 +74,8 @@ double calculatePolygonArea(Coord* start, Coord* end);
 const int kMinDepth = 10; // min number of nodes to consider a closed polygon
 const double kMinArea = 1000; //min area to consider close polygon
 
-bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& enclosableObjs);
+Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord* endNode);
+
+//returns the enclosed convex polygon that forms from the intersection
+
+Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& enclosableObjs);

@@ -204,6 +204,7 @@ int main(void)
 	SetTargetFPS(60);
 
 	Top top;
+	Coord* enclosedPoly = nullptr;
 
 	WorldObject* wo = new WorldObject(garchompAnims);
 	wo->position = Vector2({ 100, 100 });
@@ -263,9 +264,11 @@ int main(void)
 		ComputeAndUpdateDistance(&top);
 		ForceTopDistanceLimit(&top);
 
-		if (checkTopIntersection(&top, allEnclosableObjs) == true)
+		if (enclosedPoly = checkTopIntersection(&top, allEnclosableObjs))
 		{
-			//printf("INTERSECTED\n");
+			printf("INTERSECTED\n");
+			ShowStack(enclosedPoly);
+			DestroyStackNoDepth(&enclosedPoly);
 		}
 
 

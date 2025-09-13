@@ -32,11 +32,34 @@ void InsertCoord(Coord **stack, float x, float y)
   }
 }
 
+void InsertCoordNoDepth(Coord** stack, float x, float y)
+{
+	Coord* aux;
+	aux = (Coord*)malloc(sizeof(Coord));
+	aux->x = x;
+	aux->y = y;
+	aux->intersected = false;
+
+	//printf("depth %d\n", currDepth);
+
+	if (*stack != nullptr)
+	{ //stack contains something
+		aux->nextCoord = &**stack;
+		*stack = aux;
+	}
+	else //empty stack
+	{
+		aux->nextCoord = nullptr;
+		*stack = aux;
+	}
+}
+
+
 void ShowStack(Coord *stack)
 {
   Coord *aux;
   printf("=====================\n");
-  for(aux=stack;aux!=nullptr;aux=aux->nextCoord) printf("%d %d\n",aux->x,aux->y);
+  for(aux=stack;aux!=nullptr;aux=aux->nextCoord) printf("%f %f\n",aux->x,aux->y);
   printf("=====================\n");
 }
 
@@ -75,10 +98,6 @@ Coord* BotStack(Coord* stack, int mode)
 	return nullptr; // Invalid mode
 }
 
-Coord *TopStack(Coord *stack)
-{
-  return stack;
-}
 
 Coord *ExtractFIFO(Coord **stack)
 {
@@ -102,10 +121,44 @@ Coord *ExtractFIFO(Coord **stack)
   }
 }
 
+Coord* ExtractFIFONoDepth(Coord** stack)
+{
+	Coord* aux = nullptr;
+
+	if (*stack == nullptr) { /*printf("NO QUEDA COORD\n")*/; return NULL; }
+	else if ((*stack)->nextCoord == nullptr)
+	{
+		// printf("QUEDA UNA COORD\n");
+		aux = &**stack;
+		*stack = nullptr;
+		return aux;
+	}
+	else
+	{
+		aux = BotStack(*stack, 0);
+		BotStack(*stack, -1)->nextCoord = nullptr;
+		return aux;
+	}
+}
+
 void DestroyStack(Coord **stack)
 {
-  while(TopStack(*stack)!= nullptr) free(ExtractFIFO(&*stack));
-  currDepth = 0;
+	while (*stack != nullptr)
+	{
+		Coord* aux = ExtractFIFO(&*stack);
+		free(aux);
+	}
+
+	currDepth = 0;
+}
+void DestroyStackNoDepth(Coord** stack)
+{
+	while (*stack != nullptr)
+	{
+		Coord* aux = ExtractFIFO(&*stack);
+		printf("\nDestroyed");
+		free(aux);
+	}
 }
 
 void freeCoordsBackward(Coord* start, Coord* end) {

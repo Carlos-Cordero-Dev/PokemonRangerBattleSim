@@ -189,8 +189,34 @@ double calculatePolygonArea(Coord* start, Coord* end) {
 	return fabs(area) / 2.0;
 }
 
+Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord *endNode)
+{
+	Coord* newPoly;
+	Coord* aux = startNode;
+	Coord* newPolyAux = nullptr;
 
-bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& enclosableObjs) {
+	newPoly = (Coord*)malloc(sizeof(Coord));
+	newPoly->x = startNode->x;
+	newPoly->y = startNode->y;
+
+	while (aux != endNode)
+	{ 
+	  aux = aux->nextCoord;
+
+	  if (newPolyAux == nullptr) newPolyAux = newPoly;
+	  newPolyAux->nextCoord = (Coord*)malloc(sizeof(Coord));
+	  newPolyAux = newPolyAux->nextCoord;
+
+	  newPolyAux->x = aux->x;
+	  newPolyAux->y = aux->y;
+	}
+
+	newPolyAux->nextCoord = nullptr;
+
+	return newPoly;
+}
+
+Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& enclosableObjs) {
 	Coord* head = top->stack;
 	if (head == nullptr) return false;
 	if (head->nextCoord == nullptr) return false;
@@ -248,6 +274,8 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& enclos
 			printf("intersected %d %d %d %d  point %d %d area %f\n", head->depth, headNext->depth,
 				current->depth, current->nextCoord->depth, intersection.x, intersection.y, area);
 
+			Coord* enclosedPolygon = DeepcopyPolyStartEnd(head,current);
+			
 
 			//run enclosed logic
 			for (EnclosableObject* enclosableObj : enclosableObjs)
@@ -279,9 +307,9 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& enclos
 			//TODO: distance hard to implement bc you are deleting nodes buddy
 			//UpdateStackDepths(head);
 
-			return true;
+			return enclosedPolygon;
 		}
 		current = current->nextCoord;
 	}
-	return false;
+	return nullptr;
 }

@@ -14,6 +14,9 @@ struct Coord
 
 void InsertCoord(Coord **stack, float x, float y);
 
+void InsertCoordNoDepth(Coord** stack, float x, float y);
+
+
 void ShowStack(Coord *stack);
 
 int GetStackCount(Coord *stack);
@@ -21,11 +24,13 @@ int GetStackCount(Coord *stack);
 //mode: 0 = goes up until the last coord, -1= goes to the one before last coord, so lastcoord -1
 Coord *BotStack(Coord *stack,int mode);
 
-Coord *TopStack(Coord *stack);
-
 Coord *ExtractFIFO(Coord **stack);
 
+Coord* ExtractFIFONoDepth(Coord** stack);
+
 void DestroyStack(Coord **stack);
+
+void DestroyStackNoDepth(Coord** stack);
 
 int GetStackDepth(Coord* stack);
 
