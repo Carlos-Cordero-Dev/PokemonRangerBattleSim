@@ -119,7 +119,6 @@ int main(void)
 
 	// === === === 
 
-
 	unsigned int stylus_framebuffer = rlLoadFramebuffer();
 	unsigned int main_framebuffer = rlLoadFramebuffer();
 
@@ -205,6 +204,7 @@ int main(void)
 
 	Top top;
 	Coord* enclosedPoly = nullptr;
+	std::vector<Vector2> enclosedAuxPoints;
 
 	WorldObject* wo = new WorldObject(garchompAnims);
 	wo->position = Vector2({ 100, 100 });
@@ -247,6 +247,9 @@ int main(void)
 			if (top.stack != nullptr)
 			{
 				ResetTop(&top);
+				DestroyStackNoDepth(&enclosedPoly);
+				enclosedAuxPoints.clear();
+				printf("\nReset");
 
 				//TODO: propper disable just in case instead of offscreen
 				topObject->position.x = -100;
@@ -264,11 +267,23 @@ int main(void)
 		ComputeAndUpdateDistance(&top);
 		ForceTopDistanceLimit(&top);
 
-		if (enclosedPoly = checkTopIntersection(&top, allEnclosableObjs))
+		if (Coord *currEnclosedPoly = checkTopIntersection(&top, allEnclosableObjs))
 		{
-			printf("INTERSECTED\n");
-			ShowStack(enclosedPoly);
-			DestroyStackNoDepth(&enclosedPoly);
+			//printf("INTERSECTED\n");
+			//ShowStack(enclosedPoly);
+			//DestroyStackNoDepth(&enclosedPoly);
+			if (enclosedPoly)
+			{
+				//yellow transition is always destroyed if another appears
+				DestroyStackNoDepth(&enclosedPoly);
+				enclosedAuxPoints.clear();
+			}
+
+			enclosedPoly = currEnclosedPoly;
+			CalculateEnclosedShaderAreaPoints(enclosedPoly, enclosedAuxPoints);
+
+			//NOTE: yellow transition is always destroyed if another appears
+			// catch circles can stack, so circles have lifetime (particles)
 		}
 
 
@@ -362,6 +377,37 @@ int main(void)
 				next = next->nextCoord;
 			}
 
+			// yellow transition
+			//rlDisableBackfaceCulling(); //this does nothing, cool!
+
+			for(int i = 0; i < enclosedAuxPoints.size(); i+=4)
+			{				
+				// horizontal lines higher "thickness"
+				// vertical lines little to no thickness
+
+				//counter-clockwise
+				Vector2 topLeft = enclosedAuxPoints[i + 0];
+				Vector2 topRight = enclosedAuxPoints[i + 1];
+				Vector2 botLeft = enclosedAuxPoints[i + 2];
+				Vector2 botRight = enclosedAuxPoints[i + 3];
+
+				DrawTriangle(topLeft, botLeft, topRight, YELLOW);
+				DrawTriangle(topLeft, topRight, botLeft, YELLOW);
+
+				DrawTriangle(topRight, botLeft, botRight, YELLOW);
+				DrawTriangle(topRight, botRight, botLeft, YELLOW);
+
+				//debug draw nodes
+				//DrawCircleV(enclosedAuxPoints[i + 0],1.0f,RED);
+				//DrawCircleV(enclosedAuxPoints[i + 3], 1.0f, BLUE);
+
+			}
+
+			//rlEnableBackfaceCulling();
+			
+			//TODO: update yellow transition
+			// horizontal lines higher "thickness"
+			// vertical lines little to no thickness
 		}
 
 		topObject->Draw(frame);

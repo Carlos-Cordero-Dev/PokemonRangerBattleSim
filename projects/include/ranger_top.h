@@ -27,6 +27,7 @@
 #include "FIFO.h"
 
 #include <algorithm>
+#include <vector>
 
 #include "enclosable_object.h"
 #include "collision.h"
@@ -79,3 +80,5 @@ Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord* endNode);
 //returns the enclosed convex polygon that forms from the intersection
 
 Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& enclosableObjs);
+
+void CalculateEnclosedShaderAreaPoints(Coord* enclosedPoints, std::vector<Vector2>& vectorToFill);
