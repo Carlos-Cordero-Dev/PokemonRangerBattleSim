@@ -5,14 +5,14 @@
 
 struct Coord
 { //only used for fifo stack implementation
-  int x,y;
+  float x,y;
   Coord *nextCoord;
   bool intersected = false;
   int depth = 0;
   float distance_at_point = 0.0f;
 };
 
-void InsertCoord(Coord **stack, int x, int y);
+void InsertCoord(Coord **stack, float x, float y);
 
 void ShowStack(Coord *stack);
 

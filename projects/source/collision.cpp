@@ -23,6 +23,61 @@ bool IsIntersecting(Point a, Point b, Point c, Point d)
 	return (r >= 0 && r <= 1) && (s >= 0 && s <= 1);
 }
 
+bool PolygonCollidingWithLine(Coord* stack, Point lineOrgin, Point lineEnd)
+{
+	Coord* coord = stack;
+	while (coord)
+	{
+		Point polyLineOrigin = { coord->x,coord->y };
+		Point polyLineEnd = { coord->nextCoord->x,coord->nextCoord->y };
+
+		if (IsIntersecting(polyLineOrigin, polyLineEnd, lineOrgin, lineEnd)) return true;
+
+		coord = coord->nextCoord;
+	}
+
+	return false;
+}
+
+bool PolygonCollidingWithBox(Coord* stack, float boxOriginX, float boxOriginY, float boxWidth, float boxHeight)
+{
+
+	Coord* coord = stack;
+	while (coord && coord->nextCoord)
+	{
+		Point polyLineOrigin = { coord->x,coord->y };
+		Point polyLineEnd = { coord->nextCoord->x,coord->nextCoord->y };
+
+		//TODO: maybe crossing is unnecessary overhead? 
+
+		//note: originally used PolygonCollidingWithLine but that loops the whole linked list for every line, 
+		// this skips that part
+		
+		//cross1 (topleft to botright)
+		if (IsIntersecting(polyLineOrigin, polyLineEnd,{ boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY + boxHeight })) return true;
+		//cross2 (topright to botleft)
+		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX + boxWidth,boxOriginY }, { boxOriginX,boxOriginY + boxHeight })) return true;
+		//top
+		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY })) return true;
+		//right
+		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX + boxWidth,boxOriginY }, { boxOriginX + boxWidth,boxOriginY + boxHeight })) return true;
+		//bot
+		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY + boxHeight }, { boxOriginX + boxWidth,boxOriginY + boxHeight })) return true;
+		//left
+		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY }, { boxOriginX,boxOriginY + boxHeight })) return true;
+
+		coord = coord->nextCoord;
+	}
+
+	return false;
+
+}
+
+bool PolygonCollidingWithBox(Coord* stack, Rectangle bb)
+{
+	return PolygonCollidingWithBox(stack, bb.x, bb.y, bb.width, bb.height);
+}
+
 bool PolygonHeadCollidingWithLine(Coord* stack, int lineCount /*starting from head*/, Point lineOrgin, Point lineEnd)
 {
 	if (stack == nullptr) return false;
@@ -36,7 +91,7 @@ bool PolygonHeadCollidingWithLine(Coord* stack, int lineCount /*starting from he
 			if (aux->nextCoord == nullptr) return false;
 			else
 			{
-				Point polyLineOrigin = { (float)aux->x,(float)aux->y }, polyLineEnd = { (float)aux->nextCoord->x,(float)aux->nextCoord->y };
+				Point polyLineOrigin = { aux->x,aux->y }, polyLineEnd = { aux->nextCoord->x,aux->nextCoord->y };
 
 				if (IsIntersecting(polyLineOrigin, polyLineEnd, lineOrgin, lineEnd)) return true;
 
@@ -108,7 +163,7 @@ Point* CoordListToPointList(Coord* poly_start, Coord* poly_end)
 	{
 		if (current)
 		{
-			pointList[i] = { (float)current->x,(float)current->y };
+			pointList[i] = { current->x,current->y };
 			current = current->nextCoord;
 		}
 	}

@@ -16,11 +16,14 @@ public:
 	void Update();
 	void Cleanup();
 
+	void OnCollision() { printf("collided"); };
+
 public:
 
 	Vector2 position;
 	float scale;
 	float rotationDeg;
+	bool canCollide = true;
 
 	Rectangle boundingBox;
 	SpriteAnimation** spriteAnim;

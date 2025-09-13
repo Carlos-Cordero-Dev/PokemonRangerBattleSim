@@ -9,7 +9,7 @@
 
 int currDepth = 0;
 
-void InsertCoord(Coord **stack, int x, int y)
+void InsertCoord(Coord **stack, float x, float y)
 {
   Coord* aux;
   aux = (Coord*) malloc(sizeof(Coord));

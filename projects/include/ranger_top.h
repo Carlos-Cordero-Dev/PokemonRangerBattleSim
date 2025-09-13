@@ -33,13 +33,7 @@
 
 struct Top
 {
-	Top()
-	{
-		poly = (Point*)calloc((int)kMaxPolyLength + 1/*to avoid rounding down during cast*/, sizeof(Point));
-	}
-
 	Coord* stack = nullptr;
-	Point* poly = nullptr;
 	float distance = 0.0f;
 };
 
@@ -47,8 +41,8 @@ void InsertTopCoord(Top* top, int x, int y);
 
 inline float Dist(Coord* c1, Coord* c2)
 {
-	Vector2 v1 = { (float)c1->x,(float)c1->y };
-	Vector2 v2 = { (float)c2->x,(float)c2->y };
+	Vector2 v1 = { c1->x,c1->y };
+	Vector2 v2 = { c2->x,c2->y };
 
 	float dist = Vector2Distance(v1, v2);
 	return dist;

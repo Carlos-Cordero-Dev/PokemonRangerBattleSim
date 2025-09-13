@@ -218,6 +218,10 @@ int main(void)
 	std::vector<EnclosableObject*> allEnclosableObjs;
 	allEnclosableObjs.emplace_back(p);
 
+	std::vector<WorldObject*> allWorldObjs;
+	allWorldObjs.emplace_back(wo);
+	allWorldObjs.emplace_back(p);
+
 	int frame = 0;
 	double currTime = 0.0;
 	double lastTime = 0;
@@ -273,7 +277,13 @@ int main(void)
 		//update pokemon
 
 		//check top collision with world objects
-
+		for (WorldObject* wo : allWorldObjs)
+		{
+			if (PolygonCollidingWithBox(top.stack, wo->boundingBox))
+			{
+				wo->OnCollision();
+			}
+		}
 
 		// End of Update
 		// ---------------------------------------------------------------------------------

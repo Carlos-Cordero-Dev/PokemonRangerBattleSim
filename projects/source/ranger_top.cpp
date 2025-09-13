@@ -68,8 +68,8 @@ void ForceTopDistanceLimit(Top* top)
 		// and top->distance (which is lastCoord->distance_at_point) > kMaxDistance.
 		// We need to move lastCoord to the kMaxDistance point.
 
-		Vector2 lastCoordVec = { (float)lastCoord->x, (float)lastCoord->y };
-		Vector2 lastMinusOneCoordVec = { (float)lastMinusOneCoord->x, (float)lastMinusOneCoord->y };
+		Vector2 lastCoordVec = { lastCoord->x, lastCoord->y };
+		Vector2 lastMinusOneCoordVec = { lastMinusOneCoord->x, lastMinusOneCoord->y };
 		Vector2 lastMinusOneToLastVec = Vector2Subtract(lastCoordVec, lastMinusOneCoordVec);
 
 		float distLeftToCover = kMaxPolyLength - lastMinusOneCoord->distance_at_point;
