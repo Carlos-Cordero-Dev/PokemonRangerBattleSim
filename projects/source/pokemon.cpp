@@ -1,7 +1,7 @@
 
 #include "pokemon.h"
 
-Pokemon::Pokemon(SpriteAnimation** sa) : EnclosableObject(sa)
+Pokemon::Pokemon(const std::vector<SpriteAnimation*>& animations) : EnclosableObject(animations)
 {
 
 }

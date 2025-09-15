@@ -1,47 +1,38 @@
 
-#ifndef TIMER_H_
-#define TIMER_H_ 1
+#pragma once
 
-#include <chrono>
+#include <cstdint> //uint64_t
 #include "constants.h"
-
-typedef std::chrono::high_resolution_clock GClock;
-
-typedef GClock::time_point GTimePoint;
-typedef std::chrono::duration<uint64_t, std::ratio<1, 1000>> GTimeUnit;
-typedef std::chrono::duration<double, std::ratio<1, 1>> GImpulseUnit;
-typedef std::chrono::duration<double, std::ratio<1, KFPS>> GMaxFPSUnit; //Max FPS, ratio<1,60> = 60 FPS
+#include "raylib.h"
 
 class Timer
 {
 public:
-	//HAS TO BE REFACTORED INTO NOT BEING ABLE TO BE INSTANCIATED MULTIPLE TIMES
-	Timer();
-	~Timer(){};
 
-	[[nodiscard]] inline double get_delta_time() { return (double)deltaTime_.count(); };	
-	[[nodiscard]] inline int get_time_ms() { return (int)gameTime_.count(); };	//milliseconds
+	static Timer& Timer::GetInstance() {
+		static Timer instance;
+		return instance;
+	}
 
+	//needs to be called every frame
 	void Update();
-	void Reset();
-	void FrameSleep();
 
-	uint64_t frame = 0;
+	float GetDeltaTime() const { return GetFrameTime(); };
+	float GetGameTime() const { return GetTime(); };
+	int GetFrame() const { return m_gameFrame; };
+
 private:
-
+	Timer();
+	~Timer();
+	Timer(const Timer&) = delete;
 	Timer& operator=(const Timer&) = delete;
 
 private:
 
+	float m_deltaTime = 0.0f;
+	double m_lastFrameTime = 0.0;
 
-	const GMaxFPSUnit GMaxFPS_{ 1 };
-
-	GTimeUnit gameTime_;
-	GImpulseUnit deltaTime_;
-
-	GTimePoint gameStart_;
-	GTimePoint gameFrameBegin_;
-	GTimePoint gameFrameEnd_;
-	GTimePoint gameFrameMark_;
+	double m_gameTime = 0.0;
+	uint64_t m_gameFrame = 0;
 };
-#endif
+

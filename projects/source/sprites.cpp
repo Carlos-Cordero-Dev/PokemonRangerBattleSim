@@ -1,100 +1,46 @@
 
 #include "sprites.h"
+#include "timer.h"
 
-void SpriteAnimation::advanceFrame(int frame)
+#include "animation_database.h"
+
+void SpriteAnimation::Update()
 {
-	framesPassedSinceLastAnimUpdate++;
-	if (framesPassedSinceLastAnimUpdate >= advanceRate)
+	//inspired by: https://github.com/jkatsanis/SpriteEngineUI/blob/main/Engine/Engine/Core/Source/Sprite/Components/Animator/Animation.cpp
+	
+	float deltaTime = Timer::GetInstance().GetDeltaTime();
+	this->timePassed += deltaTime;
+	this->totalTimePassed += deltaTime;
+
+	float keyframeDelay = animData->keyframes[currentFrame].delaySec;
+	//check if not at default -1.0f delay keyframe
+	if (keyframeDelay > 0.0f)
 	{
-		framesPassedSinceLastAnimUpdate = 0;
+		float condition = keyframeDelay / 100.0f/*ms conversion*/;
+		if (this->timePassed >= condition)
+		{
+			//reset internal keyframe timer
+			this->timePassed = 0.0f;
 
-		currentFrame++;
-		if (currentFrame >= numberOfTextures) currentFrame = 0;
+			//move to next keyframe
+			currentFrame++;
 
-		//unused for now
-		lastRealFrame = frame;
-
+			//potentially stop if not needed to loop?
+		}
 	}
-}
+	else 
+	{
+		printf("\nDefault -1 keyframe");
+	}
 
+}
 void SpriteAnimation::Draw(int posX, int posY)
 {
-	DrawTexture(textures[currentFrame].texture, posX, posY, WHITE);
+	DrawTexture(animData->textures[currentFrame].texture, posX, posY, WHITE);
 }
 
 void SpriteAnimation::DrawRotScale(int posX, int posY, float rotDeg, float scale)
 {
 	Vector2 pos = { posX, posY };
-	DrawTextureEx(textures[currentFrame].texture, pos, rotDeg, scale , WHITE);
-}
-void loadTexturesFromFolder(const std::string& basePathFromResourceFolder, SpriteAnimation** spriteAnims,
-	int numOfAnimationsInFolder, int numOfTexturesPerAnimation, const std::string& texNamePrefix) {
-
-	int currTextureIndex = 0;
-	int currSpriteAnimIndex = 0;
-
-	std::string basePath = RESOURCES_FOLDER + basePathFromResourceFolder;
-
-	// Traverse directories and subdirectories
-	for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(basePath)) {
-		if (dirEntry.is_regular_file()) {
-			// Get file path and check if it's a texture (by extension, e.g., .png, .jpg)
-			std::string filePath = dirEntry.path().string();
-			std::string extension = dirEntry.path().extension().string();
-
-			// Skip files that are not textures (you can add more extensions if needed)
-			if (extension != ".png" && extension != ".jpg" && extension != ".jpeg") {
-				continue;
-			}
-
-			// Extract the directory structure (basename)
-			std::string relativePath = dirEntry.path().string();
-			size_t baseDirPos = relativePath.find(basePath);
-			if (baseDirPos != std::string::npos) {
-				relativePath = relativePath.substr(baseDirPos + basePath.length() + 1); // Skip the basePath and leading '/'
-			}
-
-			// Extract parts of the path to create the name
-			size_t lastSlash = relativePath.find_last_of('/');
-			std::string category = relativePath.substr(0, lastSlash);  // e.g., "attack"
-			std::replace(category.begin(), category.end(), '\\', '_');
-
-			size_t extPos = category.find_last_of('.');
-			if (extPos != std::string::npos) {
-				category = category.substr(0, extPos);  // Remove ".png", leaving "18"
-			}
-
-			std::string textureName = category;
-
-			std::replace(filePath.begin(), filePath.end(), '\\', '/');
-			Texture2D texture = LoadTexture(filePath.c_str());
-
-			// Add the texture to the vector with its name
-			if (!texNamePrefix.empty())
-			{
-				textureName = textureName.append(texNamePrefix);
-			}
-			spriteAnims[currSpriteAnimIndex]->textures.push_back({ texture, textureName });
-
-			currTextureIndex++;
-			if (currTextureIndex >= numOfTexturesPerAnimation)
-			{
-				currTextureIndex = 0;
-				currSpriteAnimIndex++;
-				if (currSpriteAnimIndex >= numOfAnimationsInFolder)
-				{
-					//cache number of textures
-					for (int i = 0; i < numOfAnimationsInFolder; i++)
-					{
-						spriteAnims[i]->numberOfTextures = spriteAnims[i]->textures.size();
-					}
-
-					//this should only happen in the literal end step of the algorithm and if this is ever reached while the 
-					//folder is not completely traversed something is very wrong
-					return;
-				}
-			}
-		}
-	}
-
+	DrawTextureEx(animData->textures[currentFrame].texture, pos, rotDeg, scale , WHITE);
 }

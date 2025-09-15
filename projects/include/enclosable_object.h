@@ -7,7 +7,7 @@
 class EnclosableObject : public WorldObject
 {
 public:
-	EnclosableObject(SpriteAnimation** sa);
+	EnclosableObject(const std::vector<SpriteAnimation*>& animations);
 
 	virtual void OnEnclosed() = 0;
 

@@ -7,7 +7,7 @@
 class Pokemon : public EnclosableObject
 {
 public:
-	Pokemon(SpriteAnimation** sa);
+	Pokemon(const std::vector<SpriteAnimation*>& animations);
 
 	void OnEnclosed() override;
 	void Update();

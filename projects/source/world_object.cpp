@@ -1,9 +1,12 @@
 
 #include "world_object.h"
+#include "animation_database.h"
 
-WorldObject::WorldObject(SpriteAnimation** sa)
+
+WorldObject::WorldObject(const std::vector<SpriteAnimation*>& animations)
 {
-	spriteAnim = sa;
+	this->animations = animations;
+	this->state = StateMachine::kStateIdle;
 
 	position.x = 0;
 	position.y = 0;
@@ -14,43 +17,27 @@ WorldObject::WorldObject(SpriteAnimation** sa)
 	boundingBox = Rectangle();
 	boundingBox.x = position.x;
 	boundingBox.y = position.y;
-	boundingBox.width = sa[0]->textures[0].texture.width;
-	boundingBox.height = sa[0]->textures[0].texture.height;
+
+	//TODO: eventually this comes from metadata from each frame
+	boundingBox.width = animations[0]->animData->textures[0].texture.width;
+	boundingBox.height = animations[0]->animData->textures[0].texture.height;
 
 }
 
-void WorldObject::Draw(int frame)
+void WorldObject::Draw()
 {
-	spriteAnim[0]->DrawRotScale(
+	animations[state]->DrawRotScale(
 		position.x - boundingBox.width * scale /2,
 		position.y - boundingBox.height * scale / 2,
 		rotationDeg, scale);
 	
-	spriteAnim[0]->advanceFrame(frame);
+	animations[state]->Update();
 
 	//debug draw bounding box
 	DrawRectangleLines(
 		boundingBox.x - boundingBox.width * scale / 2 ,
 		boundingBox.y - boundingBox.height * scale / 2,
 		boundingBox.width * scale,boundingBox.height * scale,
-		RED
-	);
-}
-
-void WorldObject::Draw(int frame, int animation)
-{
-	spriteAnim[animation]->DrawRotScale(
-		position.x - boundingBox.width * scale / 2,
-		position.y - boundingBox.height * scale / 2,
-		rotationDeg, scale);
-
-	spriteAnim[animation]->advanceFrame(frame);
-
-	//debug draw bounding box
-	DrawRectangleLines(
-		boundingBox.x - boundingBox.width * scale / 2,
-		boundingBox.y - boundingBox.height * scale / 2,
-		boundingBox.width * scale, boundingBox.height * scale,
 		RED
 	);
 }

@@ -29,8 +29,10 @@
 #endif
 #endif
 
+
 #include "constants.h"
-#include "geometry_shader_support.h"
+#include "animation_database.h"
+//#include "geometry_shader_support.h"
 #include "sprites.h"
 #include "timer.h"
 #include "controls.h"
@@ -173,27 +175,37 @@ int main(void)
     //loadTexturesFromFolder("romfs:/resources/sprites");
     //texture = textures[0].texture;
 
-	SpriteAnimation* garchompAnim0 = new SpriteAnimation();
-    garchompAnim0->advanceRate = 5;
-	SpriteAnimation* garchompAnim1 = new SpriteAnimation();
-	SpriteAnimation* garchompAnim2 = new SpriteAnimation();
-	SpriteAnimation* garchompAnim3 = new SpriteAnimation();
 
-	SpriteAnimation** garchompAnims = new SpriteAnimation*[4];
-	garchompAnims[0] = garchompAnim0;
-	garchompAnims[1] = garchompAnim1;
-	garchompAnims[2] = garchompAnim2;
-	garchompAnims[3] = garchompAnim3;
-    
-    loadTexturesFromFolder("sprites/garchomp/attack", garchompAnims, 4, 6, "garchomp_attack");
+	//TODO: objective
+	/*
+	* -you have SpriteAnims that have are only loaded once
+	* -each WorldObject gets a copy of that spriteAnim thats independent, but it doesnt copy the texture each time its
+	* initialized, it just refers to the texture pointer
+	* -every other variable is deep copied
+	*/
+	//SpriteAnimation* garchompAnim0 = new SpriteAnimation();
+	//SpriteAnimation* garchompAnim1 = new SpriteAnimation();
+	//SpriteAnimation* garchompAnim2 = new SpriteAnimation();
+	//SpriteAnimation* garchompAnim3 = new SpriteAnimation();
 
-	SpriteAnimation* stylusAnim0 = new SpriteAnimation();
-	stylusAnim0->advanceRate = 5;
+	//SpriteAnimation** garchompAnims = new SpriteAnimation*[4];
+	//garchompAnims[0] = garchompAnim0;
+	//garchompAnims[1] = garchompAnim1;
+	//garchompAnims[2] = garchompAnim2;
+	//garchompAnims[3] = garchompAnim3;
 
-	SpriteAnimation** stylusAnims = new SpriteAnimation * [1];
-	stylusAnims[0] = stylusAnim0;
+	AnimationDatabase animDatabase;
+	
+	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack", 4, 6, "garchomp_attack");
+	animDatabase.LoadAnimDataFromFolder("sprites/stylus/top", 1, 3, "top_idle_spin");
 
-	loadTexturesFromFolder("sprites/stylus/top", stylusAnims, 1, 3, "top_idle_spin");
+	std::vector<SpriteAnimation*> garchompAnims;
+	garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("left_up_0garchomp_attack") });
+
+
+	std::vector<SpriteAnimation*> stylusAnims;
+	stylusAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("left_up_0garchomp_attack") });
+
 
     printf("\ndamnson2=================================\n");
 	//---------------------------------------------------------------------------------------
@@ -227,7 +239,8 @@ int main(void)
 	double currTime = 0.0;
 	double lastTime = 0;
 
-	Timer timer = 
+	Timer& timer = Timer::GetInstance();
+
 
 	while (!WindowShouldClose())    // Detect window close button or ESC key
 	{
@@ -423,7 +436,7 @@ int main(void)
 			// vertical lines little to no thickness
 		}
 
-		topObject->Draw(frame);
+		topObject->Draw();
 
 		//DrawCurrentPolygonOnlyLines(top.stack);
 
@@ -452,8 +465,8 @@ int main(void)
 
 		//draw every world object
 
-		wo->Draw(frame);
-		p->Draw(frame);
+		wo->Draw();
+		p->Draw();
 
 
 		EndTextureMode();
@@ -477,9 +490,13 @@ int main(void)
 
 		frame++;
 		currTime += GetFrameTime();
+
+		timer.Update();
+
 		//----------------------------------------------------------------------------------
 		//wait or end of frame
 		//timer.FrameSleep();
+		//NOTE: EndDrawing() does this by default check custom swap functions
 	}
 
 	ResetTop(&top);

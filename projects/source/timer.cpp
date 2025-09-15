@@ -1,40 +1,19 @@
 
 #include "timer.h"
+#include "raylib.h"
 
-#include <chrono>
-#include <thread>
-
-#define GNow() GClock::now()
-#define GTimeCast(value) std::chrono::duration_cast<GTimeUnit>(value)
-#define GImpCast(value) std::chrono::duration_cast<GImpulseUnit>(value)
-
-Timer::Timer()
-{
-	this->Reset();
+Timer::Timer() : m_deltaTime(0.0f), m_lastFrameTime(0.0) {
+    m_lastFrameTime = GetTime();
 }
 
-void Timer::Reset()
-{
-	gameStart_ = GNow();
-	gameFrameBegin_ = gameStart_;
-}
+Timer::~Timer() {}
 
-void Timer::Update()
-{
-	auto currentTime = GNow();
-	gameTime_ = GTimeCast(currentTime - gameStart_);
-	deltaTime_ = GImpCast(currentTime - gameFrameBegin_);
-	gameFrameBegin_ = currentTime;
-	frame++;
-}
+void Timer::Update() {
 
-void Timer::FrameSleep()
-{
-	gameFrameEnd_ = GNow();
-	gameFrameMark_ = gameFrameBegin_;
-
-	GImpulseUnit frameImpulse = (gameFrameEnd_ - gameFrameBegin_);
-	if (frameImpulse < GMaxFPS_) { //TOO FAST, Limit the framerate by sleeping.
-		std::this_thread::sleep_for(GMaxFPS_ - frameImpulse);
-	}
+    //disabled cause why would I need to call this every frame
+    
+    //m_lastFrameTime = m_gameTime;
+    //m_gameTime = GetTime();
+    //m_deltaTime = GetFrameTime();
+    m_gameFrame++;
 }

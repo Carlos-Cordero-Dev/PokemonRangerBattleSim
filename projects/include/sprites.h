@@ -10,6 +10,8 @@
 
 #include "constants.h"
 
+class AnimationData;
+
 // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 struct TextureData {
 	Texture2D texture;
@@ -18,42 +20,40 @@ struct TextureData {
 
 class SpriteAnimation
 {
-	/*
-	update()
-	{
-		frame++
-			foreach(activeanim in activeanims)
-		{
-			//important to make them DEPENDENT on the framerate
-			if(activeanim.state != frozen)
-			activeanim.frameAdvace()
-		}
-	}*/
-	enum class AnimState
-	{
-		kPlaying = 1,
-		kFrozen,
-		kMAXStates
-	};
 
 public:
-	void advanceFrame(int frame);
+	//TODO: if nullptr animData prolly should create a no sprite sprite
+	SpriteAnimation(AnimationData* animData) { this->animData = animData; };
+
+	void Update();
 	void Draw(int posX, int posY);
 	void DrawRotScale(int posX, int posY, float rotDeg, float scale);
 
-	std::string name;
-	std::vector<TextureData> textures;
-	int advanceRate = 1; //every how many frames to advance
-	int numberOfTextures;
+	//TODO: if pause is ever needed these are useful
+	// 	enum class AnimState
+	//{
+	//	kPlaying = 1,
+	//		kFrozen,
+	//		kMAXStates
+	//};
+	//void Pause(); useAnimState pls
+	//void Play();
+
+	bool loop = false;
+	AnimationData* animData = nullptr;
+
 private:
-	int id;
+	SpriteAnimation();
+private:
 
 	int currentFrame = 0;
 	int framesPassedSinceLastAnimUpdate = 0;
 	int lastRealFrame = 0;
+
+	float timePassed = 0.0f;
+	float totalTimePassed = 0.0f;
 };
 
-void loadTexturesFromFolder(const std::string& basePathFromResourceFolder, SpriteAnimation** spriteAnims,
-	int numOfAnimationsInFolder, int numOfTexturesPerAnimation, const std::string& texNamePrefix);
+
 
  
