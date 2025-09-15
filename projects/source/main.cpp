@@ -169,30 +169,7 @@ int main(void)
 #endif
 
 
-    // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-
-	// texture = LoadTexture("romfs:/resources/raylib_logo.png");        // Texture loading
-    //loadTexturesFromFolder("romfs:/resources/sprites");
-    //texture = textures[0].texture;
-
-
-	//TODO: objective
-	/*
-	* -you have SpriteAnims that have are only loaded once
-	* -each WorldObject gets a copy of that spriteAnim thats independent, but it doesnt copy the texture each time its
-	* initialized, it just refers to the texture pointer
-	* -every other variable is deep copied
-	*/
-	//SpriteAnimation* garchompAnim0 = new SpriteAnimation();
-	//SpriteAnimation* garchompAnim1 = new SpriteAnimation();
-	//SpriteAnimation* garchompAnim2 = new SpriteAnimation();
-	//SpriteAnimation* garchompAnim3 = new SpriteAnimation();
-
-	//SpriteAnimation** garchompAnims = new SpriteAnimation*[4];
-	//garchompAnims[0] = garchompAnim0;
-	//garchompAnims[1] = garchompAnim1;
-	//garchompAnims[2] = garchompAnim2;
-	//garchompAnims[3] = garchompAnim3;
+    // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required) 
 
 	AnimationDatabase animDatabase;
 	
@@ -201,7 +178,6 @@ int main(void)
 
 	std::vector<SpriteAnimation*> garchompAnims;
 	garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("left_up_0garchomp_attack") });
-
 
 	std::vector<SpriteAnimation*> stylusAnims;
 	stylusAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("left_up_0garchomp_attack") });
@@ -240,7 +216,7 @@ int main(void)
 	double lastTime = 0;
 
 	Timer& timer = Timer::GetInstance();
-
+	float yellowTransitionElapsedTime = 0.0f;
 
 	while (!WindowShouldClose())    // Detect window close button or ESC key
 	{
@@ -392,11 +368,23 @@ int main(void)
 				next = next->nextCoord;
 			}
 
-			// yellow transition
-			//rlDisableBackfaceCulling(); //this does nothing, cool!
 
-			for(int i = 0; i < enclosedAuxPoints.size(); i+=4)
-			{				
+			//rlEnableBackfaceCulling();
+			
+			//TODO: update yellow transition
+			// horizontal lines higher "thickness"
+			// vertical lines little to no thickness
+		}
+
+		// yellow transition - (needs to be rendered even if player doesnt touch screen)
+		
+		//rlDisableBackfaceCulling(); //this does nothing, cool!
+		int enclosedPointsCount = enclosedAuxPoints.size();
+		if (enclosedPointsCount > 0)
+		{
+
+			for (int i = 0; i < enclosedPointsCount; i += 4)
+			{
 				// horizontal lines higher "thickness"
 				// vertical lines little to no thickness
 
@@ -412,28 +400,40 @@ int main(void)
 				DrawTriangle(topRight, botLeft, botRight, YELLOW);
 				DrawTriangle(topRight, botRight, botLeft, YELLOW); //dupe
 
-				//update enclosed points
-				
-				//determine up direction
-				//TODO: this has to go somewhere else and make it deltatime dependant and kYellowTransitionUpdateSpeed dependant
-				Vector2 upDir = Vector2Normalize(Vector2Subtract(botLeft,topLeft));
-
-				enclosedAuxPoints[i + 0].y += upDir.y * KYellowTransitionShrinkingFactor;
-				enclosedAuxPoints[i + 1].y += upDir.y * KYellowTransitionShrinkingFactor;
-				enclosedAuxPoints[i + 2].y -= upDir.y * KYellowTransitionShrinkingFactor;
-				enclosedAuxPoints[i + 3].y -= upDir.y * KYellowTransitionShrinkingFactor;
 
 				//debug draw nodes
 				//DrawCircleV(enclosedAuxPoints[i + 0],1.0f,RED);
 				//DrawCircleV(enclosedAuxPoints[i + 3], 1.0f, BLUE);
 
 			}
-
-			//rlEnableBackfaceCulling();
 			
-			//TODO: update yellow transition
-			// horizontal lines higher "thickness"
-			// vertical lines little to no thickness
+			//update points - time dependent
+			yellowTransitionElapsedTime += timer.GetDeltaTime();
+
+			if (yellowTransitionElapsedTime > kYellowTransitionShrinkingFrequencySec)
+			{
+				yellowTransitionElapsedTime = 0.0f;
+
+				for (int i = 0; i < enclosedPointsCount; i += 4)
+				{
+					// horizontal lines higher "thickness"
+					// vertical lines little to no thickness
+
+					//counter-clockwise
+					Vector2 topLeft = enclosedAuxPoints[i + 0];
+					Vector2 topRight = enclosedAuxPoints[i + 1];
+					Vector2 botLeft = enclosedAuxPoints[i + 2];
+					Vector2 botRight = enclosedAuxPoints[i + 3];
+					//determine up direction
+					//TODO: this has to go somewhere else and make it deltatime dependant and kYellowTransitionUpdateSpeed dependant
+					Vector2 upDir = Vector2Normalize(Vector2Subtract(botLeft, topLeft));
+
+					enclosedAuxPoints[i + 0].y += upDir.y * KYellowTransitionShrinkingFactor;
+					enclosedAuxPoints[i + 1].y += upDir.y * KYellowTransitionShrinkingFactor;
+					enclosedAuxPoints[i + 2].y -= upDir.y * KYellowTransitionShrinkingFactor;
+					enclosedAuxPoints[i + 3].y -= upDir.y * KYellowTransitionShrinkingFactor;
+				}
+			}
 		}
 
 		topObject->Draw();

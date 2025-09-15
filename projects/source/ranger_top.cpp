@@ -234,6 +234,7 @@ Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& encl
 			if ((depth < kMinDepth) /*|| (distance < kMinDistance)*/)
 			{
 				current = current->nextCoord;
+				//printf("\nunder 10 depth not intersect");
 				continue;
 			}
 
@@ -261,11 +262,12 @@ Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& encl
 			current->x = oldcurrentX;
 			current->y = oldcurrentY;
 
-			if (area < kMinArea)
-			{
-				current = current->nextCoord;
-				continue;
-			}
+			//if (area < kMinArea)
+			//{
+			//	current = current->nextCoord;
+			//	printf("\nmin area not valid");
+			//	continue;
+			//}
 
 			head->intersected = true;
 			headNext->intersected = true;

@@ -16,7 +16,7 @@ void SpriteAnimation::Update()
 	//check if not at default -1.0f delay keyframe
 	if (keyframeDelay > 0.0f)
 	{
-		float condition = keyframeDelay / 100.0f/*ms conversion*/;
+		float condition = keyframeDelay * 1.0f/100.0f/*ms conversion*/;
 		if (this->timePassed >= condition)
 		{
 			//reset internal keyframe timer
@@ -24,13 +24,13 @@ void SpriteAnimation::Update()
 
 			//move to next keyframe
 			currentFrame++;
-
+			if (currentFrame > animData->numberOfTextures - 1) currentFrame = 0;
 			//potentially stop if not needed to loop?
 		}
 	}
 	else 
 	{
-		printf("\nDefault -1 keyframe");
+		//printf("\nDefault -1 keyframe");
 	}
 
 }

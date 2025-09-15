@@ -4,16 +4,64 @@
 #include <string>
 #include <unordered_map>
 #include <filesystem>
+#include <fstream>
+#include <sstream>
 
 #include "raylib.h"
 
 #include "constants.h"
 #include "sprites.h"
 
+std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file_path)
+{ 
+
+	std::vector<std::vector<KeyFrame>> keyframes;
+	std::ifstream in(file_path);
+
+	if (!in.is_open()) {
+		printf("\nFailed to open keyframe file");
+		return keyframes;
+	}
+
+	std::vector<KeyFrame> currentAnim;
+	std::string line;
+
+	while (std::getline(in, line)) {
+		// Trim whitespace
+		if (line.empty()) {
+			// End of one animation block
+			if (!currentAnim.empty()) {
+				keyframes.push_back(currentAnim);
+				currentAnim.clear();
+			}
+			continue;
+		}
+
+		std::stringstream ss(line);
+		float delay = 0.0f;
+		ss >> delay;
+
+		if (!ss.fail()) {
+			KeyFrame keyframe;
+			keyframe.delaySec = delay;
+			currentAnim.push_back(keyframe);
+		}
+	}
+
+	// Push last animation if file didn’t end with an empty line
+	if (!currentAnim.empty()) {
+		keyframes.push_back(currentAnim);
+	}
+
+	return keyframes;
+}
+
 void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,
 	int numOfAnimationsInFolder, int numOfTexturesPerAnimation, const std::string& texNamePrefix) {
 
 	std::vector<AnimationData*> animations;
+	std::vector<std::vector<KeyFrame>> keyframes;
+
 	animations.resize(numOfAnimationsInFolder);
 
 	for (int i = 0; i < numOfAnimationsInFolder; i++)
@@ -39,7 +87,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 
 
 			// Skip files that are not textures or keyframe data
-			if (extension != ".png" && extension != ".jpg" && extension != ".jpeg" /*&& extension != ".prkf"*/) {
+			if (extension != ".png" && extension != ".jpg" && extension != ".jpeg" && extension != ".prkf"/*keyframe extension*/) {
 				continue;
 			}
 
@@ -63,7 +111,16 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 			std::string textureName = category;
 
 			std::replace(filePath.begin(), filePath.end(), '\\', '/');
+
+			if (extension == ".prkf" && category.compare(texNamePrefix) == 0/*name of prkf must match parameter prefix*/)
+			{
+				//keyframe file for the whole folder
+				keyframes = LoadKeyframesFromFile(filePath.c_str());
+				continue;
+			}
+
 			Texture2D texture = LoadTexture(filePath.c_str());
+			
 
 			// Add the texture to the vector with its name
 			if (!texNamePrefix.empty())
@@ -80,20 +137,26 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 				currSpriteAnimIndex++;
 				if (currSpriteAnimIndex >= numOfAnimationsInFolder)
 				{
-					//cache number of textures
+					//cache number of textures + assing keyframes to struct
 					for (int i = 0; i < numOfAnimationsInFolder; i++)
 					{
 						animations[i]->numberOfTextures = animations[i]->textures.size();
+						if (keyframes.size() > 0)
+						{
+							animations[i]->keyframes = keyframes[i];
+						}
+
 					}
 
 					//this should only happen in the literal end step of the algorithm and if this is ever reached while the 
 					//folder is not completely traversed something is very wrong
 
-						//move from vector to unordered map
+					//move from vector to unordered map
 					for (AnimationData* animation : animations)
 					{
 						animData.emplace(std::pair<std::string, AnimationData*>(animation->textures[0].name, animation));
 					}
+
 					return;
 				}
 			}

@@ -27,6 +27,9 @@ class AnimationDatabase
 public:
 	AnimationDatabase() {};
 
+	//loads from path, where 4,6  would be 4 animations with 6 frames each 
+	//texNamePrefix is appended in the texture name at the end of every texture loaded in that function call
+	//note: texNamePrefix must match .prkf name file for propper keyframe loading
 	void LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,
 		int numOfAnimationsInFolder, int numOfTexturesPerAnimation, const std::string& texNamePrefix);
 
