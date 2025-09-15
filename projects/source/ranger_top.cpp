@@ -316,7 +316,7 @@ Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& encl
 
 void CalculateEnclosedShaderAreaPoints(Coord* enclosedPoints, std::vector<Vector2>& vectorToFill)
 {
-	constexpr float kEnclosedYOffset = 10.0f;
+	constexpr float kEnclosedYOffset = 30.0f;
 
 	Coord* aux = enclosedPoints;
 	Coord* auxNext = enclosedPoints->nextCoord;

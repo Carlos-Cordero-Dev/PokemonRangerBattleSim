@@ -227,6 +227,8 @@ int main(void)
 	double currTime = 0.0;
 	double lastTime = 0;
 
+	Timer timer = 
+
 	while (!WindowShouldClose())    // Detect window close button or ESC key
 	{
 
@@ -392,10 +394,21 @@ int main(void)
 				Vector2 botRight = enclosedAuxPoints[i + 3];
 
 				DrawTriangle(topLeft, botLeft, topRight, YELLOW);
-				DrawTriangle(topLeft, topRight, botLeft, YELLOW);
+				DrawTriangle(topLeft, topRight, botLeft, YELLOW); //dupe
 
 				DrawTriangle(topRight, botLeft, botRight, YELLOW);
-				DrawTriangle(topRight, botRight, botLeft, YELLOW);
+				DrawTriangle(topRight, botRight, botLeft, YELLOW); //dupe
+
+				//update enclosed points
+				
+				//determine up direction
+				//TODO: this has to go somewhere else and make it deltatime dependant and kYellowTransitionUpdateSpeed dependant
+				Vector2 upDir = Vector2Normalize(Vector2Subtract(botLeft,topLeft));
+
+				enclosedAuxPoints[i + 0].y += upDir.y * KYellowTransitionShrinkingFactor;
+				enclosedAuxPoints[i + 1].y += upDir.y * KYellowTransitionShrinkingFactor;
+				enclosedAuxPoints[i + 2].y -= upDir.y * KYellowTransitionShrinkingFactor;
+				enclosedAuxPoints[i + 3].y -= upDir.y * KYellowTransitionShrinkingFactor;
 
 				//debug draw nodes
 				//DrawCircleV(enclosedAuxPoints[i + 0],1.0f,RED);
@@ -441,13 +454,10 @@ int main(void)
 
 		wo->Draw(frame);
 		p->Draw(frame);
-		//=========================
-		//timer related stuff
 
-		frame++;
-		currTime += GetFrameTime();
 
 		EndTextureMode();
+
 
 		// Draw the main texture (flipped vertically to correct for upside-down rendering)
 		Rectangle sourceRec = { 0, 0, (float)screenWidth, (float)-screenHeight };
@@ -462,7 +472,11 @@ int main(void)
 
 		EndDrawing();
 
+		//=========================
+		//timer related stuff
 
+		frame++;
+		currTime += GetFrameTime();
 		//----------------------------------------------------------------------------------
 		//wait or end of frame
 		//timer.FrameSleep();
