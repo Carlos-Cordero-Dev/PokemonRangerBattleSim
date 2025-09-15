@@ -180,7 +180,7 @@ int main(void)
 	garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("left_up_0garchomp_attack") });
 
 	std::vector<SpriteAnimation*> stylusAnims;
-	stylusAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("left_up_0garchomp_attack") });
+	stylusAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("top_basic_1top_idle_spin") });
 
 
     printf("\ndamnson2=================================\n");

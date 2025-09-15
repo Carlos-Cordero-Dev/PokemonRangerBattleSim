@@ -62,6 +62,11 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 	std::vector<AnimationData*> animations;
 	std::vector<std::vector<KeyFrame>> keyframes;
 
+	std::string basePath = RESOURCES_FOLDER + basePathFromResourceFolder;
+
+	//try to load .prkf file
+	keyframes = LoadKeyframesFromFile((basePath + "/" + texNamePrefix + ".prkf").c_str());
+
 	animations.resize(numOfAnimationsInFolder);
 
 	for (int i = 0; i < numOfAnimationsInFolder; i++)
@@ -69,14 +74,18 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 		animations[i] = new AnimationData();
 
 		//default one -1 keyframe so it never advances
-		animations[i]->keyframes.resize(1);
-		animations[i]->keyframes[0].delaySec = -1.0f;
+		if (!keyframes.size() > 0)
+		{
+			animations[i]->keyframes.resize(1);
+			animations[i]->keyframes[0].delaySec = -1.0f;
+		}
 	}
 
 	int currTextureIndex = 0;
 	int currSpriteAnimIndex = 0;
 
-	std::string basePath = RESOURCES_FOLDER + basePathFromResourceFolder;
+
+
 
 	// Traverse directories and subdirectories
 	for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(basePath)) {
@@ -87,7 +96,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 
 
 			// Skip files that are not textures or keyframe data
-			if (extension != ".png" && extension != ".jpg" && extension != ".jpeg" && extension != ".prkf"/*keyframe extension*/) {
+			if (extension != ".png" && extension != ".jpg" && extension != ".jpeg") {
 				continue;
 			}
 
@@ -112,12 +121,6 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 
 			std::replace(filePath.begin(), filePath.end(), '\\', '/');
 
-			if (extension == ".prkf" && category.compare(texNamePrefix) == 0/*name of prkf must match parameter prefix*/)
-			{
-				//keyframe file for the whole folder
-				keyframes = LoadKeyframesFromFile(filePath.c_str());
-				continue;
-			}
 
 			Texture2D texture = LoadTexture(filePath.c_str());
 			
