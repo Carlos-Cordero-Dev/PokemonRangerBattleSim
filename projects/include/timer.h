@@ -9,7 +9,7 @@ class Timer
 {
 public:
 
-	static Timer& Timer::GetInstance() {
+	static Timer& GetInstance() {
 		static Timer instance;
 		return instance;
 	}
