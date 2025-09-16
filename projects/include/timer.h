@@ -17,8 +17,8 @@ public:
 	//needs to be called every frame
 	void Update();
 
-	float GetDeltaTime() const { return GetFrameTime(); };
-	float GetGameTime() const { return GetTime(); };
+	float GetDeltaTime() const { return m_deltaTime; };
+	float GetGameTime() const { return m_gameTime; };
 	int GetFrame() const { return m_gameFrame; };
 
 private:

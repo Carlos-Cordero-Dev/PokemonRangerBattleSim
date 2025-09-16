@@ -188,7 +188,9 @@ int main(void)
 	// Main game loop
 
 	std::string text = "Frame ";
-	SetTargetFPS(60);
+	//SetTargetFPS(600);
+	const double renderStep = 1.0 / 120.0; // render at 60Hz
+	double lastRender = 0.0;
 
 	Top top;
 	Coord* enclosedPoly = nullptr;
@@ -211,9 +213,6 @@ int main(void)
 	allWorldObjs.emplace_back(wo);
 	allWorldObjs.emplace_back(p);
 
-	int frame = 0;
-	double currTime = 0.0;
-	double lastTime = 0;
 
 	Timer& timer = Timer::GetInstance();
 	float yellowTransitionElapsedTime = 0.0f;
@@ -225,11 +224,10 @@ int main(void)
 
 		// ---------------------------------------------------------------------------------
 		// Update
-		 
-		
-		//timer.Update();
+		PollInputEvents();
 
-		//printf("frame %d\n",frame);
+		timer.Update();
+
 
 		prbs::Vector2 touch = GetTouch();
 
@@ -240,7 +238,7 @@ int main(void)
 				ResetTop(&top);
 				DestroyStackNoDepth(&enclosedPoly);
 				enclosedAuxPoints.clear();
-				printf("\nReset");
+				//printf("\nReset");
 
 				//TODO: propper disable just in case instead of offscreen
 				topObject->position.x = -100;
@@ -258,7 +256,7 @@ int main(void)
 		ComputeAndUpdateDistance(&top);
 		ForceTopDistanceLimit(&top);
 
-		if (Coord *currEnclosedPoly = checkTopIntersection(&top, allEnclosableObjs))
+		if (Coord* currEnclosedPoly = checkTopIntersection(&top, allEnclosableObjs))
 		{
 			//printf("INTERSECTED\n");
 			//ShowStack(enclosedPoly);
@@ -277,6 +275,35 @@ int main(void)
 			// catch circles can stack, so circles have lifetime (particles)
 		}
 
+
+		//update points - time dependent
+		yellowTransitionElapsedTime += timer.GetDeltaTime();
+		int enclosedPointsCount = enclosedAuxPoints.size();
+
+		if (yellowTransitionElapsedTime > kYellowTransitionShrinkingFrequencySec)
+		{
+			yellowTransitionElapsedTime = 0.0f;
+
+			for (int i = 0; i < enclosedPointsCount; i += 4)
+			{
+				// horizontal lines higher "thickness"
+				// vertical lines little to no thickness
+
+				//counter-clockwise
+				Vector2 topLeft = enclosedAuxPoints[i + 0];
+				Vector2 topRight = enclosedAuxPoints[i + 1];
+				Vector2 botLeft = enclosedAuxPoints[i + 2];
+				Vector2 botRight = enclosedAuxPoints[i + 3];
+				//determine up direction
+				//TODO: this has to go somewhere else and make it deltatime dependant and kYellowTransitionUpdateSpeed dependant
+				Vector2 upDir = Vector2Normalize(Vector2Subtract(botLeft, topLeft));
+
+				enclosedAuxPoints[i + 0].y += upDir.y * KYellowTransitionShrinkingFactor;
+				enclosedAuxPoints[i + 1].y += upDir.y * KYellowTransitionShrinkingFactor;
+				enclosedAuxPoints[i + 2].y -= upDir.y * KYellowTransitionShrinkingFactor;
+				enclosedAuxPoints[i + 3].y -= upDir.y * KYellowTransitionShrinkingFactor;
+			}
+		}
 
 		//update every single world object
 		wo->Update();
@@ -300,119 +327,28 @@ int main(void)
 
 		//----------------------------------------------------------------------------------
 		// Draw
-
-		BeginDrawing();
-
-		rlDisableDepthTest();
-
-		// === STYLUS TEXTURE === 
-
-		BeginTextureMode(stylusOverlayRenTex);
-		ClearBackground(BLANK);
-
-		//DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
-
-		rlSetBlendMode(BLEND_ALPHA);
-
-		//draw stlyus tail
-
-		if (touch.x != 0 && touch.y != 0)
+		if (timer.GetGameTime() - lastRender >= renderStep) 
 		{
-
-			int numberOfNodes = GetStackDepth(top.stack);
-
-			//printf("num of nodes: %d\n", numberOfNodes);
-			float trailThickness = 10.0f;
-
-			Coord* current = top.stack;
-			Coord* next = top.stack->nextCoord;
-
-
-			// --- First pass: draw all circles ---
-
-			SetShaderValue(stylus_circle_shader, trailThicknessCircleLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
-
-			for (int i = 0; i < numberOfNodes - 1; i++)
-			{
-				float startPos[2] = { current->x, current->y };
-				// Set uniforms
-				SetShaderValue(stylus_circle_shader, circleCenterLoc, startPos, SHADER_UNIFORM_VEC2);
-
-				BeginShaderMode(stylus_circle_shader);
-				DrawCircleV({ startPos[0], startPos[1] }, trailThickness, BLANK);
-				EndShaderMode();
-
-				current = next;
-				next = next->nextCoord;
-			}
-
-			// --- Second pass: draw all lines ---
-			current = top.stack;
-			next = current->nextCoord;
-
-			SetShaderValue(stylus_line_shader, trailThicknessStylusLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
-			
-			for (int i = 0; i < numberOfNodes - 2; i++)
-			{
-				float startPos[2] = { current->x, current->y };
-				float endPos[2] = { next->x, next->y };
-
-				// Set uniforms
-				SetShaderValue(stylus_line_shader, lineStartLoc, startPos, SHADER_UNIFORM_VEC2);
-				SetShaderValue(stylus_line_shader, lineEndLoc, endPos, SHADER_UNIFORM_VEC2);
-				BeginShaderMode(stylus_line_shader);
-				DrawLineEx({ startPos[0], startPos[1] }, { endPos[0], endPos[1] }, trailThickness * 2.0f, BLANK);
-				EndShaderMode();
-
-				current = next;
-				next = next->nextCoord;
-			}
-
-
-			//rlEnableBackfaceCulling();
-			
-			//TODO: update yellow transition
-			// horizontal lines higher "thickness"
-			// vertical lines little to no thickness
-		}
-
-		// yellow transition - (needs to be rendered even if player doesnt touch screen)
+			lastRender = timer.GetGameTime();
 		
-		//rlDisableBackfaceCulling(); //this does nothing, cool!
-		int enclosedPointsCount = enclosedAuxPoints.size();
-		if (enclosedPointsCount > 0)
-		{
+			BeginDrawing();
 
-			for (int i = 0; i < enclosedPointsCount; i += 4)
+			rlDisableDepthTest();
+
+			// === STYLUS TEXTURE === 
+
+			BeginTextureMode(stylusOverlayRenTex);
+			ClearBackground(BLANK);
+
+			//DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+
+			rlSetBlendMode(BLEND_ALPHA);
+
+			// yellow transition - (needs to be rendered even if player doesnt touch screen)
+
+			//rlDisableBackfaceCulling(); //this does nothing, cool!
+			if (enclosedPointsCount > 0)
 			{
-				// horizontal lines higher "thickness"
-				// vertical lines little to no thickness
-
-				//counter-clockwise
-				Vector2 topLeft = enclosedAuxPoints[i + 0];
-				Vector2 topRight = enclosedAuxPoints[i + 1];
-				Vector2 botLeft = enclosedAuxPoints[i + 2];
-				Vector2 botRight = enclosedAuxPoints[i + 3];
-
-				DrawTriangle(topLeft, botLeft, topRight, YELLOW);
-				DrawTriangle(topLeft, topRight, botLeft, YELLOW); //dupe
-
-				DrawTriangle(topRight, botLeft, botRight, YELLOW);
-				DrawTriangle(topRight, botRight, botLeft, YELLOW); //dupe
-
-
-				//debug draw nodes
-				//DrawCircleV(enclosedAuxPoints[i + 0],1.0f,RED);
-				//DrawCircleV(enclosedAuxPoints[i + 3], 1.0f, BLUE);
-
-			}
-			
-			//update points - time dependent
-			yellowTransitionElapsedTime += timer.GetDeltaTime();
-
-			if (yellowTransitionElapsedTime > kYellowTransitionShrinkingFrequencySec)
-			{
-				yellowTransitionElapsedTime = 0.0f;
 
 				for (int i = 0; i < enclosedPointsCount; i += 4)
 				{
@@ -424,74 +360,133 @@ int main(void)
 					Vector2 topRight = enclosedAuxPoints[i + 1];
 					Vector2 botLeft = enclosedAuxPoints[i + 2];
 					Vector2 botRight = enclosedAuxPoints[i + 3];
-					//determine up direction
-					//TODO: this has to go somewhere else and make it deltatime dependant and kYellowTransitionUpdateSpeed dependant
-					Vector2 upDir = Vector2Normalize(Vector2Subtract(botLeft, topLeft));
 
-					enclosedAuxPoints[i + 0].y += upDir.y * KYellowTransitionShrinkingFactor;
-					enclosedAuxPoints[i + 1].y += upDir.y * KYellowTransitionShrinkingFactor;
-					enclosedAuxPoints[i + 2].y -= upDir.y * KYellowTransitionShrinkingFactor;
-					enclosedAuxPoints[i + 3].y -= upDir.y * KYellowTransitionShrinkingFactor;
+					DrawTriangle(topLeft, botLeft, topRight, YELLOW);
+					DrawTriangle(topLeft, topRight, botLeft, YELLOW); //dupe
+
+					DrawTriangle(topRight, botLeft, botRight, YELLOW);
+					DrawTriangle(topRight, botRight, botLeft, YELLOW); //dupe
+
+
+					//debug draw nodes
+					//DrawCircleV(enclosedAuxPoints[i + 0],1.0f,RED);
+					//DrawCircleV(enclosedAuxPoints[i + 3], 1.0f, BLUE);
+
 				}
 			}
+
+			//draw stlyus tail
+
+			if (touch.x != 0 && touch.y != 0)
+			{
+
+				int numberOfNodes = GetStackDepth(top.stack);
+
+				//printf("num of nodes: %d\n", numberOfNodes);
+				float trailThickness = 10.0f;
+
+				Coord* current = top.stack;
+				Coord* next = top.stack->nextCoord;
+
+
+				// --- First pass: draw all circles ---
+
+				SetShaderValue(stylus_circle_shader, trailThicknessCircleLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
+
+				for (int i = 0; i < numberOfNodes - 1; i++)
+				{
+					float startPos[2] = { current->x, current->y };
+					// Set uniforms
+					SetShaderValue(stylus_circle_shader, circleCenterLoc, startPos, SHADER_UNIFORM_VEC2);
+
+					BeginShaderMode(stylus_circle_shader);
+					DrawCircleV({ startPos[0], startPos[1] }, trailThickness, BLANK);
+					EndShaderMode();
+
+					current = next;
+					next = next->nextCoord;
+				}
+
+				// --- Second pass: draw all lines ---
+				current = top.stack;
+				next = current->nextCoord;
+
+				SetShaderValue(stylus_line_shader, trailThicknessStylusLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
+
+				for (int i = 0; i < numberOfNodes - 2; i++)
+				{
+					float startPos[2] = { current->x, current->y };
+					float endPos[2] = { next->x, next->y };
+
+					// Set uniforms
+					SetShaderValue(stylus_line_shader, lineStartLoc, startPos, SHADER_UNIFORM_VEC2);
+					SetShaderValue(stylus_line_shader, lineEndLoc, endPos, SHADER_UNIFORM_VEC2);
+					BeginShaderMode(stylus_line_shader);
+					DrawLineEx({ startPos[0], startPos[1] }, { endPos[0], endPos[1] }, trailThickness * 2.0f, BLANK);
+					EndShaderMode();
+
+					current = next;
+					next = next->nextCoord;
+				}
+
+
+				//rlEnableBackfaceCulling();
+
+				//TODO: update yellow transition
+				// horizontal lines higher "thickness"
+				// vertical lines little to no thickness
+			}
+
+			topObject->Draw();
+
+			//DrawCurrentPolygonOnlyLines(top.stack);
+
+			EndTextureMode();
+
+			// =======================
+
+			// === MAIN TEXTURE ===
+
+			//rlEnableDepthTest();
+
+			BeginTextureMode(mainTexOverlayRenTex);
+			ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+
+			DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
+			DrawText(("touch " + std::to_string(touch.x) + " " + std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
+			DrawText((text + std::to_string(timer.GetFrame())).c_str(), 360, 370, 40, GRAY);
+			DrawText(("Time " + std::to_string(timer.GetGameTime()) + " deltaTime " + std::to_string(GetFrameTime())).c_str(),
+				360, 230, 40, GRAY);
+
+			//========== 
+
+			if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
+
+
+			//draw every world object
+
+			wo->Draw();
+			p->Draw();
+
+
+			EndTextureMode();
+
+
+			// Draw the main texture (flipped vertically to correct for upside-down rendering)
+			Rectangle sourceRec = { 0, 0, (float)screenWidth, (float)-screenHeight };
+			Rectangle destRec = { 0, 0, (float)screenWidth, (float)screenHeight };
+			Vector2 origin = { 0, 0 };
+
+			DrawTexturePro(mainTexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
+
+			// Draw the stylus texture on top (also flipped)
+			DrawTexturePro(stylusOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
+
+
+			EndDrawing();
+			//SwapScreenBuffer();
 		}
 
-		topObject->Draw();
-
-		//DrawCurrentPolygonOnlyLines(top.stack);
-
-		EndTextureMode();
-
-
-		// =======================
-
-		// === MAIN TEXTURE ===
-		
-		//rlEnableDepthTest();
-
-		BeginTextureMode(mainTexOverlayRenTex);
-		ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-
-		DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
-		DrawText(("touch " + std::to_string(touch.x) + " " + std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
-		DrawText((text + std::to_string(frame)).c_str(), 360, 370, 40, GRAY);
-		DrawText(("Time " + std::to_string(currTime) + " deltaTime " + std::to_string(GetFrameTime())).c_str(),
-			360, 230, 40, GRAY);
-
-		//========== 
-
-		if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
-
-
-		//draw every world object
-
-		wo->Draw();
-		p->Draw();
-
-
-		EndTextureMode();
-
-
-		// Draw the main texture (flipped vertically to correct for upside-down rendering)
-		Rectangle sourceRec = { 0, 0, (float)screenWidth, (float)-screenHeight };
-		Rectangle destRec = { 0, 0, (float)screenWidth, (float)screenHeight };
-		Vector2 origin = { 0, 0 };
-
-		DrawTexturePro(mainTexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
-
-		// Draw the stylus texture on top (also flipped)
-		DrawTexturePro(stylusOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
-
-
-		EndDrawing();
-
-		//=========================
-		//timer related stuff
-
-		frame++;
-		currTime += GetFrameTime();
-
-		timer.Update();
 
 		//----------------------------------------------------------------------------------
 		//wait or end of frame

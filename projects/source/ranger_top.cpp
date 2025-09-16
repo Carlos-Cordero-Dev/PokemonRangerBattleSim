@@ -87,7 +87,7 @@ void ForceTopDistanceLimit(Top* top)
 			lastCoord->y = (int)std::round(lastMinusOneCoordVec.y);
 			lastCoord->distance_at_point = kMaxPolyLength;
 			top->distance = kMaxPolyLength;
-			return; // Done
+			return;
 		}
 
 		Vector2 normalizedDir = Vector2Normalize(lastMinusOneToLastVec);
@@ -99,7 +99,7 @@ void ForceTopDistanceLimit(Top* top)
 		lastCoord->y = (int)std::round(newLastPosVec.y);
 		lastCoord->distance_at_point = kMaxPolyLength;
 		top->distance = kMaxPolyLength;
-		return; // Done
+		return;
 	}
 }
 
@@ -262,12 +262,12 @@ Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& encl
 			current->x = oldcurrentX;
 			current->y = oldcurrentY;
 
-			//if (area < kMinArea)
-			//{
-			//	current = current->nextCoord;
-			//	printf("\nmin area not valid");
-			//	continue;
-			//}
+			if (area < kMinArea)
+			{
+				current = current->nextCoord;
+				printf("\nmin area not valid");
+				continue;
+			}
 
 			head->intersected = true;
 			headNext->intersected = true;

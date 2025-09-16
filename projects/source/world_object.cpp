@@ -31,8 +31,6 @@ void WorldObject::Draw()
 		position.y - boundingBox.height * scale / 2,
 		rotationDeg, scale);
 	
-	animations[state]->Update();
-
 	//debug draw bounding box
 	DrawRectangleLines(
 		boundingBox.x - boundingBox.width * scale / 2 ,
@@ -44,6 +42,8 @@ void WorldObject::Draw()
 
 void WorldObject::Update()
 {
+	animations[state]->Update();
+
 	boundingBox.x = position.x;
 	boundingBox.y = position.y;
 }

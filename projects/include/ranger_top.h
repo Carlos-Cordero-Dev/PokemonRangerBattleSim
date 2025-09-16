@@ -58,16 +58,16 @@ void ResetTop(Top* top);
 //======= intersection stuff  =============================================
 
 // Check if point r is on segment pq
-bool onSegment(Coord* p, Coord* q, Coord* r);
+bool inline onSegment(Coord* p, Coord* q, Coord* r);
 
 // Determine the orientation of the triplet (p, q, r)
 // 0 -> collinear, 1 -> clockwise, 2 -> counterclockwise
-int orientation(Coord* p, Coord* q, Coord* r);
+int inline orientation(Coord* p, Coord* q, Coord* r);
 
 // Check if two segments p1q1 and p2q2 intersect
-bool doIntersect(Coord* p1, Coord* q1, Coord* p2, Coord* q2);
+bool inline doIntersect(Coord* p1, Coord* q1, Coord* p2, Coord* q2);
 
-bool getIntersectionPoint(Coord* p1, Coord* q1, Coord* p2, Coord* q2, Coord& intersection);
+bool inline getIntersectionPoint(Coord* p1, Coord* q1, Coord* p2, Coord* q2, Coord& intersection);
 
 // Shoelace formula to calculate the area of a polygon
 double calculatePolygonArea(Coord* start, Coord* end);

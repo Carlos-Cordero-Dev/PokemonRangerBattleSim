@@ -22,7 +22,7 @@ public:
 	void Update();
 	void Cleanup();
 
-	void OnCollision() { printf("collided"); };
+	void OnCollision() { /*printf("collided");*/ };
 
 public:
 
