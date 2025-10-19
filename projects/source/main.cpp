@@ -195,6 +195,7 @@ int main(void)
 	Top top;
 	Coord* enclosedPoly = nullptr;
 	std::vector<Vector2> enclosedAuxPoints;
+	std::vector<Vector2> enclosedIndicatorParticlePositions;
 
 	WorldObject* wo = new WorldObject(garchompAnims);
 	wo->position = Vector2({ 100, 100 });
@@ -267,10 +268,11 @@ int main(void)
 				DestroyStackNoDepth(&enclosedPoly);
 				enclosedAuxPoints.clear();
 			}
+			enclosedIndicatorParticlePositions.clear();
 
 			enclosedPoly = currEnclosedPoly;
 			CalculateEnclosedShaderAreaPoints(enclosedPoly, enclosedAuxPoints);
-
+			CalculateClosingIndicatorParticlePoints(enclosedPoly, enclosedIndicatorParticlePositions);
 			//NOTE: yellow transition is always destroyed if another appears
 			// catch circles can stack, so circles have lifetime (particles)
 		}
@@ -279,7 +281,7 @@ int main(void)
 		//update points - time dependent
 		yellowTransitionElapsedTime += timer.GetDeltaTime();
 		int enclosedPointsCount = enclosedAuxPoints.size();
-
+		 
 		if (yellowTransitionElapsedTime > kYellowTransitionShrinkingFrequencySec)
 		{
 			yellowTransitionElapsedTime = 0.0f;
@@ -304,6 +306,7 @@ int main(void)
 				enclosedAuxPoints[i + 3].y -= upDir.y * KYellowTransitionShrinkingFactor;
 			}
 		}
+
 
 		//update every single world object
 		wo->Update();
@@ -372,6 +375,12 @@ int main(void)
 					//DrawCircleV(enclosedAuxPoints[i + 0],1.0f,RED);
 					//DrawCircleV(enclosedAuxPoints[i + 3], 1.0f, BLUE);
 
+				}
+
+				//DEBUG draw particles positions
+				for (Vector2 pos : enclosedIndicatorParticlePositions)
+				{
+					DrawCircleV(pos, 3.0f, RED);
 				}
 			}
 

@@ -82,3 +82,5 @@ Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord* endNode);
 Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& enclosableObjs);
 
 void CalculateEnclosedShaderAreaPoints(Coord* enclosedPoints, std::vector<Vector2>& vectorToFill);
+
+void CalculateClosingIndicatorParticlePoints(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions);
