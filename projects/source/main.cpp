@@ -195,7 +195,8 @@ int main(void)
 	Top top;
 	Coord* enclosedPoly = nullptr;
 	std::vector<Vector2> enclosedAuxPoints;
-	std::vector<Vector2> enclosedIndicatorParticlePositions;
+	std::vector<Vector2> enclosedIndicatorParticlePositions; //initial positions
+	std::vector<Vector2> lerpingEIParticlePositions; //during lerping positions
 
 	WorldObject* wo = new WorldObject(garchompAnims);
 	wo->position = Vector2({ 100, 100 });
@@ -217,6 +218,8 @@ int main(void)
 
 	Timer& timer = Timer::GetInstance();
 	float yellowTransitionElapsedTime = 0.0f;
+	const float KEnclosingParticlesTravelTimeFromOutToCenterSec = 0.3f;
+	float enclosingParticlesElapsedTime = 0.0f;
 
 	while (!WindowShouldClose())    // Detect window close button or ESC key
 	{
@@ -268,11 +271,16 @@ int main(void)
 				DestroyStackNoDepth(&enclosedPoly);
 				enclosedAuxPoints.clear();
 			}
+
+			//reset enclosing particles
 			enclosedIndicatorParticlePositions.clear();
+			enclosingParticlesElapsedTime = 0.0f;
 
 			enclosedPoly = currEnclosedPoly;
 			CalculateEnclosedShaderAreaPoints(enclosedPoly, enclosedAuxPoints);
 			CalculateClosingIndicatorParticlePoints(enclosedPoly, enclosedIndicatorParticlePositions);
+			lerpingEIParticlePositions.resize(enclosedIndicatorParticlePositions.size());
+
 			//NOTE: yellow transition is always destroyed if another appears
 			// catch circles can stack, so circles have lifetime (particles)
 		}
@@ -307,6 +315,35 @@ int main(void)
 			}
 		}
 
+		//enclosed particles (TODO: I think the timer always matches 1to1 with the yellow transiton, maybe combine them)
+
+		if (enclosedIndicatorParticlePositions.size() > 0)
+		{
+			//continuous transition, same time spent regardless of distance
+
+			enclosingParticlesElapsedTime += timer.GetDeltaTime();
+
+			float interpFactor = enclosingParticlesElapsedTime / KEnclosingParticlesTravelTimeFromOutToCenterSec;
+
+			//TODO: This is a debug center , in reality particles only happen when a pokemon is inside which is the center
+			Vector2 center = allEnclosableObjs[0]->position;
+
+			//move every particle
+			for (int i = 0; i < enclosedIndicatorParticlePositions.size(); i++)
+			{
+				Vector2 currParticlePos = Vector2Add(enclosedIndicatorParticlePositions[i],
+					Vector2Scale(Vector2Subtract(center, enclosedIndicatorParticlePositions[i]), interpFactor));
+
+				lerpingEIParticlePositions[i] = currParticlePos;
+			}
+
+			//reset on lerp > 1
+			if (interpFactor >= 1.0f)
+			{
+				enclosingParticlesElapsedTime = 0.0f;
+				enclosedIndicatorParticlePositions.clear();
+			}
+		}
 
 		//update every single world object
 		wo->Update();
@@ -370,19 +407,17 @@ int main(void)
 					DrawTriangle(topRight, botLeft, botRight, YELLOW);
 					DrawTriangle(topRight, botRight, botLeft, YELLOW); //dupe
 
-
-					//debug draw nodes
-					//DrawCircleV(enclosedAuxPoints[i + 0],1.0f,RED);
-					//DrawCircleV(enclosedAuxPoints[i + 3], 1.0f, BLUE);
-
-				}
-
-				//DEBUG draw particles positions
-				for (Vector2 pos : enclosedIndicatorParticlePositions)
-				{
-					DrawCircleV(pos, 3.0f, RED);
 				}
 			}
+			//enclosed particles
+			if (enclosedIndicatorParticlePositions.size() > 0)
+			{
+				for (Vector2 particlePos : lerpingEIParticlePositions)
+				{
+					DrawCircleV(particlePos,3.0f,RED);
+				}
+			}
+
 
 			//draw stlyus tail
 
