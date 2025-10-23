@@ -36,7 +36,7 @@ void main()
     // Gradient factor: 0 at center, 1 at edge
     float t = dist / trailThickness;
 
-    // White in the middle → Blue at the edges
+    // White in the middle -> Blue at the edges
     vec3 centerColor = vec3(1.0, 1.0, 1.0);   // white
     vec3 edgeColor   = vec3(0.0, 0.0, 1.0);   // blue
     vec3 mixedColor  = mix(centerColor, edgeColor, t);

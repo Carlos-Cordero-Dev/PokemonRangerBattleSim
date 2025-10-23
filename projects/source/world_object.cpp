@@ -1,12 +1,13 @@
 
 #include "world_object.h"
 #include "animation_database.h"
+#include "timer.h"
 
 
 WorldObject::WorldObject(const std::vector<SpriteAnimation*>& animations)
 {
 	this->animations = animations;
-	this->state = StateMachine::kStateIdle;
+	this->animState = AnimationState::kStateIdle;
 
 	position.x = 0;
 	position.y = 0;
@@ -26,7 +27,7 @@ WorldObject::WorldObject(const std::vector<SpriteAnimation*>& animations)
 
 void WorldObject::Draw()
 {
-	animations[state]->DrawRotScale(
+	animations[animState]->DrawRotScale(
 		position.x - boundingBox.width * scale /2,
 		position.y - boundingBox.height * scale / 2,
 		rotationDeg, scale);
@@ -42,7 +43,7 @@ void WorldObject::Draw()
 
 void WorldObject::Update()
 {
-	animations[state]->Update();
+	animations[animState]->Update();
 
 	boundingBox.x = position.x;
 	boundingBox.y = position.y;

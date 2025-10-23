@@ -42,6 +42,12 @@
 
 #include "world_object.h"
 #include "pokemon.h"
+
+#include "state_machine.h"
+#include "states/idle_state.h"
+#include "states/move_state.h"
+#include "states/attack_state.h"
+
 /*
 what do I need man:
 
@@ -198,6 +204,30 @@ int main(void)
 	std::vector<Vector2> enclosedIndicatorParticlePositions; //initial positions
 	std::vector<Vector2> lerpingEIParticlePositions; //during lerping positions
 
+	//state machines
+	 
+		//default pokemon state machie
+	StateMachine* pokemondefaultStateMachine = new StateMachine();
+	{//scope cause im like that (no reason whatsoever)
+		//TODO: this should probably be a function but tbh this WILL be an external application passing in the FSM
+		IdleState* idleState = new IdleState();
+		MoveState* moveState = new MoveState();
+		AttackState* attackState = new AttackState();
+		std::vector<State*> pdsm_ownedStates = { idleState , moveState, attackState };
+
+		idleState->on_idle_timer_finished = moveState;
+
+		moveState->on_move_action_completed = attackState;
+
+		attackState->on_attack_completed = idleState;
+
+		pokemondefaultStateMachine->currentState = idleState;
+		pokemondefaultStateMachine->ownedStates = pdsm_ownedStates;
+
+	}
+
+	//world object creation
+
 	WorldObject* wo = new WorldObject(garchompAnims);
 	wo->position = Vector2({ 100, 100 });
 
@@ -207,6 +237,7 @@ int main(void)
 
 	Pokemon* p = new Pokemon(garchompAnims);
 	p->position = Vector2({ 500, 100 });
+	p->AssignStateMachine(pokemondefaultStateMachine);
 
 	std::vector<EnclosableObject*> allEnclosableObjs;
 	allEnclosableObjs.emplace_back(p);

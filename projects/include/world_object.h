@@ -4,9 +4,9 @@
 #include <raylib.h>
 
 #include "sprites.h"
+#include "state_machine.h"
 
-//TODO: propper state machine
-enum StateMachine
+enum AnimationState
 {
 	kStateIdle = 0,
 	kMAXState
@@ -30,7 +30,8 @@ public:
 	float scale;
 	float rotationDeg;
 	bool canCollide = true;
-	StateMachine state;
+	
+	AnimationState animState;
 
 	Rectangle boundingBox;
 	std::vector<SpriteAnimation*> animations;

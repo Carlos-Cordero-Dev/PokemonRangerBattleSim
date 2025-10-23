@@ -13,11 +13,11 @@ public:
 	void Update();
 	void Cleanup();
 
+	void AssignStateMachine(StateMachine* stateMachine);
 public:
 	int id = 0;
 
-	// IA COMPONENT STATE MACHINE EXTERNAL TOOL
-	// IA* stateMachine;
-
+private:
+	StateMachine* _stateMachine = nullptr;
 
 };

@@ -4,6 +4,8 @@
 #include "world_object.h"
 #include "sprites.h"
 
+#include "state_machine.h"
+
 class EnclosableObject : public WorldObject
 {
 public:
