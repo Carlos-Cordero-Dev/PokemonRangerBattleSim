@@ -72,7 +72,11 @@ MECHANIC IDEAS:
 and during a duration can make shape which triggers buff etc
 
 -pokemon summon obstacles you have to catch
--
+-multiple pokemon spawned at once like flocks of pidgeys
+-one pokemon cries for help many appear
+-collecting instruments or pokemon with instruments (pichu ukelele starting, you find more in a potential game)
+- ^ alternatively, the goal of the game is collecting instruments, starting ukelele, rework how ukelele works
+-powerup: draw one circle and another one is drawn either to the side or one bigger is drawn on top
 
 */
 
