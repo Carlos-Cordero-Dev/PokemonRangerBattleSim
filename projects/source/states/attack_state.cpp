@@ -6,7 +6,8 @@
 
 void AttackState::OnEnter()
 {
-	waitTimer = 3.0f;
+	waitTimer = 1.0f;
+	printf("enter attack state\n");
 }
 
 State* AttackState::OnUpdate(float dt)
@@ -22,5 +23,6 @@ State* AttackState::OnUpdate(float dt)
 
 void AttackState::OnExit()
 {
-
+	waitTimer = 1.0f;
+	printf("exit attack state\n");
 }

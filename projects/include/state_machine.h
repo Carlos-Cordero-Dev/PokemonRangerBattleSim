@@ -23,9 +23,17 @@ public:
     WorldObject* owner = nullptr;
     std::vector<State*> ownedStates;
 
-public:
+private:
+    bool running = false;
 
+public:
+    
     void Update(float dt) {
+        if (!running)
+        {
+            currentState->OnEnter();
+            running = true;
+        }
         State* nextState = currentState->OnUpdate(dt);
         if (nextState)
         {

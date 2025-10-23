@@ -91,7 +91,9 @@ int main(void)
 
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1280;
+	srand(time(0));
+	
+	const int screenWidth = 1280;
     const int screenHeight = 720;
 
     char textBoxText[64] = "Text box";

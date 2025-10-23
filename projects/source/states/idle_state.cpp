@@ -7,13 +7,13 @@
 
 void IdleState::OnEnter()  
 {
-	waitTimer = 3.0f;
+	waitTimer = 1.0f;
+	printf("enter idle state\n");
 }
 
 State* IdleState::OnUpdate(float dt)
 {
 	waitTimer -= dt;
-	printf("updating idle\n");
 
 	if (waitTimer <= 0.0f)
 	{
@@ -24,5 +24,6 @@ State* IdleState::OnUpdate(float dt)
 
 void IdleState::OnExit() 
 {
-
+	waitTimer = 1.0f;
+	printf("exit idle state\n");
 }
