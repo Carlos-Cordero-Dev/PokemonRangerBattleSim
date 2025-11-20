@@ -57,7 +57,7 @@ std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file
 }
 
 void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,
-	int numOfAnimationsInFolder, int numOfTexturesPerAnimation, const std::string& texNamePrefix) {
+	int numOfAnimationsInFolder, int numOfTexturesPerAnimation, const std::string& animName) {
 
 	std::vector<AnimationData*> animations;
 	std::vector<std::vector<KeyFrame>> keyframes;
@@ -65,7 +65,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 	std::string basePath = RESOURCES_FOLDER + basePathFromResourceFolder;
 
 	//try to load .prkf file
-	keyframes = LoadKeyframesFromFile((basePath + "/" + texNamePrefix + ".prkf").c_str());
+	keyframes = LoadKeyframesFromFile((basePath + "/" + animName + ".prkf").c_str());
 
 	animations.resize(numOfAnimationsInFolder);
 
@@ -126,9 +126,9 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 			
 
 			// Add the texture to the vector with its name
-			if (!texNamePrefix.empty())
+			if (!animName.empty())
 			{
-				textureName = textureName.append(texNamePrefix);
+				textureName = textureName.append(animName);
 			}
 
 			animations[currSpriteAnimIndex]->textures.push_back({ texture, textureName });
@@ -157,7 +157,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 					//move from vector to unordered map
 					for (AnimationData* animation : animations)
 					{
-						animData.emplace(std::pair<std::string, AnimationData*>(animation->textures[0].name, animation));
+						animData.emplace(std::pair<std::string, AnimationData*>(animName, animation));
 					}
 
 					return;
@@ -167,6 +167,59 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 	}
 
 	//algo never reaches this point , always from return above ^
+}
+
+void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,
+	const std::string& animName)
+{
+	std::string basePath = RESOURCES_FOLDER + basePathFromResourceFolder;
+
+	// Load keyframes if file exists
+	std::vector<std::vector<KeyFrame>> keyframes;
+	const std::string keyframePath = basePath + "/" + animName + ".prkf";
+
+	if (std::filesystem::exists(keyframePath))
+		keyframes = LoadKeyframesFromFile(keyframePath.c_str());
+
+	// Create one animation
+	AnimationData* anim = new AnimationData();
+
+	// Default keyframe if none exist
+	if (keyframes.empty()) {
+		anim->keyframes.resize(1);
+		anim->keyframes[0].delaySec = -1.0f;
+	}
+	else {
+		anim->keyframes = keyframes[0];
+	}
+
+	// Load all textures from folder
+	for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(basePath)) {
+
+		if (!dirEntry.is_regular_file())
+			continue;
+
+		std::string extension = dirEntry.path().extension().string();
+		if (extension != ".png" && extension != ".jpg" && extension != ".jpeg")
+			continue;
+
+		std::string filePath = dirEntry.path().string();
+		std::replace(filePath.begin(), filePath.end(), '\\', '/');
+
+		// Create texture name from file (no subfolder logic needed anymore)
+		std::string textureName = dirEntry.path().stem().string();
+		textureName += "_" + animName;
+
+		// Load texture
+		Texture2D texture = LoadTexture(filePath.c_str());
+
+		anim->textures.push_back({ texture, textureName });
+	}
+
+	anim->numberOfTextures = anim->textures.size();
+
+	// Store in animation map
+	animData.emplace(animName, anim);
 }
 
 AnimationData* AnimationDatabase::GetAnimationDataFromName(const std::string& name)

@@ -6,24 +6,20 @@
 #include "sprites.h"
 #include "state_machine.h"
 
-enum AnimationState
-{
-	kStateIdle = 0,
-	kMAXState
-};
-
 class WorldObject
 {
 public:
 
 	WorldObject(const std::vector<SpriteAnimation*>& animations);
+	virtual ~WorldObject() = default;
 
-	void Draw();
-	void Update();
-	void Cleanup();
+	virtual void Draw();
+	virtual void Update();
+	virtual void Cleanup();
 
-	void OnCollision() { /*printf("collided");*/ };
+	virtual void OnCollision() { /*printf("collided");*/ };
 
+	void UpdateBBoxPosition();
 public:
 
 	Vector2 position;
@@ -31,9 +27,11 @@ public:
 	float rotationDeg;
 	bool canCollide = true;
 	
-	AnimationState animState;
-
 	Rectangle boundingBox;
+
+	// vector in case children want to have multiple animations, but worldObjects can only have one sprite so to 
+	// not mess with the base impl of worldobject, so only objects with no state can exist in worldobject form.
+	// see pokemon for an example where a state machine and different animationStates go thru the animations vector
 	std::vector<SpriteAnimation*> animations;
 };
 

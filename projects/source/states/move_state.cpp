@@ -3,10 +3,15 @@
 
 #include "world_object.h"
 #include "raymath.h"
+#include "pokemon.h"
 
 void MoveState::OnEnter()
 {
 	waitTimer = 3.0f;
+
+	Pokemon* owner_pkm = dynamic_cast<Pokemon*>(owner);
+	owner_pkm->animationState = Pokemon::AnimationState::kMove;
+
 	//random direction [-1,1]
 	direction = { 2.0f * rand() / RAND_MAX - 1.0f,2.0f * rand() / RAND_MAX - 1.0f };
 	direction = Vector2Normalize(direction);
@@ -18,7 +23,7 @@ State* MoveState::OnUpdate(float dt)
 {
 	waitTimer -= dt;
 
-	printf("updating move dir %f %f\n", direction.x, direction.y);
+	//printf("updating move dir %f %f\n", direction.x, direction.y);
 
 	//TODO: PLEASE GET THIS OUT OF HERE
 	const float moveSpeed = 100.0f;

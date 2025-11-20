@@ -23,7 +23,8 @@ class SpriteAnimation
 
 public:
 	//TODO: if nullptr animData prolly should create a no sprite sprite
-	SpriteAnimation(AnimationData* animData) { this->animData = animData; };
+	SpriteAnimation(AnimationData* animData) : animData_(animData) {};
+	SpriteAnimation(const SpriteAnimation& other);
 
 	void Update();
 	void Draw(int posX, int posY);
@@ -40,7 +41,7 @@ public:
 	//void Play();
 
 	bool loop = false;
-	AnimationData* animData = nullptr;
+	AnimationData* animData_ = nullptr;
 
 private:
 	SpriteAnimation();

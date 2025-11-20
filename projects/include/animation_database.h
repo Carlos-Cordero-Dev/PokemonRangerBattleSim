@@ -27,14 +27,21 @@ class AnimationDatabase
 public:
 	AnimationDatabase() {};
 
-	//loads from path, where 4,6  would be 4 animations with 6 frames each 
-	//texNamePrefix is appended in the texture name at the end of every texture loaded in that function call
-	//note: texNamePrefix must match .prkf name file for propper keyframe loading
+	//animName must match .prkf name file for propper keyframe data loading
 	void LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,
-		int numOfAnimationsInFolder, int numOfTexturesPerAnimation, const std::string& texNamePrefix);
+		const std::string& animName);
+
+	//NOTE: Legacy version
+	//loads from path, where 4,6  would be 4 animations with 6 frames each 
+	//animName is a custom, unique string that identfies a set of frames
+	//note: animName must match .prkf name file for propper keyframe data loading
+	void LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,
+		int numOfAnimationsInFolder, int numOfTexturesPerAnimation, const std::string& animName);
 
 	AnimationData* GetAnimationDataFromName(const std::string& name);
-	//TODO: destructor which liberates all the animations stored
+	
+	//TODO: destructor which frees all the animations stored
+
 private:
 	std::unordered_map<std::string,AnimationData*> animData;
 };

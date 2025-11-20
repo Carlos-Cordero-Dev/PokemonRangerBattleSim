@@ -185,14 +185,30 @@ int main(void)
 
 	AnimationDatabase animDatabase;
 	
-	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack", 4, 6, "garchomp_attack");
-	animDatabase.LoadAnimDataFromFolder("sprites/stylus/top", 1, 3, "top_idle_spin");
+	//TODO: if we assume we are doing it with the todo below: remove the random ints and just take path and custom name, cause you know its
+	// 1 animation in the folder and just count the files
+
+	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/left_down", "garchomp_attack_left_down");
+	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/left_up", "garchomp_attack_left_up");
+	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/right_down", "garchomp_attack_right_down");
+	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/right_up", "garchomp_attack_right_up");
+
+	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/run", "garchomp_run");
+	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/idle","garchomp_idle");
+
+	animDatabase.LoadAnimDataFromFolder("sprites/stylus/top", "top_idle_spin");
+
+	//TODO: A bit lengthy, you have to make it so animations can only be in one folder so instead of all 4 attack anim in the same folder
+	// there must be 1 folder per anim and so when you call GetAnimationDataFromName make it match to the one at LoadAnimDataFromFolder you gave it.
+	// prkf files should be fine cause they support single anims
 
 	std::vector<SpriteAnimation*> garchompAnims;
-	garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("left_up_0garchomp_attack") });
+	garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("garchomp_idle") }); //0 = idle
+	garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("garchomp_run") }); // 1 = move
+	garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("garchomp_attack_left_down") }); // 2 = attack
 
 	std::vector<SpriteAnimation*> stylusAnims;
-	stylusAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("top_basic_1top_idle_spin") });
+	stylusAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("top_idle_spin") });
 
 
     printf("\ndamnson2=================================\n");
@@ -244,6 +260,10 @@ int main(void)
 	Pokemon* p = new Pokemon(garchompAnims);
 	p->position = Vector2({ 500, 100 });
 	p->AssignStateMachine(pokemondefaultStateMachine);
+
+	//TODO: below tasks to be automated so basically find a way to register anyway object created, it can be a function 
+	// ex: register(pokemon) and it tries to cast to each type of object dynamic_cast<EnclosedObject*> for example and if != nullptr
+	// it will add to allEnclosableObjs
 
 	std::vector<EnclosableObject*> allEnclosableObjs;
 	allEnclosableObjs.emplace_back(p);

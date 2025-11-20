@@ -4,11 +4,16 @@
 
 #include "world_object.h"
 
+#include "pokemon.h"
 
 void IdleState::OnEnter()  
 {
 	waitTimer = 1.0f;
 	printf("enter idle state\n");
+
+
+	Pokemon* owner_pkm = dynamic_cast<Pokemon*>(owner);
+	owner_pkm->animationState = Pokemon::AnimationState::kIdle;
 }
 
 State* IdleState::OnUpdate(float dt)

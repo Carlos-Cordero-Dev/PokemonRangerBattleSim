@@ -3,11 +3,14 @@
 #include "animation_database.h"
 #include "timer.h"
 
-
 WorldObject::WorldObject(const std::vector<SpriteAnimation*>& animations)
 {
-	this->animations = animations;
-	this->animState = AnimationState::kStateIdle;
+	//deep copy so updating an object doesnt cause the anim of other to update too
+
+	this->animations.reserve(animations.size());
+	for (auto* anim : animations)
+		this->animations.push_back(new SpriteAnimation(*anim));
+	//bad: this->animations = animations;
 
 	position.x = 0;
 	position.y = 0;
@@ -20,14 +23,14 @@ WorldObject::WorldObject(const std::vector<SpriteAnimation*>& animations)
 	boundingBox.y = position.y;
 
 	//TODO: eventually this comes from metadata from each frame
-	boundingBox.width = animations[0]->animData->textures[0].texture.width;
-	boundingBox.height = animations[0]->animData->textures[0].texture.height;
+	boundingBox.width = animations[0]->animData_->textures[0].texture.width;
+	boundingBox.height = animations[0]->animData_->textures[0].texture.height;
 
 }
 
 void WorldObject::Draw()
 {
-	animations[animState]->DrawRotScale(
+	animations[0]->DrawRotScale(
 		position.x - boundingBox.width * scale /2,
 		position.y - boundingBox.height * scale / 2,
 		rotationDeg, scale);
@@ -43,8 +46,13 @@ void WorldObject::Draw()
 
 void WorldObject::Update()
 {
-	animations[animState]->Update();
+	animations[0]->Update();
 
+	UpdateBBoxPosition();
+}
+
+void WorldObject::UpdateBBoxPosition()
+{
 	boundingBox.x = position.x;
 	boundingBox.y = position.y;
 }
