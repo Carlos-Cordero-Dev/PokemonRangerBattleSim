@@ -7,7 +7,7 @@
 void AttackState::OnEnter()
 {
 	waitTimer = 1.0f;
-	printf("enter attack state\n");
+	//printf("enter attack state\n");
 
 	Pokemon* owner_pkm = dynamic_cast<Pokemon*>(owner);
 	owner_pkm->animationState = Pokemon::AnimationState::kAttack;
@@ -27,5 +27,5 @@ State* AttackState::OnUpdate(float dt)
 void AttackState::OnExit()
 {
 	waitTimer = 1.0f;
-	printf("exit attack state\n");
+	//printf("exit attack state\n");
 }

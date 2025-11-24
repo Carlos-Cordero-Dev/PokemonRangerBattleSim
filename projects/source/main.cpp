@@ -40,7 +40,9 @@
 #include "player_polygon.h"
 #include "ranger_top.h"
 
+#include "world.h"
 #include "world_object.h"
+#include "hitbox.h"
 #include "pokemon.h"
 
 #include "state_machine.h"
@@ -219,6 +221,8 @@ int main(void)
 	//SetTargetFPS(600);
 	const double renderStep = 1.0 / 120.0; // render at 60Hz
 	double lastRender = 0.0;
+
+	g_world = new World();
 
 	Top top;
 	Coord* enclosedPoly = nullptr;
@@ -403,20 +407,37 @@ int main(void)
 		}
 
 		//update every single world object
-		wo->Update();
 		topObject->Update();
-		p->Update();
 
-		//update pokemon
+		//wo->Update();
+		//p->Update();
+
+		for (WorldObject* wobj : allWorldObjs)
+		{
+			wobj->Update();
+		}
+
+		//check top collision with hitboxes
+		for (Hitbox* hitbox : g_world->activeHitboxes)
+		{
+			//TODO: PolygonCollidingWithBox literally doesnt work
+			if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
+			{
+				hitbox->OnCollision();
+			}
+			//clear hitbox as it only exists this frame
+			//TODO: okey maybe dont clear the hitbox bc what if the hitbox interacts with the environment
+		}
 
 		//check top collision with world objects
-		for (WorldObject* wo : allWorldObjs)
+		for (WorldObject* wobj : allWorldObjs)
 		{
-			if (PolygonCollidingWithBox(top.stack, wo->boundingBox))
+			if (PolygonCollidingWithBox(top.stack, wobj->boundingBox))
 			{
-				wo->OnCollision();
+				wobj->OnCollision();
 			}
 		}
+
 
 		// End of Update
 		// ---------------------------------------------------------------------------------
@@ -566,9 +587,21 @@ int main(void)
 
 			//draw every world object
 
-			wo->Draw();
-			p->Draw();
+			//wo->Draw();
+			//p->Draw();
 
+
+
+			for (WorldObject* wobj : allWorldObjs)
+			{
+				wobj->Draw();
+			}
+
+			//debug draw hitboxes
+			for (Hitbox* hitbox : g_world->activeHitboxes)
+			{
+				hitbox->ShowHitbox();
+			}
 
 			EndTextureMode();
 

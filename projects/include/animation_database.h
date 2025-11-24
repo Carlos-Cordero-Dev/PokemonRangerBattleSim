@@ -10,6 +10,12 @@ struct TextureData;
 struct KeyFrame
 {
 	float delaySec = 0.0f; //time to spend in this frame
+	//only used when frame has a hitbox
+	float hitboxCenterOffsetX = 0.0f;
+	float hitboxCenterOffsetY = 0.0f;
+	//note: these should never be negative values
+	float hitboxHeight = 0.0f;
+	float hitboxWidth = 0.0f;
 };
 
 struct AnimationData

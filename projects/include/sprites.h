@@ -26,7 +26,7 @@ public:
 	SpriteAnimation(AnimationData* animData) : animData_(animData) {};
 	SpriteAnimation(const SpriteAnimation& other);
 
-	void Update();
+	void Update(int posX, int posY);
 	void Draw(int posX, int posY);
 	void DrawRotScale(int posX, int posY, float rotDeg, float scale);
 

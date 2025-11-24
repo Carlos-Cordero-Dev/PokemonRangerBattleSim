@@ -9,7 +9,7 @@
 void IdleState::OnEnter()  
 {
 	waitTimer = 1.0f;
-	printf("enter idle state\n");
+	//printf("enter idle state\n");
 
 
 	Pokemon* owner_pkm = dynamic_cast<Pokemon*>(owner);
@@ -30,5 +30,5 @@ State* IdleState::OnUpdate(float dt)
 void IdleState::OnExit() 
 {
 	waitTimer = 1.0f;
-	printf("exit idle state\n");
+	//printf("exit idle state\n");
 }

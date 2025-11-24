@@ -27,8 +27,8 @@ void Pokemon::Update()
 
 	UpdateBBoxPosition();
 
-	printf("curr anim state %d\n", (int)animationState);
-	animations[animationState]->Update();
+	//printf("curr anim state %d\n", (int)animationState);
+	animations[animationState]->Update(position.x,position.y);
 }
 
 void Pokemon::Draw()

@@ -16,7 +16,7 @@ void MoveState::OnEnter()
 	direction = { 2.0f * rand() / RAND_MAX - 1.0f,2.0f * rand() / RAND_MAX - 1.0f };
 	direction = Vector2Normalize(direction);
 
-	printf("enter move state\n");
+	//printf("enter move state\n");
 }
 
 State* MoveState::OnUpdate(float dt)
@@ -54,5 +54,5 @@ State* MoveState::OnUpdate(float dt)
 void MoveState::OnExit()
 {
 	waitTimer = 3.0f;
-	printf("exit move state\n");
+	//printf("exit move state\n");
 }

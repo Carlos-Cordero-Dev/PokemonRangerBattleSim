@@ -46,7 +46,7 @@ void WorldObject::Draw()
 
 void WorldObject::Update()
 {
-	animations[0]->Update();
+	animations[0]->Update(position.x,position.y);
 
 	UpdateBBoxPosition();
 }

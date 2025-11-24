@@ -13,8 +13,7 @@
 #include "sprites.h"
 
 std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file_path)
-{ 
-
+{
 	std::vector<std::vector<KeyFrame>> keyframes;
 	std::ifstream in(file_path);
 
@@ -26,10 +25,11 @@ std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file
 	std::vector<KeyFrame> currentAnim;
 	std::string line;
 
-	while (std::getline(in, line)) {
-		// Trim whitespace
-		if (line.empty()) {
-			// End of one animation block
+	while (std::getline(in, line))
+	{
+		// Empty line = end of animation block
+		if (line.empty())
+		{
 			if (!currentAnim.empty()) {
 				keyframes.push_back(currentAnim);
 				currentAnim.clear();
@@ -38,17 +38,35 @@ std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file
 		}
 
 		std::stringstream ss(line);
+
 		float delay = 0.0f;
+		float centerOffsetX = 0.0f;
+		float centerOffsetY = 0.0f;
+		float height = 0.0f;
+		float width = 0.0f;
+
 		ss >> delay;
 
-		if (!ss.fail()) {
-			KeyFrame keyframe;
-			keyframe.delaySec = delay;
-			currentAnim.push_back(keyframe);
+		if (ss.fail())
+			continue;
+
+		KeyFrame kf;
+
+		//only mandatory field is delay
+		kf.delaySec = delay;
+
+		// optional hitbox data
+		if (ss >> centerOffsetX >> centerOffsetY >> height >> width) {
+			kf.hitboxCenterOffsetX = centerOffsetX;
+			kf.hitboxCenterOffsetY = centerOffsetY;
+			kf.hitboxHeight = height;
+			kf.hitboxWidth = width;
 		}
+
+		currentAnim.push_back(kf);
 	}
 
-	// Push last animation if file didn’t end with an empty line
+	// Push last animation if file does not end with blank line
 	if (!currentAnim.empty()) {
 		keyframes.push_back(currentAnim);
 	}
