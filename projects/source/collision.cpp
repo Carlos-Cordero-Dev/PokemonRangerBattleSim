@@ -54,17 +54,54 @@ bool PolygonCollidingWithBox(Coord* stack, float boxOriginX, float boxOriginY, f
 		// this skips that part
 		
 		//cross1 (topleft to botright)
-		if (IsIntersecting(polyLineOrigin, polyLineEnd,{ boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY + boxHeight })) return true;
-		//cross2 (topright to botleft)
-		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX + boxWidth,boxOriginY }, { boxOriginX,boxOriginY + boxHeight })) return true;
-		//top
-		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY })) return true;
+		//if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY + boxHeight }))
+		//{
+		//	DrawLine(polyLineOrigin.x, polyLineOrigin.y, polyLineEnd.x, polyLineEnd.y,YELLOW);
+		//	DrawLineEx({ boxOriginX, boxOriginY }, { boxOriginX + boxWidth, boxOriginY + boxHeight },2.0f, GREEN);
+		//	printf("collided cross1\n");
+		//	return true;
+		//}
+		////cross2 (topright to botleft)
+		//else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX + boxWidth,boxOriginY }, { boxOriginX,boxOriginY + boxHeight }))
+		//{
+		//	DrawLine(polyLineOrigin.x, polyLineOrigin.y, polyLineEnd.x, polyLineEnd.y, YELLOW);
+		//	DrawLineEx({ boxOriginX + boxWidth,boxOriginY }, { boxOriginX,boxOriginY + boxHeight }, 2.0f, GREEN);
+		//	printf("collided cross2\n");
+		//	return true;
+		//}
+		////top
+		//else 
+			if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY }))
+		{
+			DrawLineEx({ polyLineOrigin.x, polyLineOrigin.y }, { polyLineEnd.x, polyLineEnd.y },3.0f, YELLOW);
+			DrawLineEx({ boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY }, 2.0f, GREEN);
+			//printf("collided top\n");
+			return true;
+		}
 		//right
-		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX + boxWidth,boxOriginY }, { boxOriginX + boxWidth,boxOriginY + boxHeight })) return true;
+		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX + boxWidth,boxOriginY }, { boxOriginX + boxWidth,boxOriginY + boxHeight }))
+		{
+			DrawLineEx({ polyLineOrigin.x, polyLineOrigin.y }, { polyLineEnd.x, polyLineEnd.y }, 3.0f, YELLOW);
+			DrawLineEx({ boxOriginX + boxWidth,boxOriginY }, { boxOriginX + boxWidth,boxOriginY + boxHeight }, 2.0f, GREEN);
+			//printf("collided right\n");
+			return true;
+		}
 		//bot
-		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY + boxHeight }, { boxOriginX + boxWidth,boxOriginY + boxHeight })) return true;
+		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY + boxHeight }, { boxOriginX + boxWidth,boxOriginY + boxHeight }))
+		{
+			DrawLine(polyLineOrigin.x, polyLineOrigin.y, polyLineEnd.x, polyLineEnd.y, YELLOW);
+			DrawLineEx({ boxOriginX,boxOriginY + boxHeight }, { boxOriginX + boxWidth,boxOriginY + boxHeight }, 2.0f, GREEN);
+			//printf("collided bot\n");
+			return true;
+		}
 		//left
-		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY }, { boxOriginX,boxOriginY + boxHeight })) return true;
+		else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY }, { boxOriginX,boxOriginY + boxHeight }))
+		{
+			DrawLine(polyLineOrigin.x, polyLineOrigin.y, polyLineEnd.x, polyLineEnd.y, YELLOW);
+			DrawLineEx({ boxOriginX,boxOriginY }, { boxOriginX,boxOriginY + boxHeight }, 2.0f, GREEN);
+			//printf("collided left\n");
+			return true;
+		}
 
 		coord = coord->nextCoord;
 	}

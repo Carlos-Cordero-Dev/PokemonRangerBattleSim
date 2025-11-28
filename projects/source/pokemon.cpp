@@ -33,18 +33,23 @@ void Pokemon::Update()
 
 void Pokemon::Draw()
 {
+	//TODO: technically this boundbox w/h should be the w/h of the sprite, not the bb
 	animations[animationState]->DrawRotScale(
 		position.x - boundingBox.width * scale / 2,
 		position.y - boundingBox.height * scale / 2,
 		rotationDeg, scale);
 
 	//debug draw bounding box
-	DrawRectangleLines(
-		boundingBox.x - boundingBox.width * scale / 2,
-		boundingBox.y - boundingBox.height * scale / 2,
-		boundingBox.width * scale, boundingBox.height * scale,
-		RED
-	);
+	//DrawRectangleLines(
+	//	boundingBox.x - boundingBox.width * scale / 2 ,
+	//	boundingBox.y - boundingBox.height * scale / 2,
+	//	boundingBox.width * scale,boundingBox.height * scale,
+	//	RED
+	//);
+	DrawRectangleLinesEx(boundingBox, 1.0f, RED);
+
+	//debug center position
+	DrawCircleV(position, 5.5f, GREEN);
 }
 
 void Pokemon::OnEnclosed()

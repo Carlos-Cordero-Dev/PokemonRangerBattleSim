@@ -17,11 +17,12 @@ public:
 	virtual void Update();
 	virtual void Cleanup();
 
-	virtual void OnCollision() { /*printf("collided");*/ };
+	virtual void OnCollision() { printf("collided"); };
 
 	void UpdateBBoxPosition();
 public:
 
+	//NOTE: position is always centered, boundinBox is topleft aligned and gets h,w/2 subtracted every time it needs to get drawn
 	Vector2 position;
 	float scale;
 	float rotationDeg;

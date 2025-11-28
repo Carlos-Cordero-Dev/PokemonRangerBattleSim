@@ -439,6 +439,7 @@ int main(void)
 		}
 
 
+
 		// End of Update
 		// ---------------------------------------------------------------------------------
 
@@ -589,7 +590,6 @@ int main(void)
 
 			//wo->Draw();
 			//p->Draw();
-
 
 
 			for (WorldObject* wobj : allWorldObjs)

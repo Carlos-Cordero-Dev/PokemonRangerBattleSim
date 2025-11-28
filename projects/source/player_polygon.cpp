@@ -31,7 +31,7 @@ void DrawCurrentPolygon(Coord *stack)
       DrawLine(aux->x, aux->y, aux->nextCoord->x, aux->nextCoord->y, RED);
       if((aux->nextCoord)->nextCoord==nullptr)
       {
-        DrawCircle(KMarginToClosePoly,aux->nextCoord->x,aux->nextCoord->y);
+        //DrawCircle(KMarginToClosePoly,aux->nextCoord->x,aux->nextCoord->y);
       }
     }
   }

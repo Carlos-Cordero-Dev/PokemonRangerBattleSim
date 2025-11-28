@@ -30,18 +30,24 @@ WorldObject::WorldObject(const std::vector<SpriteAnimation*>& animations)
 
 void WorldObject::Draw()
 {
+	//TODO: technically this boundbox w/h should be the w/h of the sprite, not the bb
 	animations[0]->DrawRotScale(
-		position.x - boundingBox.width * scale /2,
+		position.x - boundingBox.width * scale / 2,
 		position.y - boundingBox.height * scale / 2,
 		rotationDeg, scale);
 	
 	//debug draw bounding box
 	DrawRectangleLines(
-		boundingBox.x - boundingBox.width * scale / 2 ,
-		boundingBox.y - boundingBox.height * scale / 2,
-		boundingBox.width * scale,boundingBox.height * scale,
+		boundingBox.x,
+		boundingBox.y,
+		boundingBox.width * scale,
+		boundingBox.height * scale,
 		RED
 	);
+	//DrawRectangleLinesEx(boundingBox,1.0f,RED);
+
+	//debug center position
+	DrawCircleV(position, 5.5f, GREEN);
 }
 
 void WorldObject::Update()
@@ -53,8 +59,9 @@ void WorldObject::Update()
 
 void WorldObject::UpdateBBoxPosition()
 {
-	boundingBox.x = position.x;
-	boundingBox.y = position.y;
+	//TODO: center everything bc theres a missmatch between the bb thats top left aligned and some stuff thats "center" aligned -w,-h etc
+	boundingBox.x = position.x - boundingBox.width * scale/ 2;
+	boundingBox.y = position.y - boundingBox.height * scale / 2;
 }
 
 void WorldObject::Cleanup()
