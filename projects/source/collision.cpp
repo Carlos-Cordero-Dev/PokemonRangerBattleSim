@@ -1,32 +1,55 @@
-
 #include "collision.h"
 #include "FIFO.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <cmath>
+#include <algorithm>
 
 //source: https://gamedev.stackexchange.com/questions/26004/how-to-detect-2d-line-on-line-collision
 
 bool IsIntersecting(Point a, Point b, Point c, Point d)
 {
+	const float EPS = 1e-6f;
+
 	float denominator = ((b.x - a.x) * (d.y - c.y)) - ((b.y - a.y) * (d.x - c.x));
 	float numerator1 = ((a.y - c.y) * (d.x - c.x)) - ((a.x - c.x) * (d.y - c.y));
 	float numerator2 = ((a.y - c.y) * (b.x - a.x)) - ((a.x - c.x) * (b.y - a.y));
 
-	// Detect coincident lines (has a problem, read below)
-	if (denominator == 0) return numerator1 == 0 && numerator2 == 0;
+	//Parallel or collinear
+	if (std::fabs(denominator) < EPS)
+	{
+		//Collinear if numerators are close to 0
+		if (std::fabs(numerator1) < EPS && std::fabs(numerator2) < EPS)
+		{
+			//Check 1D overlap using bounding boxes (EPS)
+			float minAx = std::min(a.x, b.x), maxAx = std::max(a.x, b.x);
+			float minAy = std::min(a.y, b.y), maxAy = std::max(a.y, b.y);
+			float minCx = std::min(c.x, d.x), maxCx = std::max(c.x, d.x);
+			float minCy = std::min(c.y, d.y), maxCy = std::max(c.y, d.y);
+
+			//If bounding boxes do not overlap, no intersection
+			if (maxAx < minCx - EPS || maxCx < minAx - EPS) return false;
+			if (maxAy < minCy - EPS || maxCy < minAy - EPS) return false;
+
+			//Overlap in projections, segments collinear and overlapping
+			return true;
+		}
+
+		// Parallel non-collinear -> no intersection
+		return false;
+	}
 
 	float r = numerator1 / denominator;
 	float s = numerator2 / denominator;
 
-	return (r >= 0 && r <= 1) && (s >= 0 && s <= 1);
+	return (r >= 0.0f && r <= 1.0f) && (s >= 0.0f && s <= 1.0f);
 }
 
 bool PolygonCollidingWithLine(Coord* stack, Point lineOrgin, Point lineEnd)
 {
 	Coord* coord = stack;
-	while (coord)
+	while (coord && coord->nextCoord)
 	{
 		Point polyLineOrigin = { coord->x,coord->y };
 		Point polyLineEnd = { coord->nextCoord->x,coord->nextCoord->y };
@@ -48,30 +71,8 @@ bool PolygonCollidingWithBox(Coord* stack, float boxOriginX, float boxOriginY, f
 		Point polyLineOrigin = { coord->x,coord->y };
 		Point polyLineEnd = { coord->nextCoord->x,coord->nextCoord->y };
 
-		//TODO: maybe crossing is unnecessary overhead? 
-
-		//note: originally used PolygonCollidingWithLine but that loops the whole linked list for every line, 
-		// this skips that part
-		
-		//cross1 (topleft to botright)
-		//if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY + boxHeight }))
-		//{
-		//	DrawLine(polyLineOrigin.x, polyLineOrigin.y, polyLineEnd.x, polyLineEnd.y,YELLOW);
-		//	DrawLineEx({ boxOriginX, boxOriginY }, { boxOriginX + boxWidth, boxOriginY + boxHeight },2.0f, GREEN);
-		//	printf("collided cross1\n");
-		//	return true;
-		//}
-		////cross2 (topright to botleft)
-		//else if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX + boxWidth,boxOriginY }, { boxOriginX,boxOriginY + boxHeight }))
-		//{
-		//	DrawLine(polyLineOrigin.x, polyLineOrigin.y, polyLineEnd.x, polyLineEnd.y, YELLOW);
-		//	DrawLineEx({ boxOriginX + boxWidth,boxOriginY }, { boxOriginX,boxOriginY + boxHeight }, 2.0f, GREEN);
-		//	printf("collided cross2\n");
-		//	return true;
-		//}
-		////top
-		//else 
-			if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY }))
+		//top
+		if (IsIntersecting(polyLineOrigin, polyLineEnd, { boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY }))
 		{
 			DrawLineEx({ polyLineOrigin.x, polyLineOrigin.y }, { polyLineEnd.x, polyLineEnd.y },3.0f, YELLOW);
 			DrawLineEx({ boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY }, 2.0f, GREEN);
