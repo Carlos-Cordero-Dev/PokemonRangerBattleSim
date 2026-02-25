@@ -75,7 +75,9 @@ bool PolygonCollidingWithBox(Coord* stack, float boxOriginX, float boxOriginY, f
 		{
 			DrawLineEx({ polyLineOrigin.x, polyLineOrigin.y }, { polyLineEnd.x, polyLineEnd.y },3.0f, YELLOW);
 			DrawLineEx({ boxOriginX,boxOriginY }, { boxOriginX + boxWidth,boxOriginY }, 2.0f, GREEN);
-			//printf("collided top\n");
+
+			DrawLineEx({ polyLineOrigin.x, polyLineOrigin.y }, { boxOriginX,boxOriginY }, 3.0f, ORANGE);
+			printf("collided top\n");
 			return true;
 		}
 		//right
@@ -83,7 +85,9 @@ bool PolygonCollidingWithBox(Coord* stack, float boxOriginX, float boxOriginY, f
 		{
 			DrawLineEx({ polyLineOrigin.x, polyLineOrigin.y }, { polyLineEnd.x, polyLineEnd.y }, 3.0f, YELLOW);
 			DrawLineEx({ boxOriginX + boxWidth,boxOriginY }, { boxOriginX + boxWidth,boxOriginY + boxHeight }, 2.0f, GREEN);
-			//printf("collided right\n");
+			DrawLineEx({ polyLineOrigin.x, polyLineOrigin.y }, { boxOriginX,boxOriginY }, 3.0f, ORANGE);
+
+			printf("collided right\n");
 			return true;
 		}
 		//bot
@@ -91,7 +95,9 @@ bool PolygonCollidingWithBox(Coord* stack, float boxOriginX, float boxOriginY, f
 		{
 			DrawLine(polyLineOrigin.x, polyLineOrigin.y, polyLineEnd.x, polyLineEnd.y, YELLOW);
 			DrawLineEx({ boxOriginX,boxOriginY + boxHeight }, { boxOriginX + boxWidth,boxOriginY + boxHeight }, 2.0f, GREEN);
-			//printf("collided bot\n");
+			DrawLineEx({ polyLineOrigin.x, polyLineOrigin.y }, { boxOriginX,boxOriginY }, 3.0f, ORANGE);
+
+			printf("collided bot\n");
 			return true;
 		}
 		//left
@@ -99,7 +105,9 @@ bool PolygonCollidingWithBox(Coord* stack, float boxOriginX, float boxOriginY, f
 		{
 			DrawLine(polyLineOrigin.x, polyLineOrigin.y, polyLineEnd.x, polyLineEnd.y, YELLOW);
 			DrawLineEx({ boxOriginX,boxOriginY }, { boxOriginX,boxOriginY + boxHeight }, 2.0f, GREEN);
-			//printf("collided left\n");
+			DrawLineEx({ polyLineOrigin.x, polyLineOrigin.y }, { boxOriginX,boxOriginY }, 3.0f, ORANGE);
+
+			printf("collided left\n");
 			return true;
 		}
 

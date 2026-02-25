@@ -418,25 +418,25 @@ int main(void)
 		}
 
 		//check top collision with hitboxes
-		for (Hitbox* hitbox : g_world->activeHitboxes)
-		{
-			//TODO: PolygonCollidingWithBox literally doesnt work
-			if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
-			{
-				hitbox->OnCollision();
-			}
-			//clear hitbox as it only exists this frame
-			//TODO: okey maybe dont clear the hitbox bc what if the hitbox interacts with the environment
-		}
+		//for (Hitbox* hitbox : g_world->activeHitboxes)
+		//{
+		//	//TODO: PolygonCollidingWithBox literally doesnt work
+		//	if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
+		//	{
+		//		hitbox->OnCollision();
+		//	}
+		//	//clear hitbox as it only exists this frame
+		//	//TODO: okey maybe dont clear the hitbox bc what if the hitbox interacts with the environment
+		//}
 
 		//check top collision with world objects
-		for (WorldObject* wobj : allWorldObjs)
-		{
-			if (PolygonCollidingWithBox(top.stack, wobj->boundingBox))
-			{
-				wobj->OnCollision();
-			}
-		}
+		//for (WorldObject* wobj : allWorldObjs)
+		//{
+		//	if (PolygonCollidingWithBox(top.stack, wobj->boundingBox))
+		//	{
+		//		wobj->OnCollision();
+		//	}
+		//}
 
 
 
@@ -602,6 +602,18 @@ int main(void)
 			{
 				hitbox->ShowHitbox();
 			}
+
+			for (Hitbox* hitbox : g_world->activeHitboxes)
+			{
+				//TODO: PolygonCollidingWithBox literally doesnt work
+				if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
+				{
+					hitbox->OnCollision();
+				}
+				//clear hitbox as it only exists this frame
+				//TODO: okey maybe dont clear the hitbox bc what if the hitbox interacts with the environment
+			}
+
 
 			EndTextureMode();
 

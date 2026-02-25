@@ -48,7 +48,7 @@ void SpriteAnimation::Update(int posX, int posY)
 			//check if new frame has a hitbox and spawn it
 			if (animData_->keyframes[currentFrame].hitboxHeight > 0.0f && animData_->keyframes[currentFrame].hitboxWidth > 0.0f)
 			{
-				printf("spawned hitbox");
+				printf("spawned hitbox"); 
 
 				g_world->activeHitboxes.push_back(new Hitbox(
 					animData_->keyframes[currentFrame].hitboxCenterOffsetX + posX,
