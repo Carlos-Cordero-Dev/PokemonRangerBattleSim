@@ -423,6 +423,11 @@ int main(void)
 			if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
 			{
 				hitbox->OnCollision();
+
+				//reset stylus
+				ResetTop(&top);
+				DestroyStackNoDepth(&enclosedPoly);
+				enclosedAuxPoints.clear();
 			}
 			//clear hitbox as it only exists this frame
 			//TODO: okey maybe dont clear the hitbox bc what if the hitbox interacts with the environment
@@ -434,6 +439,11 @@ int main(void)
 			if (PolygonCollidingWithBox(top.stack, wobj->boundingBox))
 			{
 				wobj->OnCollision();
+
+				//reset stylus
+				ResetTop(&top);
+				DestroyStackNoDepth(&enclosedPoly);
+				enclosedAuxPoints.clear();
 			}
 		}
 
@@ -498,11 +508,10 @@ int main(void)
 
 
 			//draw stlyus tail
+			int numberOfNodes = GetStackDepth(top.stack);
 
-			if (touch.x != 0 && touch.y != 0)
+			if (touch.x != 0 && touch.y != 0 && numberOfNodes > 0)
 			{
-
-				int numberOfNodes = GetStackDepth(top.stack);
 
 				//printf("num of nodes: %d\n", numberOfNodes);
 				float trailThickness = 10.0f;

@@ -17,7 +17,7 @@ public:
 	virtual void Update();
 	virtual void Cleanup();
 
-	virtual void OnCollision() { printf("collided"); };
+	virtual void OnCollision() { printf("worldobj collided"); };
 
 	void UpdateBBoxPosition();
 public:
