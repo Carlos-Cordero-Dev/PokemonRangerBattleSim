@@ -5,3 +5,11 @@ https://www.raylib.com/examples/shaders/loader.html?name=shaders_shapes_textures
 
 deferred rendering:
 https://www.raylib.com/examples/shaders/loader.html?name=shaders_deferred_render
+
+
+-sound:
+there are speed thresholds where pitch starts going up/down
+if you go fast for a prolonger period, pitch steadily grows
+if you start going slower, pitch slowly goes lower
+
+

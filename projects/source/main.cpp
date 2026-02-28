@@ -60,7 +60,7 @@ what do I need man:
 
 AI:
 - movement
-- atacks: single hitboxes + 
+- atacks: single hitboxes
 
 
 -special player atacks
@@ -229,6 +229,7 @@ int main(void)
 	std::vector<Vector2> enclosedAuxPoints;
 	std::vector<Vector2> enclosedIndicatorParticlePositions; //initial positions
 	std::vector<Vector2> lerpingEIParticlePositions; //during lerping positions
+	Vector2 enclosedTrackingPosition;
 
 	//state machines
 	 
@@ -321,11 +322,15 @@ int main(void)
 		ComputeAndUpdateDistance(&top);
 		ForceTopDistanceLimit(&top);
 
-		if (Coord* currEnclosedPoly = checkTopIntersection(&top, allEnclosableObjs))
+		// poly closed, calculate enclosed particles positions
+		Coord* currEnclosedPoly = nullptr;
+		if (checkTopIntersection(&top, allEnclosableObjs, currEnclosedPoly, &enclosedTrackingPosition))
 		{
 			//printf("INTERSECTED\n");
 			//ShowStack(enclosedPoly);
 			//DestroyStackNoDepth(&enclosedPoly);
+
+			// prior frame existed enclosed poly > clear it, set it to new one
 			if (enclosedPoly)
 			{
 				//yellow transition is always destroyed if another appears
@@ -386,8 +391,7 @@ int main(void)
 
 			float interpFactor = enclosingParticlesElapsedTime / KEnclosingParticlesTravelTimeFromOutToCenterSec;
 
-			//TODO: This is a debug center , in reality particles only happen when a pokemon is inside which is the center
-			Vector2 center = allEnclosableObjs[0]->position;
+			Vector2 center = enclosedTrackingPosition;
 
 			//move every particle
 			for (int i = 0; i < enclosedIndicatorParticlePositions.size(); i++)

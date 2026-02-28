@@ -3,7 +3,7 @@
 
 #include "world_object.h"
 #include "sprites.h"
-
+#include "ranger_top.h"
 #include "state_machine.h"
 
 class EnclosableObject : public WorldObject

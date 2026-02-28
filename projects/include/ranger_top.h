@@ -29,8 +29,10 @@
 #include <algorithm>
 #include <vector>
 
-#include "enclosable_object.h"
 #include "collision.h"
+
+//#include "enclosable_object.h"
+class EnclosableObject;
 
 struct Top
 {
@@ -77,9 +79,10 @@ const double kMinArea = 1000; //min area to consider close polygon
 
 Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord* endNode);
 
-//returns the enclosed convex polygon that forms from the intersection
-
-Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& enclosableObjs);
+// in: every enclosable object to check against
+// out: enclosed convex polygon that forms from the intersection, point where last encosed object was (TODO: idk what happens when multiple objects are enclosed)
+// return true when enclosed any object, false otherwise
+bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEnclosableObjs, Coord*& outEnclosedPolygon, Vector2* outEnclosedCenter);
 
 void CalculateEnclosedShaderAreaPoints(Coord* enclosedPoints, std::vector<Vector2>& vectorToFill);
 

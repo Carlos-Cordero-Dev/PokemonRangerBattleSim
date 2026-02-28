@@ -3,6 +3,7 @@
 
 #include "sprites.h"
 #include "enclosable_object.h"
+#include "ranger_top.h"
 
 class Pokemon : public EnclosableObject
 {
@@ -11,6 +12,7 @@ public:
 
 	void Draw() override;
 	void OnEnclosed() override;
+	void OnEnclosedSetCenter(Vector2* newCenter);
 	void Update() override;
 	void Cleanup() override;
 

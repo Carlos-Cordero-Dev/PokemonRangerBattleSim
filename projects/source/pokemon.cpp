@@ -1,7 +1,7 @@
 
 #include "pokemon.h"
-
 #include "timer.h"
+#include "world.h"
 
 Pokemon::Pokemon(const std::vector<SpriteAnimation*>& animations) : EnclosableObject(animations)
 {
@@ -56,6 +56,14 @@ void Pokemon::OnEnclosed()
 {
 	printf("enclosed pokimon\n");
 }
+void Pokemon::OnEnclosedSetCenter(Vector2* newCenter)
+{
+	OnEnclosed();
+
+	newCenter->x = position.x;
+	newCenter->y = position.y;
+}
+
 
 void Pokemon::Cleanup()
 {

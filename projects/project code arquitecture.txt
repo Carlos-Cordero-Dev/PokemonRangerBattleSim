@@ -1,0 +1,3 @@
+
+-decouple class funcionality as much as possible
+-if multiple returns, multiple params function(&in,*out)

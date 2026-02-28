@@ -1,6 +1,8 @@
 
 #include "ranger_top.h"
-
+#include "constants.h"
+#include "enclosable_object.h"
+#include "pokemon.h"
 
 void InsertTopCoord(Top* top, int x, int y)
 {
@@ -216,7 +218,7 @@ Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord *endNode)
 	return newPoly;
 }
 
-Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& enclosableObjs) {
+bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEnclosableObjs, Coord*& outEnclosedPolygon, Vector2* outEnclosedCenter) {
 	Coord* head = top->stack;
 	if (head == nullptr) return nullptr;
 	if (head->nextCoord == nullptr) return nullptr;
@@ -280,7 +282,7 @@ Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& encl
 			
 
 			//run enclosed logic
-			for (EnclosableObject* enclosableObj : enclosableObjs)
+			for (EnclosableObject* enclosableObj : inEnclosableObjs)
 			{
 				float centerX = enclosableObj->boundingBox.x + enclosableObj->boundingBox.width / 2;
 				float centerY = enclosableObj->boundingBox.y + enclosableObj->boundingBox.height / 2;
@@ -293,7 +295,13 @@ Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& encl
 
 				if (pnpoly({ centerX,centerY }, CoordListToPointList(head, current), polyNodeCount) != 0)
 				{
-					enclosableObj->OnEnclosed();
+					Pokemon* pokemonEnclosable = dynamic_cast<Pokemon*>(enclosableObj);
+					if (pokemonEnclosable)
+					{
+						//TODO: what happens when multiple objects are enclosed at the same time? maybe interpolate the center or something
+						pokemonEnclosable->OnEnclosedSetCenter(outEnclosedCenter);
+					}
+					else enclosableObj->OnEnclosed();
 				}
 
 			}
@@ -309,11 +317,13 @@ Coord* checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& encl
 			//TODO: distance hard to implement bc you are deleting nodes buddy
 			//UpdateStackDepths(head);
 
-			return enclosedPolygon;
+
+			outEnclosedPolygon =  enclosedPolygon;
+			return true;
 		}
 		current = current->nextCoord;
 	}
-	return nullptr;
+	return false;
 }
 
 void CalculateEnclosedShaderAreaPoints(Coord* enclosedPoints, std::vector<Vector2>& vectorToFill)
