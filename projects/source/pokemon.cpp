@@ -2,6 +2,7 @@
 #include "pokemon.h"
 #include "timer.h"
 #include "world.h"
+#include "state_machine.h"
 
 Pokemon::Pokemon(const std::vector<SpriteAnimation*>& animations) : EnclosableObject(animations)
 {
@@ -10,19 +11,28 @@ Pokemon::Pokemon(const std::vector<SpriteAnimation*>& animations) : EnclosableOb
 
 void Pokemon::AssignStateMachine(StateMachine* stateMachine)
 {
-	_stateMachine = stateMachine;
-	_stateMachine->owner = this;
-	for (State* ownedState : _stateMachine->ownedStates)
+	this->stateMachine = stateMachine;
+	stateMachine->owner = this;
+	for (State* ownedState : stateMachine->ownedStates)
 	{
 		ownedState->owner = this;
 	}
 }
 
+void Pokemon::SetAnimationState(const std::string& animationName)
+{
+	if (animationName == "idle")
+		animationState = AnimationState::kIdle;
+	else if (animationName == "move")
+		animationState = AnimationState::kMove;
+	else if (animationName == "attack")
+		animationState = AnimationState::kAttack;
+}
 void Pokemon::Update()
 {
-	if (_stateMachine)
+	if (stateMachine)
 	{
-		_stateMachine->Update(Timer::GetInstance().GetDeltaTime());
+		stateMachine->Update(Timer::GetInstance().GetDeltaTime());
 	}
 
 	UpdateBBoxPosition();

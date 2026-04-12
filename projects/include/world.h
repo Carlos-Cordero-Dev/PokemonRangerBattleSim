@@ -1,12 +1,19 @@
 
+#pragma once
+
 #include <vector>
 
-class Hitbox;
+class Hitbox; //fd
 
-class World {
+class GameManager {
+
+public:
+	static GameManager& GetInstance() {
+		static GameManager instance;
+		return instance;
+	}
+
 public:
 	std::vector<Hitbox*> activeHitboxes;
 
 };
-
-extern World* g_world; 

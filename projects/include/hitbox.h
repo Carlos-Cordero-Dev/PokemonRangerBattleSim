@@ -14,4 +14,5 @@ public:
 	void ShowHitbox();
 
 	Rectangle boundingBox;
+	Vector2 velocity;
 };

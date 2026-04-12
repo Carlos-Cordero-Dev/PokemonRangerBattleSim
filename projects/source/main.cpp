@@ -46,9 +46,24 @@
 #include "pokemon.h"
 
 #include "state_machine.h"
-#include "states/idle_state.h"
-#include "states/move_state.h"
-#include "states/attack_state.h"
+//#include "states/idle_state.h"
+//#include "states/move_state.h"
+//#include "states/attack_state.h"
+
+// NEW STATE MACHINE
+#include "actions/action_factory.h"
+
+#include "actions/move_towards_target_action.h"
+#include "actions/set_target_action.h"
+#include "actions/start_timer_action.h"
+#include "actions/tick_timer_action.h"
+#include "actions/spawn_hitbox_action.h"
+#include "actions/set_animation_action.h"
+
+#include "conditions/condition_factory.h"
+
+#include "conditions/distance_condition.h"
+#include "conditions/timer_finished_condition.h"
 
 /*
 what do I need man:
@@ -216,13 +231,12 @@ int main(void)
     printf("\ndamnson2=================================\n");
 	//---------------------------------------------------------------------------------------
 	// Main game loop
+	GameManager& gameManager = GameManager::GetInstance();
 
 	std::string text = "Frame ";
 	//SetTargetFPS(600);
 	const double renderStep = 1.0 / 120.0; // render at 60Hz
 	double lastRender = 0.0;
-
-	g_world = new World();
 
 	Top top;
 	Coord* enclosedPoly = nullptr;
@@ -233,25 +247,94 @@ int main(void)
 
 	//state machines
 	 
-		//default pokemon state machie
-	StateMachine* pokemondefaultStateMachine = new StateMachine();
-	{//scope cause im like that (no reason whatsoever)
-		//TODO: this should probably be a function but tbh this WILL be an external application passing in the FSM
-		IdleState* idleState = new IdleState();
-		MoveState* moveState = new MoveState();
-		AttackState* attackState = new AttackState();
-		std::vector<State*> pdsm_ownedStates = { idleState , moveState, attackState };
+	//	//default pokemon state machie
+	//StateMachine* pokemondefaultStateMachine = new StateMachine();
+	//{//scope cause im like that (no reason whatsoever)
+	//	//TODO: this should probably be a function but tbh this WILL be an external application passing in the FSM
+	//	IdleState* idleState = new IdleState();
+	//	MoveState* moveState = new MoveState();
+	//	AttackState* attackState = new AttackState();
+	//	std::vector<State*> pdsm_ownedStates = { idleState , moveState, attackState };
 
-		idleState->on_idle_timer_finished = moveState;
+	//	idleState->on_idle_timer_finished = moveState;
 
-		moveState->on_move_action_completed = attackState;
+	//	moveState->on_move_action_completed = attackState;
 
-		attackState->on_attack_completed = idleState;
+	//	attackState->on_attack_completed = idleState;
 
-		pokemondefaultStateMachine->currentState = idleState;
-		pokemondefaultStateMachine->ownedStates = pdsm_ownedStates;
+	//	pokemondefaultStateMachine->currentState = idleState;
+	//	pokemondefaultStateMachine->ownedStates = pdsm_ownedStates;
 
-	}
+	//}
+
+	// READ SM FROM JSON 
+	auto& conditionFactory = ConditionFactory::Instance();
+
+	conditionFactory.Register("DistanceToTargetLess", [](const Json& j) {
+		auto c = std::make_unique<DistanceToTargetLess>();
+		c->value = j["value"];
+		return c;
+		});
+
+	conditionFactory.Register("TimerFinished", [](const Json& j) {
+		auto c = std::make_unique<TimerFinishedCondition>();
+		c->name = j["name"];
+		return c;
+		});
+
+
+	auto& actionFactory = ActionFactory::Instance();
+
+	actionFactory.Register("MoveTowardsTarget", [](const Json& j) {
+		auto a = std::make_unique<MoveTowardsTargetAction>();
+		a->speed = ParseFloatValue(j["speed"]);
+		return a;
+		});
+
+	actionFactory.Register("SetTarget", [](const Json& j) {
+		auto a = std::make_unique<SetTargetAction>();
+
+		a->targetX = ParseFloatValue(j["x"]);
+		a->targetY = ParseFloatValue(j["y"]);
+
+		return a;
+		});
+
+	actionFactory.Register("SpawnHitbox", [](const Json& j) {
+		auto a = std::make_unique<SpawnHitboxAction>();
+
+		a->width = ParseFloatValue(j["width"]);
+		a->height = ParseFloatValue(j["height"]);
+		a->speed = ParseFloatValue(j["speed"]);
+		a->dirX = ParseFloatValue(j["dirX"]);
+		a->dirY = ParseFloatValue(j["dirY"]);
+
+		return a;
+		});
+
+	actionFactory.Register("StartTimer", [](const Json& j) {
+		auto a = std::make_unique<StartTimerAction>();
+		a->name = j["name"];
+		a->duration = j["duration"];
+		return a;
+		});
+
+	actionFactory.Register("TickTimer", [](const Json& j) {
+		auto a = std::make_unique<TickTimerAction>();
+		a->name = j["name"];
+		return a;
+		});
+
+	actionFactory.Register("SetAnimation", [](const Json& j) {
+		auto a = std::make_unique<SetAnimationAction>();
+		a->animationName = j["animation"];
+		return a;
+		});
+
+	std::string jsonPath = "state_machines/sm.json";
+	Json j = LoadJson(RESOURCES_FOLDER + jsonPath);
+	//TODO: either leave the owner here or in AssignMachine state, but not in both
+	StateMachine* sm = BuildStateMachine(j, nullptr/*owner*/);
 
 	//world object creation
 
@@ -264,7 +347,7 @@ int main(void)
 
 	Pokemon* p = new Pokemon(garchompAnims);
 	p->position = Vector2({ 500, 100 });
-	p->AssignStateMachine(pokemondefaultStateMachine);
+	p->AssignStateMachine(sm);
 
 	//TODO: below tasks to be automated so basically find a way to register anyway object created, it can be a function 
 	// ex: register(pokemon) and it tries to cast to each type of object dynamic_cast<EnclosedObject*> for example and if != nullptr
@@ -422,7 +505,7 @@ int main(void)
 		}
 
 		//check top collision with hitboxes
-		for (Hitbox* hitbox : g_world->activeHitboxes)
+		for (Hitbox* hitbox : gameManager.activeHitboxes)
 		{
 			if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
 			{
@@ -610,7 +693,7 @@ int main(void)
 			}
 
 			//debug draw hitboxes
-			for (Hitbox* hitbox : g_world->activeHitboxes)
+			for (Hitbox* hitbox : GameManager::GetInstance().activeHitboxes)
 			{
 				hitbox->ShowHitbox();
 			}

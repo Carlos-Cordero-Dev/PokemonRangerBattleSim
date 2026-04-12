@@ -4,7 +4,7 @@
 #include <raylib.h>
 
 #include "sprites.h"
-#include "state_machine.h"
+//#include "state_machine.h"
 
 class WorldObject
 {

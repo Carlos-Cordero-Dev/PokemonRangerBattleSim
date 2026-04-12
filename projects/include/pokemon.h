@@ -17,10 +17,12 @@ public:
 	void Cleanup() override;
 
 	void AssignStateMachine(StateMachine* stateMachine);
+	void SetAnimationState(const std::string& animationMame);
+
+	StateMachine* stateMachine = nullptr;
 
 private:
 
-public:
 	int id = 0;
 
 	enum AnimationState
@@ -32,8 +34,4 @@ public:
 
 	//its assumed it gets changed by the state machine designed for this specific pkmn
 	AnimationState animationState;
-
-private:
-	StateMachine* _stateMachine = nullptr;
-
 };

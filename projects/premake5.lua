@@ -14,7 +14,8 @@ project "MyProject"
     -- Project source and include files
     files { "source/**.c", "source/**/**.c",
 			"source/**.cpp","source/**/**.cpp",
-			"include/**.h" ,"include/**/**.h"}
+			"include/**.h" ,"include/**/**.h",
+			"include/**.hpp" ,"include/**/**.hpp"}
 
     -- Include directories
     includedirs {

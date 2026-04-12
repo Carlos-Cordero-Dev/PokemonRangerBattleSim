@@ -55,13 +55,13 @@ std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file
 		//only mandatory field is delay
 		kf.delaySec = delay;
 
-		// optional hitbox data
-		if (ss >> centerOffsetX >> centerOffsetY >> height >> width) {
-			kf.hitboxCenterOffsetX = centerOffsetX;
-			kf.hitboxCenterOffsetY = centerOffsetY;
-			kf.hitboxHeight = height;
-			kf.hitboxWidth = width;
-		}
+		//// optional hitbox data
+		//if (ss >> centerOffsetX >> centerOffsetY >> height >> width) {
+		//	kf.hitboxCenterOffsetX = centerOffsetX;
+		//	kf.hitboxCenterOffsetY = centerOffsetY;
+		//	kf.hitboxHeight = height;
+		//	kf.hitboxWidth = width;
+		//}
 
 		currentAnim.push_back(kf);
 	}

@@ -1,0 +1,53 @@
+{
+  "states": [
+    {
+      "name": "Move",
+      "onEnter": [
+	    { "type": "SetAnimation", "animation": "move" },
+		{
+		  "type": "SetTarget",
+		  "x": { "type": "random_range", "min": 100, "max": 500 },
+		  "y": { "type": "random_range", "min": 200, "max": 600 }
+		}
+      ],
+      "onUpdate": [
+        { "type": "MoveTowardsTarget", "speed": 120 }
+      ]
+    },
+    {
+      "name": "Attack",
+      "onEnter": [
+	    { "type": "SetAnimation", "animation": "attack" },
+        { 
+		  "type": "SpawnHitbox",
+		  "width": 50, "height": 50,
+		  "speed":0,
+		  "dirX":0,"dirY":0
+		},
+        { "type": "StartTimer", "name": "attackTimer", "duration": 1.0 }
+      ],
+      "onUpdate": [
+        { "type": "TickTimer", "name": "attackTimer" }
+      ]
+    }
+  ],
+
+  "transitions": [
+    {
+      "from": "Move",
+      "to": "Attack",
+      "conditions": [
+        { "type": "DistanceToTargetLess", "value": 10 }
+      ]
+    },
+    {
+      "from": "Attack",
+      "to": "Move",
+      "conditions": [
+        { "type": "TimerFinished", "name": "attackTimer" }
+      ]
+    }
+  ],
+
+  "initialState": "Move"
+}

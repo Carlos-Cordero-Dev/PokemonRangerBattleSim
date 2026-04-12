@@ -6,6 +6,17 @@ https://www.raylib.com/examples/shaders/loader.html?name=shaders_shapes_textures
 deferred rendering:
 https://www.raylib.com/examples/shaders/loader.html?name=shaders_deferred_render
 
+-enemy AI tool
+
+TODO: 
+-sm working but now how do I make an action that runs at the same time as other action:
+-example: hitbox action active while move action (bc spawn hitbox action ended)
+
+
+course of action:
+1: stable battle first with literally everything you can think of
+2: abstract functionality to XAML and WPF (.NET, C#)
+fms + ???
 
 -sound:
 there are speed thresholds where pitch starts going up/down
@@ -13,3 +24,16 @@ if you go fast for a prolonger period, pitch steadily grows
 if you start going slower, pitch slowly goes lower
 
 
+mechanic ideas:
+-special player atacks
+-terrains?
+
+-gestures: press a button (maybe time slows down, screen goes gray) 
+and during a duration can make shape which triggers buff etc
+
+-pokemon summon obstacles you have to catch
+-multiple pokemon spawned at once like flocks of pidgeys
+-one pokemon cries for help many appear
+-collecting instruments or pokemon with instruments (pichu ukelele starting, you find more in a potential game)
+- ^ alternatively, the goal of the game is collecting instruments, starting ukelele, rework how ukelele works
+-powerup: draw one circle and another one is drawn either to the side or one bigger is drawn on top
