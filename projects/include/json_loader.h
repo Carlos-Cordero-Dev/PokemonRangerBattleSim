@@ -4,7 +4,7 @@
 #include <fstream>
 #include "actions/action_values.h"
 
-#include "nlohmann/json.hpp"
+#include <external/nlohmann/json.hpp>
 
 using Json = nlohmann::json;
 

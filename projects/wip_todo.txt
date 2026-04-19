@@ -11,7 +11,7 @@ https://www.raylib.com/examples/shaders/loader.html?name=shaders_deferred_render
 TODO: 
 -sm working but now how do I make an action that runs at the same time as other action:
 -example: hitbox action active while move action (bc spawn hitbox action ended)
-
+-Remove malloc from every frame, do it at the start of program
 
 course of action:
 1: stable battle first with literally everything you can think of

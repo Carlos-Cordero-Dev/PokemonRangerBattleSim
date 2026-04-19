@@ -6,7 +6,7 @@ ifeq ($(strip $(DEVKITPRO)),)
 $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
 endif
 
-RAYLIB_NX=C:/PokemonRangerBattleSim
+RAYLIB_NX=D:/PokemonRangerBattleSim
 
 ifeq ($(strip $(RAYLIB_NX)),)
 $(error "Please set RAYLIB_NX in your environment. export RAYLIB_NX=<path to>/raylib-nx")
@@ -47,7 +47,7 @@ TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
-INCLUDES	:=	include
+INCLUDES	:=	include ../src/**/** ../src/external
 ROMFS		:=	romfs
 DEFINES		:=  -DSWITCH_BUILD
 #---------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
+CXXFLAGS	:= $(CFLAGS) -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)

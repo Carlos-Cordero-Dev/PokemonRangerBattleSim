@@ -2,26 +2,27 @@
 #include <stdlib.h>
 
 #ifdef SWITCH_BUILD
+#define PLATFORM_NX 1
 #include <switch.h>
 #endif
 
 #include "raylib.h"
 #include "raymath.h"
 
-#define GRAPHICS_API_OPENGL_33
+//#define GRAPHICS_API_OPENGL_33
 #include "rlgl.h" //rlFramebuffer
 //#include "glad.h" //glBindBuffer
 #include <glad.h>
 
 #define RAYGUI_IMPLEMENTATION
 #ifdef SWITCH_BUILD 
-#include "raygui.h"
+#include "raygui.h"	
 #else 
 #include "raygui_win.h"
 #include <crtdbg.h> //memory leaks check
 #endif
 
-#define GLSL_VERSION 420
+//#define GLSL_VERSION 420
 
 #ifdef DEBUG
 #ifdef WINDOWS_BUILD
@@ -109,7 +110,6 @@ int main(void)
 	SetLogFileEX("prbs_log.txt");
 #endif
 
-
     // Initialization
     //--------------------------------------------------------------------------------------
 	srand(time(0));
@@ -121,8 +121,9 @@ int main(void)
     bool textBoxEditMode = false;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
-	printf("\n=====================damnson1=================================\n");
 
+	printf("\n=====================damnson1=================================\n");
+	//fflush(stdout);
 	// === GRADIENT SHADERS ===
 
 	// line
@@ -155,10 +156,10 @@ int main(void)
 
 	rlEnableFramebuffer(main_framebuffer);
 	rlEnableFramebuffer(stylus_framebuffer);
-	unsigned int main_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+	unsigned int main_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
 	unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8/*important for transparency*/, 1);
 
-    rlActiveDrawBuffers(2);
+    //rlActiveDrawBuffers(2);
 	rlFramebufferAttach(main_framebuffer, main_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
 	rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
 
@@ -178,13 +179,13 @@ int main(void)
 	mainTexOverlay.width = screenWidth;
 	mainTexOverlay.height = screenHeight;
 	mainTexOverlay.mipmaps = 1;
-	mainTexOverlay.format = RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16;
+	mainTexOverlay.format = RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
 
 	// Make sure our framebuffer is complete.
     // NOTE: rlFramebufferComplete() automatically unbinds the framebuffer, so we don't have
     // to rlDisableFramebuffer() here.
-#ifndef SWITCH_BUILD
+//#ifndef SWITCH_BUILD
 	if (!rlFramebufferComplete(main_framebuffer))
 	{
 		printf("Framebuffer is not complete");
@@ -195,7 +196,7 @@ int main(void)
 		printf("Framebuffer is not complete");
 		CloseWindow();
 	}
-#endif
+//#endif
 
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required) 

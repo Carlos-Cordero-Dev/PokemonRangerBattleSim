@@ -220,8 +220,8 @@ Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord *endNode)
 
 bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEnclosableObjs, Coord*& outEnclosedPolygon, Vector2* outEnclosedCenter) {
 	Coord* head = top->stack;
-	if (head == nullptr) return nullptr;
-	if (head->nextCoord == nullptr) return nullptr;
+	if (head == nullptr) return false;
+	if (head->nextCoord == nullptr) return false;
 
 	Coord* headNext = head->nextCoord;
 

@@ -19,18 +19,18 @@ project "MyProject"
 
     -- Include directories
     includedirs {
-        "include", "include/**"                -- project headers
+        "include", "include/**", "include/**/**"                -- project headers
     }
 		
     -- Filter for Switch configuration
     filter "configurations:Switch"
 	    kind "Makefile"
 		system "linux"           -- Set as Linux-like environment for make
-		defines { "SWITCH_BUILD" , "DEBUG"}
+		defines { "SWITCH_BUILD" , "DEBUG", "NX_USB_DEBUGGER"}
 
-		buildcommands {"C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make\""}
-		rebuildcommands { "C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make clean\"", "C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make\""}
-		cleancommands { "C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make clean\"" }
+		buildcommands {"D:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make\""}
+		rebuildcommands { "D:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make clean\"", "C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make\""}
+		cleancommands { "D:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make clean\"" }
 
 		libdirs { 
 			"../src_nx",                -- nx raylib libs (.a)
@@ -40,7 +40,7 @@ project "MyProject"
 	    includedirs {
 			"../src_nx", 
 			"../src_nx/external", 
-			"C:/devkitPro/libnx/include", --libnx headers
+			"D:/devkitPro/libnx/include", --libnx headers
 		}
 		-- Custom debug command
 		debugcommand "$(ProjectDir)\\tools\\run_suyu.bat"
