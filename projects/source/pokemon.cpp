@@ -6,17 +6,21 @@
 
 Pokemon::Pokemon(const std::vector<SpriteAnimation*>& animations) : EnclosableObject(animations)
 {
-
+	animationState = AnimationState::kIdle;
 }
 
 void Pokemon::AssignStateMachine(StateMachine* stateMachine)
 {
-	this->stateMachine = stateMachine;
-	stateMachine->owner = this;
-	for (State* ownedState : stateMachine->ownedStates)
+	if (stateMachine)
 	{
-		ownedState->owner = this;
+		this->stateMachine = stateMachine;
+		stateMachine->owner = this;
+		for (State* ownedState : stateMachine->ownedStates)
+		{
+			ownedState->owner = this;
+		}
 	}
+	else printf("tried to assign null state machine\n");
 }
 
 void Pokemon::SetAnimationState(const std::string& animationName)

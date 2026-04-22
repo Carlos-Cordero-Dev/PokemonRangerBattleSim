@@ -12,7 +12,7 @@
 //#define GRAPHICS_API_OPENGL_33
 #include "rlgl.h" //rlFramebuffer
 //#include "glad.h" //glBindBuffer
-#include <glad.h>
+//#include <glad.h>
 
 #define RAYGUI_IMPLEMENTATION
 #ifdef SWITCH_BUILD 
@@ -151,51 +151,51 @@ int main(void)
 
 	// === === === 
 
-	unsigned int stylus_framebuffer = rlLoadFramebuffer();
-	unsigned int main_framebuffer = rlLoadFramebuffer();
+	//unsigned int stylus_framebuffer = rlLoadFramebuffer();
+	//unsigned int main_framebuffer = rlLoadFramebuffer();
 
-	rlEnableFramebuffer(main_framebuffer);
-	rlEnableFramebuffer(stylus_framebuffer);
-	unsigned int main_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
-	unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8/*important for transparency*/, 1);
+	//rlEnableFramebuffer(main_framebuffer);
+	//rlEnableFramebuffer(stylus_framebuffer);
+	//unsigned int main_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
+	//unsigned int stylus_texture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8/*important for transparency*/, 1);
 
-    //rlActiveDrawBuffers(2);
-	rlFramebufferAttach(main_framebuffer, main_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
-	rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+ //   //rlActiveDrawBuffers(2);
+	//rlFramebufferAttach(main_framebuffer, main_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+	//rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
 
 	RenderTexture2D mainTexOverlayRenTex = LoadRenderTexture(screenWidth, screenHeight);
 	RenderTexture2D stylusOverlayRenTex = LoadRenderTexture(screenWidth, screenHeight);
 
 	//texture of stylus shader in Texture2D version to be able to do DrawTexture
-	Texture2D stylusOverlay;
-	stylusOverlay.id = stylus_texture;
-	stylusOverlay.width = screenWidth;
-	stylusOverlay.height = screenHeight;
-	stylusOverlay.mipmaps = 1;
-	stylusOverlay.format = RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+	//Texture2D stylusOverlay;
+	//stylusOverlay.id = stylus_texture;
+	//stylusOverlay.width = screenWidth;
+	//stylusOverlay.height = screenHeight;
+	//stylusOverlay.mipmaps = 1;
+	//stylusOverlay.format = RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
-	Texture2D mainTexOverlay;
-	mainTexOverlay.id = main_texture;
-	mainTexOverlay.width = screenWidth;
-	mainTexOverlay.height = screenHeight;
-	mainTexOverlay.mipmaps = 1;
-	mainTexOverlay.format = RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+	//Texture2D mainTexOverlay;
+	//mainTexOverlay.id = main_texture;
+	//mainTexOverlay.width = screenWidth;
+	//mainTexOverlay.height = screenHeight;
+	//mainTexOverlay.mipmaps = 1;
+	//mainTexOverlay.format = RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
 
 	// Make sure our framebuffer is complete.
     // NOTE: rlFramebufferComplete() automatically unbinds the framebuffer, so we don't have
     // to rlDisableFramebuffer() here.
 //#ifndef SWITCH_BUILD
-	if (!rlFramebufferComplete(main_framebuffer))
-	{
-		printf("Framebuffer is not complete");
-		CloseWindow();
-	}
-	if (!rlFramebufferComplete(stylus_framebuffer))
-	{
-		printf("Framebuffer is not complete");
-		CloseWindow();
-	}
+	//if (!rlFramebufferComplete(main_framebuffer))
+	//{
+	//	printf("Framebuffer is not complete");
+	//	CloseWindow();
+	//}
+	//if (!rlFramebufferComplete(stylus_framebuffer))
+	//{
+	//	printf("Framebuffer is not complete");
+	//	CloseWindow();
+	//}
 //#endif
 
 
@@ -235,9 +235,7 @@ int main(void)
 	GameManager& gameManager = GameManager::GetInstance();
 
 	std::string text = "Frame ";
-	//SetTargetFPS(600);
-	const double renderStep = 1.0 / 120.0; // render at 60Hz
-	double lastRender = 0.0;
+	SetTargetFPS(500);
 
 	Top top;
 	Coord* enclosedPoly = nullptr;
@@ -336,7 +334,6 @@ int main(void)
 	Json j = LoadJson(RESOURCES_FOLDER + jsonPath);
 	//TODO: either leave the owner here or in AssignMachine state, but not in both
 	StateMachine* sm = BuildStateMachine(j, nullptr/*owner*/);
-
 	//world object creation
 
 	WorldObject* wo = new WorldObject(garchompAnims);
@@ -363,6 +360,8 @@ int main(void)
 
 
 	Timer& timer = Timer::GetInstance();
+	timer.SetTimeScale(1.0f);
+
 	float yellowTransitionElapsedTime = 0.0f;
 	const float KEnclosingParticlesTravelTimeFromOutToCenterSec = 0.3f;
 	float enclosingParticlesElapsedTime = 0.0f;
@@ -543,179 +542,173 @@ int main(void)
 
 		//----------------------------------------------------------------------------------
 		// Draw
-		if (timer.GetGameTime() - lastRender >= renderStep) 
-		{
-			lastRender = timer.GetGameTime();
+
 		
-			BeginDrawing();
+		BeginDrawing();
 
-			rlDisableDepthTest();
+		rlDisableDepthTest();
 
-			// === STYLUS TEXTURE === 
+		// === STYLUS TEXTURE === 
 
-			BeginTextureMode(stylusOverlayRenTex);
-			ClearBackground(BLANK);
+		BeginTextureMode(stylusOverlayRenTex);
+		ClearBackground(BLANK);
 
-			//DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+		//DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
 
-			rlSetBlendMode(BLEND_ALPHA);
+		rlSetBlendMode(BLEND_ALPHA);
 
-			// yellow transition - (needs to be rendered even if player doesnt touch screen)
+		// yellow transition - (needs to be rendered even if player doesnt touch screen)
 
-			//rlDisableBackfaceCulling(); //this does nothing, cool!
-			if (enclosedPointsCount > 0)
+		//rlDisableBackfaceCulling(); //this does nothing, cool!
+		if (enclosedPointsCount > 0)
+		{
+
+			for (int i = 0; i < enclosedPointsCount; i += 4)
 			{
-
-				for (int i = 0; i < enclosedPointsCount; i += 4)
-				{
-					// horizontal lines higher "thickness"
-					// vertical lines little to no thickness
-
-					//counter-clockwise
-					Vector2 topLeft = enclosedAuxPoints[i + 0];
-					Vector2 topRight = enclosedAuxPoints[i + 1];
-					Vector2 botLeft = enclosedAuxPoints[i + 2];
-					Vector2 botRight = enclosedAuxPoints[i + 3];
-
-					DrawTriangle(topLeft, botLeft, topRight, YELLOW);
-					DrawTriangle(topLeft, topRight, botLeft, YELLOW); //dupe
-
-					DrawTriangle(topRight, botLeft, botRight, YELLOW);
-					DrawTriangle(topRight, botRight, botLeft, YELLOW); //dupe
-
-				}
-			}
-			//enclosed particles
-			if (enclosedIndicatorParticlePositions.size() > 0)
-			{
-				for (Vector2 particlePos : lerpingEIParticlePositions)
-				{
-					DrawCircleV(particlePos,3.0f,RED);
-				}
-			}
-
-
-			//draw stlyus tail
-			int numberOfNodes = GetStackDepth(top.stack);
-
-			if (touch.x != 0 && touch.y != 0 && numberOfNodes > 0)
-			{
-
-				//printf("num of nodes: %d\n", numberOfNodes);
-				float trailThickness = 10.0f;
-
-				Coord* current = top.stack;
-				Coord* next = top.stack->nextCoord;
-
-
-				// --- First pass: draw all circles ---
-
-				SetShaderValue(stylus_circle_shader, trailThicknessCircleLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
-
-				for (int i = 0; i < numberOfNodes - 1; i++)
-				{
-					float startPos[2] = { current->x, current->y };
-					// Set uniforms
-					SetShaderValue(stylus_circle_shader, circleCenterLoc, startPos, SHADER_UNIFORM_VEC2);
-
-					BeginShaderMode(stylus_circle_shader);
-					DrawCircleV({ startPos[0], startPos[1] }, trailThickness, BLANK);
-					EndShaderMode();
-
-					current = next;
-					next = next->nextCoord;
-				}
-
-				// --- Second pass: draw all lines ---
-				current = top.stack;
-				next = current->nextCoord;
-
-				SetShaderValue(stylus_line_shader, trailThicknessStylusLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
-
-				for (int i = 0; i < numberOfNodes - 2; i++)
-				{
-					float startPos[2] = { current->x, current->y };
-					float endPos[2] = { next->x, next->y };
-
-					// Set uniforms
-					SetShaderValue(stylus_line_shader, lineStartLoc, startPos, SHADER_UNIFORM_VEC2);
-					SetShaderValue(stylus_line_shader, lineEndLoc, endPos, SHADER_UNIFORM_VEC2);
-					BeginShaderMode(stylus_line_shader);
-					DrawLineEx({ startPos[0], startPos[1] }, { endPos[0], endPos[1] }, trailThickness * 2.0f, BLANK);
-					EndShaderMode();
-
-					current = next;
-					next = next->nextCoord;
-				}
-
-
-				//rlEnableBackfaceCulling();
-
-				//TODO: update yellow transition
 				// horizontal lines higher "thickness"
 				// vertical lines little to no thickness
+
+				//counter-clockwise
+				Vector2 topLeft = enclosedAuxPoints[i + 0];
+				Vector2 topRight = enclosedAuxPoints[i + 1];
+				Vector2 botLeft = enclosedAuxPoints[i + 2];
+				Vector2 botRight = enclosedAuxPoints[i + 3];
+
+				DrawTriangle(topLeft, botLeft, topRight, YELLOW);
+				DrawTriangle(topLeft, topRight, botLeft, YELLOW); //dupe
+
+				DrawTriangle(topRight, botLeft, botRight, YELLOW);
+				DrawTriangle(topRight, botRight, botLeft, YELLOW); //dupe
+
 			}
-
-			topObject->Draw();
-
-			//DrawCurrentPolygonOnlyLines(top.stack);
-
-			EndTextureMode();
-
-			// =======================
-
-			// === MAIN TEXTURE ===
-
-			//rlEnableDepthTest();
-
-			BeginTextureMode(mainTexOverlayRenTex);
-			ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-
-			DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
-			DrawText(("touch " + std::to_string(touch.x) + " " + std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
-			DrawText((text + std::to_string(timer.GetFrame())).c_str(), 360, 370, 40, GRAY);
-			DrawText(("Time " + std::to_string(timer.GetGameTime()) + " deltaTime " + std::to_string(GetFrameTime())).c_str(),
-				360, 230, 40, GRAY);
-
-			//========== 
-
-			if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
-
-
-			//draw every world object
-
-			//wo->Draw();
-			//p->Draw();
-
-
-			for (WorldObject* wobj : allWorldObjs)
-			{
-				wobj->Draw();
-			}
-
-			//debug draw hitboxes
-			for (Hitbox* hitbox : GameManager::GetInstance().activeHitboxes)
-			{
-				hitbox->ShowHitbox();
-			}
-
-			EndTextureMode();
-
-
-			// Draw the main texture (flipped vertically to correct for upside-down rendering)
-			Rectangle sourceRec = { 0, 0, (float)screenWidth, (float)-screenHeight };
-			Rectangle destRec = { 0, 0, (float)screenWidth, (float)screenHeight };
-			Vector2 origin = { 0, 0 };
-
-			DrawTexturePro(mainTexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
-
-			// Draw the stylus texture on top (also flipped)
-			DrawTexturePro(stylusOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
-
-
-			EndDrawing();
-			//SwapScreenBuffer();
 		}
+		//enclosed particles
+		if (enclosedIndicatorParticlePositions.size() > 0)
+		{
+			for (Vector2 particlePos : lerpingEIParticlePositions)
+			{
+				DrawCircleV(particlePos,3.0f,RED);
+			}
+		}
+
+
+		//draw stlyus tail
+		int numberOfNodes = GetStackDepth(top.stack);
+
+		if (touch.x != 0 && touch.y != 0 && numberOfNodes > 0)
+		{
+
+			//printf("num of nodes: %d\n", numberOfNodes);
+			float trailThickness = 10.0f;
+
+			Coord* current = top.stack;
+			Coord* next = top.stack->nextCoord;
+
+
+			// --- First pass: draw all circles ---
+
+			SetShaderValue(stylus_circle_shader, trailThicknessCircleLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
+
+			for (int i = 0; i < numberOfNodes - 1; i++)
+			{
+				float startPos[2] = { current->x, current->y };
+				// Set uniforms
+				SetShaderValue(stylus_circle_shader, circleCenterLoc, startPos, SHADER_UNIFORM_VEC2);
+
+				BeginShaderMode(stylus_circle_shader);
+				DrawCircleV({ startPos[0], startPos[1] }, trailThickness, WHITE);
+				EndShaderMode();
+
+				current = next;
+				next = next->nextCoord;
+			}
+
+			// --- Second pass: draw all lines ---
+			current = top.stack;
+			next = current->nextCoord;
+
+			SetShaderValue(stylus_line_shader, trailThicknessStylusLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
+
+			for (int i = 0; i < numberOfNodes - 2; i++)
+			{
+				float startPos[2] = { current->x, current->y };
+				float endPos[2] = { next->x, next->y };
+
+				// Set uniforms
+				SetShaderValue(stylus_line_shader, lineStartLoc, startPos, SHADER_UNIFORM_VEC2);
+				SetShaderValue(stylus_line_shader, lineEndLoc, endPos, SHADER_UNIFORM_VEC2);
+				BeginShaderMode(stylus_line_shader);
+				DrawLineEx({ startPos[0], startPos[1] }, { endPos[0], endPos[1] }, trailThickness * 2.0f, WHITE);
+				EndShaderMode();
+
+				current = next;
+				next = next->nextCoord;
+			}
+
+
+			//rlEnableBackfaceCulling();
+
+			//TODO: update yellow transition
+			// horizontal lines higher "thickness"
+			// vertical lines little to no thickness
+		}
+
+		topObject->Draw();
+
+		//DrawCurrentPolygonOnlyLines(top.stack);
+
+		EndTextureMode();
+
+		// =======================
+
+		// === MAIN TEXTURE ===
+
+		//rlEnableDepthTest();
+
+		BeginTextureMode(mainTexOverlayRenTex);
+		ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+
+		DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
+		DrawText(("touch " + std::to_string(touch.x) + " " + std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
+		DrawText((text + std::to_string(timer.GetFrame())).c_str(), 360, 370, 40, GRAY);
+		DrawText(("Time " + std::to_string(timer.GetGameTime()) + " deltaTime " + std::to_string(GetFrameTime())).c_str(),
+			360, 230, 40, GRAY);
+
+		//========== 
+
+		if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
+
+
+		//draw every world object
+
+		for (WorldObject* wobj : allWorldObjs)
+		{
+			wobj->Draw();
+		}
+
+		//debug draw hitboxes
+		for (Hitbox* hitbox : GameManager::GetInstance().activeHitboxes)
+		{
+			hitbox->ShowHitbox();
+		}
+
+		EndTextureMode();
+
+
+		// Draw the main texture (flipped vertically to correct for upside-down rendering)
+		Rectangle sourceRec = { 0, 0, (float)screenWidth, (float)-screenHeight };
+		Rectangle destRec = { 0, 0, (float)screenWidth, (float)screenHeight };
+		Vector2 origin = { 0, 0 };
+
+		DrawTexturePro(mainTexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
+
+		// Draw the stylus texture on top (also flipped)
+		DrawTexturePro(stylusOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
+
+
+		EndDrawing();
+		//SwapScreenBuffer();
+		
 
 
 		//----------------------------------------------------------------------------------

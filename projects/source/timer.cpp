@@ -3,8 +3,9 @@
 #include "raylib.h"
 
 Timer::Timer() : m_deltaTime(0.0f), m_lastFrameTime(0.0) {
-    m_gameTime = GetTime();
+    m_gameTime = 0.0;
     m_lastFrameTime = m_gameTime;
+    m_timeScale = 1.0f;
 }
 
 Timer::~Timer() {}
@@ -12,7 +13,7 @@ Timer::~Timer() {}
 void Timer::Update() {
     
     m_lastFrameTime = m_gameTime;
-    m_gameTime = GetTime();
-    m_deltaTime = (float)(m_gameTime - m_lastFrameTime);
+    m_deltaTime = GetFrameTime() * m_timeScale;
+    m_gameTime += m_deltaTime;
     m_gameFrame++;
 }
