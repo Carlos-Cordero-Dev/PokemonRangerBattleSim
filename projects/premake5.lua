@@ -28,9 +28,9 @@ project "MyProject"
 		system "linux"           -- Set as Linux-like environment for make
 		defines { "SWITCH_BUILD" , "DEBUG", "NX_USB_DEBUGGER"}
 
-		buildcommands {"D:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make\""}
-		rebuildcommands { "D:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make clean\"", "C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make\""}
-		cleancommands { "D:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make clean\"" }
+		buildcommands {"C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make\""}
+		rebuildcommands { "C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make clean\"", "C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make\""}
+		cleancommands { "C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make clean\"" }
 
 		libdirs { 
 			"../src_nx",                -- nx raylib libs (.a)

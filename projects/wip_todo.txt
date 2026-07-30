@@ -6,6 +6,9 @@ https://www.raylib.com/examples/shaders/loader.html?name=shaders_shapes_textures
 deferred rendering:
 https://www.raylib.com/examples/shaders/loader.html?name=shaders_deferred_render
 
+SPRITES:
+https://web.archive.org/web/20220924184840/https://www.spriters-resource.com/ds_dsi/pokemonranger2shadowsofalmia/
+
 -enemy AI tool
 
 TODO: 

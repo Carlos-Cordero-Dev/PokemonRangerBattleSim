@@ -341,7 +341,7 @@ int main(void)
 
 	WorldObject* topObject = new WorldObject(stylusAnims);
 	topObject->position = Vector2({ -100, -100 }); //offscreen
-	topObject->scale = 5.0f;
+	topObject->scale = 3.0f;
 
 	Pokemon* p = new Pokemon(garchompAnims);
 	p->position = Vector2({ 500, 100 });
@@ -384,6 +384,7 @@ int main(void)
 		{
 			if (top.stack != nullptr)
 			{
+				printf("\nA");
 				ResetTop(&top);
 				DestroyStackNoDepth(&enclosedPoly);
 				enclosedAuxPoints.clear();
@@ -392,9 +393,13 @@ int main(void)
 				//TODO: propper disable just in case instead of offscreen
 				topObject->position.x = -100;
 				topObject->position.y = -100;
+
+				printf("\nA end");
 			}
+			// reset damaged flag on touch up
+			if (top.wasDamaged) top.wasDamaged = false;
 		}
-		else
+		else if(!top.wasDamaged)
 		{
 			InsertTopCoord(&top, touch.x, touch.y);
 
@@ -412,13 +417,18 @@ int main(void)
 			//printf("INTERSECTED\n");
 			//ShowStack(enclosedPoly);
 			//DestroyStackNoDepth(&enclosedPoly);
+			printf("\nB");
 
 			// prior frame existed enclosed poly > clear it, set it to new one
 			if (enclosedPoly)
 			{
+				printf("\nB2");
+
 				//yellow transition is always destroyed if another appears
 				DestroyStackNoDepth(&enclosedPoly);
 				enclosedAuxPoints.clear();
+				printf("\nB2 end");
+
 			}
 
 			//reset enclosing particles
@@ -429,6 +439,7 @@ int main(void)
 			CalculateEnclosedShaderAreaPoints(enclosedPoly, enclosedAuxPoints);
 			CalculateClosingIndicatorParticlePoints(enclosedPoly, enclosedIndicatorParticlePositions);
 			lerpingEIParticlePositions.resize(enclosedIndicatorParticlePositions.size());
+			printf("\nB end");
 
 			//NOTE: yellow transition is always destroyed if another appears
 			// catch circles can stack, so circles have lifetime (particles)
@@ -509,12 +520,21 @@ int main(void)
 		{
 			if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
 			{
+				printf("\noncol h before");
 				hitbox->OnCollision();
+				printf("\noncol h after");
 
 				//reset stylus
 				ResetTop(&top);
 				DestroyStackNoDepth(&enclosedPoly);
 				enclosedAuxPoints.clear();
+				topObject->position.x = -100;
+				topObject->position.y = -100;
+
+				top.wasDamaged = true;
+				printf("\noncol h cleared");
+				break;
+
 			}
 			//clear hitbox as it only exists this frame
 			//TODO: okey maybe dont clear the hitbox bc what if the hitbox interacts with the environment
@@ -525,12 +545,20 @@ int main(void)
 		{
 			if (PolygonCollidingWithBox(top.stack, wobj->boundingBox))
 			{
+				printf("\noncol w before");
 				wobj->OnCollision();
+				printf("\noncol w after");
 
 				//reset stylus
 				ResetTop(&top);
 				DestroyStackNoDepth(&enclosedPoly);
 				enclosedAuxPoints.clear();
+				topObject->position.x = -100;
+				topObject->position.y = -100;
+
+				top.wasDamaged = true;
+				printf("\noncol w cleared");
+				break;
 			}
 		}
 
@@ -560,9 +588,8 @@ int main(void)
 		// yellow transition - (needs to be rendered even if player doesnt touch screen)
 
 		//rlDisableBackfaceCulling(); //this does nothing, cool!
-		if (enclosedPointsCount > 0)
+		if (!enclosedAuxPoints.empty())
 		{
-
 			for (int i = 0; i < enclosedPointsCount; i += 4)
 			{
 				// horizontal lines higher "thickness"
@@ -677,6 +704,9 @@ int main(void)
 		//========== 
 
 		if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
+
+
+		//draw backdrops
 
 
 		//draw every world object

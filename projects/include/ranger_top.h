@@ -38,6 +38,9 @@ struct Top
 {
 	Coord* stack = nullptr;
 	float distance = 0.0f;
+
+	// additional vars that will later be abastarcted into higher level
+	bool wasDamaged = false; // true when last update top hit a hibox/world object , resets on touch up
 };
 
 void InsertTopCoord(Top* top, int x, int y);
