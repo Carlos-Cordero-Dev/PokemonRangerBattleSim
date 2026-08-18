@@ -8,6 +8,7 @@ https://www.raylib.com/examples/shaders/loader.html?name=shaders_deferred_render
 
 SPRITES:
 https://web.archive.org/web/20220924184840/https://www.spriters-resource.com/ds_dsi/pokemonranger2shadowsofalmia/
+Sprite splitter: https://tools.spriters-resource.com/#sprite-splitter
 
 -enemy AI tool
 

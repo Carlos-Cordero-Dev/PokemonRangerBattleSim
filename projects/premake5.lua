@@ -26,7 +26,7 @@ project "MyProject"
     filter "configurations:Switch"
 	    kind "Makefile"
 		system "linux"           -- Set as Linux-like environment for make
-		defines { "SWITCH_BUILD" , "DEBUG", "NX_USB_DEBUGGER"}
+		defines { "SWITCH_BUILD" , "DEBUG"}
 
 		buildcommands {"C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make\""}
 		rebuildcommands { "C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make clean\"", "C:\\devkitpro\\msys2\\usr\\bin\\sh.exe -c \"make\""}
@@ -40,7 +40,7 @@ project "MyProject"
 	    includedirs {
 			"../src_nx", 
 			"../src_nx/external", 
-			"D:/devkitPro/libnx/include", --libnx headers
+			"C:/devkitPro/libnx/include", --libnx headers
 		}
 		-- Custom debug command
 		debugcommand "$(ProjectDir)\\tools\\run_suyu.bat"

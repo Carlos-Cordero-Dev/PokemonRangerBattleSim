@@ -1,9 +1,27 @@
 
 #include <stdlib.h>
 
+// debug
+#ifdef DEBUG
+#ifdef SWITCH_BUILD
+#include <crtdbg.h> //memory leaks check
+#endif
+#ifdef WINDOWS_BUILD
+#include "logging_manager.h"
+#endif
+#endif
+
+// release
+// TOOD: no existe RELEASE tag ahora mismo
+#define RAYGUI_IMPLEMENTATION
 #ifdef SWITCH_BUILD
 #define PLATFORM_NX 1
 #include <switch.h>
+#include "raygui.h"	
+#endif
+#ifdef WINDOWS_BUILD
+#include "fix_win32_compatibility.h"
+#include "raygui_win.h"
 #endif
 
 #include "raylib.h"
@@ -14,26 +32,12 @@
 //#include "glad.h" //glBindBuffer
 //#include <glad.h>
 
-#define RAYGUI_IMPLEMENTATION
-#ifdef SWITCH_BUILD 
-#include "raygui.h"	
-#else 
-#include "raygui_win.h"
-#include <crtdbg.h> //memory leaks check
-#endif
-
 //#define GLSL_VERSION 420
-
-#ifdef DEBUG
-#ifdef WINDOWS_BUILD
-#include "logging_manager.h"
-#endif
-#endif
-
 
 #include "constants.h"
 #include "animation_database.h"
 //#include "geometry_shader_support.h"
+#include "backdrop.h"
 #include "sprites.h"
 #include "timer.h"
 #include "controls.h"
@@ -114,13 +118,38 @@ int main(void)
     //--------------------------------------------------------------------------------------
 	srand(time(0));
 	
-	const int screenWidth = 1280;
-    const int screenHeight = 720;
+	int screenWidth = 1280;
+    int screenHeight = 720;
+	int renderWidth = screenWidth;
+	int renderHeight = screenHeight;
 
     char textBoxText[64] = "Text box";
     bool textBoxEditMode = false;
 
+
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
+
+#ifdef WINDOWS_BUILD
+	HWND windowHandle = reinterpret_cast<HWND>(GetWindowHandle());
+
+	LONG_PTR style = GetWindowLongPtr(windowHandle, GWL_STYLE);
+
+	style &= ~WS_THICKFRAME;       // Prevent border/corner drag resizing
+	style |= WS_MAXIMIZEBOX;       // Enable the native maximize button
+
+	SetWindowLongPtr(windowHandle, GWL_STYLE, style);
+
+	// Tell Windows to redraw the title bar using the changed style.
+	SetWindowPos(
+		windowHandle,
+		nullptr,
+		0,
+		0,
+		0,
+		0,
+		SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED
+	);
+#endif
 
 	printf("\n=====================damnson1=================================\n");
 	//fflush(stdout);
@@ -200,6 +229,9 @@ int main(void)
 
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required) 
+
+	Backdrop backdrop;
+	backdrop.Load(RESOURCES_FOLDER + std::string("sprites/backdrop.png"));
 
 	AnimationDatabase animDatabase;
 	
@@ -375,10 +407,29 @@ int main(void)
 		// Update
 		PollInputEvents();
 
+		screenWidth = GetScreenWidth();
+		screenHeight = GetScreenHeight();
+
 		timer.Update();
 
 
+		const float outputWidth = static_cast<float>(screenWidth);
+		const float outputHeight = static_cast<float>(screenHeight);
+
+		const float scale = std::min<float>(
+			outputWidth / static_cast<float>(renderWidth),
+			outputHeight / static_cast<float>(renderHeight)
+		);
+
+		const float viewportWidth = renderWidth * scale;
+		const float viewportHeight = renderHeight * scale;
+		const float viewportX = (outputWidth - viewportWidth) * 0.5f;
+		const float viewportY = (outputHeight - viewportHeight) * 0.5f;
+
+		// Convert physical mouse/touch coordinates to fixed 1920x1080 coordinates.
 		prbs::Vector2 touch = GetTouch();
+		touch.x = (touch.x - viewportX) / scale;
+		touch.y = (touch.y - viewportY) / scale;
 
 		if (touch.x == 0 && touch.y == 0)
 		{
@@ -581,9 +632,11 @@ int main(void)
 		BeginTextureMode(stylusOverlayRenTex);
 		ClearBackground(BLANK);
 
+
 		//DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
 
 		rlSetBlendMode(BLEND_ALPHA);
+
 
 		// yellow transition - (needs to be rendered even if player doesnt touch screen)
 
@@ -695,6 +748,9 @@ int main(void)
 		BeginTextureMode(mainTexOverlayRenTex);
 		ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
+		backdrop.DrawCenteredBackdrop(renderWidth, renderHeight);
+
+
 		DrawText(("fps " + std::to_string(GetFPS())).c_str(), 360, 90, 40, GRAY);
 		DrawText(("touch " + std::to_string(touch.x) + " " + std::to_string(touch.y)).c_str(), 360, 190, 40, GRAY);
 		DrawText((text + std::to_string(timer.GetFrame())).c_str(), 360, 370, 40, GRAY);
@@ -726,8 +782,19 @@ int main(void)
 
 
 		// Draw the main texture (flipped vertically to correct for upside-down rendering)
-		Rectangle sourceRec = { 0, 0, (float)screenWidth, (float)-screenHeight };
-		Rectangle destRec = { 0, 0, (float)screenWidth, (float)screenHeight };
+		Rectangle sourceRec = {
+			0,
+			0,
+			static_cast<float>(renderWidth),
+			static_cast<float>(-renderHeight)
+		};
+
+		Rectangle destRec = {
+			viewportX,
+			viewportY,
+			viewportWidth,
+			viewportHeight
+		};
 		Vector2 origin = { 0, 0 };
 
 		DrawTexturePro(mainTexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
