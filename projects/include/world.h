@@ -4,6 +4,9 @@
 #include <vector>
 
 class Hitbox; //fd
+class HazardObject;
+class WorldObject;
+class EnclosableObject;
 
 class GameManager {
 
@@ -15,5 +18,8 @@ public:
 
 public:
 	std::vector<Hitbox*> activeHitboxes;
+	std::vector<HazardObject*> activeHazardObjects;
+	std::vector<WorldObject*> allWorldObjs;
+	std::vector<EnclosableObject*> allEnclosableObjs;
 
 };

@@ -64,12 +64,18 @@
 #include "actions/tick_timer_action.h"
 #include "actions/spawn_hitbox_action.h"
 #include "actions/set_animation_action.h"
+#include "actions/spawn_hazard_object_action.h"
+#include "actions/spawn_projectile_object_action.h"
 
 #include "conditions/condition_factory.h"
 
 #include "conditions/distance_condition.h"
 #include "conditions/timer_finished_condition.h"
 
+#include "attack_effect/attack_effect_factory.h"
+#include "attack_effect/hazard_object_attack_effect.h"
+#include "attack_effect/projectile_object_attack_effect.h"
+#include "attack_effect/attack_effect_database.h"
 /*
 what do I need man:
 
@@ -193,6 +199,7 @@ int main(void)
 	//rlFramebufferAttach(stylus_framebuffer, stylus_texture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
 
 	RenderTexture2D mainTexOverlayRenTex = LoadRenderTexture(screenWidth, screenHeight);
+	RenderTexture2D UITexOverlayRenTex = LoadRenderTexture(screenWidth, screenHeight);
 	RenderTexture2D stylusOverlayRenTex = LoadRenderTexture(screenWidth, screenHeight);
 
 	//texture of stylus shader in Texture2D version to be able to do DrawTexture
@@ -233,8 +240,8 @@ int main(void)
 	Backdrop backdrop;
 	backdrop.Load(RESOURCES_FOLDER + std::string("sprites/backdrop.png"));
 
-	AnimationDatabase animDatabase;
-	
+	AnimationDatabase& animDatabase = AnimationDatabase::Instance();
+
 	//TODO: if we assume we are doing it with the todo below: remove the random ints and just take path and custom name, cause you know its
 	// 1 animation in the folder and just count the files
 
@@ -339,6 +346,7 @@ int main(void)
 		a->speed = ParseFloatValue(j["speed"]);
 		a->dirX = ParseFloatValue(j["dirX"]);
 		a->dirY = ParseFloatValue(j["dirY"]);
+		a->delaySec = ParseFloatValue(j["delaySec"]);
 
 		return a;
 		});
@@ -362,11 +370,63 @@ int main(void)
 		return a;
 		});
 
-	std::string jsonPath = "state_machines/sm.json";
-	Json j = LoadJson(RESOURCES_FOLDER + jsonPath);
+	actionFactory.Register("SpawnHazardObject", [](const Json& j) {
+		auto a = std::make_unique<SpawnHazardObjectAction>();
+		a->hazardObjectType = j["effect"];
+		a->offsetX = ParseFloatValue(j["offsetX"]);
+		a->offsetY = ParseFloatValue(j["offsetY"]);
+		a->spawnDelaySec = ParseFloatValue(j["spawnDelaySec"]);
+		return a;
+		});
+
+	actionFactory.Register("SpawnProjectileObject", [](const Json& j) {
+		auto a = std::make_unique<SpawnProjectileObjectAction>();
+		a->projectileObjectType = j["effect"];
+		a->offsetX = ParseFloatValue(j["offsetX"]);
+		a->offsetY = ParseFloatValue(j["offsetY"]);
+		a->dirX = ParseFloatValue(j["dirX"]);
+		a->dirY = ParseFloatValue(j["dirY"]);
+		a->speed = ParseFloatValue(j["speed"]);
+		a->spawnDelaySec = ParseFloatValue(j["spawnDelaySec"]);
+		return a;
+		});
+
+	auto& attackEffectFactory = AttackEffectFactory::Instance();
+
+	attackEffectFactory.Register("HazardObject", [](const Json& j) {
+		auto effect = std::make_unique<HazardObjectAttackEffect>();
+		effect->visualAnimation = j["visualAnimation"];
+		effect->width = j.value("width", 0.0f);
+		effect->height = j.value("height", 0.0f);
+		effect->lifetimeSec = j.value("lifetimeSec", 0.0f);
+		return effect;
+		});
+
+	attackEffectFactory.Register("ProjectileObject", [](const Json& j) {
+		auto effect = std::make_unique<ProjectileObjectAttackEffect>();
+		effect->visualAnimation = j["visualAnimation"];
+		effect->width = j.value("width", 0.0f);
+		effect->height = j.value("height", 0.0f);
+		effect->lifetimeSec = j.value("lifetimeSec", 0.0f);
+		return effect;
+		});
+
+	AttackEffectDatabase::Instance().LoadFromFile(RESOURCES_FOLDER + std::string("attack_effects/hazard_object_af.json"));
+	AttackEffectDatabase::Instance().LoadFromFile(RESOURCES_FOLDER + std::string("attack_effects/projectile_object_af.json"));
+
+	Json j = LoadJson(RESOURCES_FOLDER + std::string("state_machines/sm.json"));
 	//TODO: either leave the owner here or in AssignMachine state, but not in both
 	StateMachine* sm = BuildStateMachine(j, nullptr/*owner*/);
 	//world object creation
+
+
+	// === AUDIO LOADING ===
+	// Note: Audio must be loaded after ever other external resource
+	InitAudioDevice();
+
+
+
+	// =====================
 
 	WorldObject* wo = new WorldObject(garchompAnims);
 	wo->position = Vector2({ 100, 100 });
@@ -383,12 +443,12 @@ int main(void)
 	// ex: register(pokemon) and it tries to cast to each type of object dynamic_cast<EnclosedObject*> for example and if != nullptr
 	// it will add to allEnclosableObjs
 
-	std::vector<EnclosableObject*> allEnclosableObjs;
-	allEnclosableObjs.emplace_back(p);
+	//std::vector<EnclosableObject*> allEnclosableObjs;
+	gameManager.allEnclosableObjs.emplace_back(p);
 
-	std::vector<WorldObject*> allWorldObjs;
-	allWorldObjs.emplace_back(wo);
-	allWorldObjs.emplace_back(p);
+	//std::vector<WorldObject*> allWorldObjs;
+	gameManager.allWorldObjs.emplace_back(wo);
+	gameManager.allWorldObjs.emplace_back(p);
 
 
 	Timer& timer = Timer::GetInstance();
@@ -463,7 +523,7 @@ int main(void)
 
 		// poly closed, calculate enclosed particles positions
 		Coord* currEnclosedPoly = nullptr;
-		if (checkTopIntersection(&top, allEnclosableObjs, currEnclosedPoly, &enclosedTrackingPosition))
+		if (checkTopIntersection(&top, gameManager.allEnclosableObjs, currEnclosedPoly, &enclosedTrackingPosition))
 		{
 			//printf("INTERSECTED\n");
 			//ShowStack(enclosedPoly);
@@ -561,10 +621,17 @@ int main(void)
 		//wo->Update();
 		//p->Update();
 
-		for (WorldObject* wobj : allWorldObjs)
+		//fix in case allWorldsObj array is modified mid iteration (afaik this is the only spot where it can be modified mid loop)
+		for (int i = 0; i < gameManager.allWorldObjs.size(); ++i)
 		{
-			wobj->Update();
+			gameManager.allWorldObjs[i]->Update();
 		}
+
+		for (Hitbox* hitbox : gameManager.activeHitboxes)
+		{
+			hitbox->Update(timer.GetDeltaTime());
+		}
+
 
 		//check top collision with hitboxes
 		for (Hitbox* hitbox : gameManager.activeHitboxes)
@@ -592,7 +659,7 @@ int main(void)
 		}
 
 		//check top collision with world objects
-		for (WorldObject* wobj : allWorldObjs)
+		for (WorldObject* wobj : gameManager.allWorldObjs)
 		{
 			if (PolygonCollidingWithBox(top.stack, wobj->boundingBox))
 			{
@@ -741,6 +808,15 @@ int main(void)
 
 		// =======================
 
+		// === UI TEXTURE ===
+
+		BeginTextureMode(UITexOverlayRenTex);
+		ClearBackground(BLANK);
+
+		//ui.draw()
+
+		EndTextureMode();
+
 		// === MAIN TEXTURE ===
 
 		//rlEnableDepthTest();
@@ -757,8 +833,7 @@ int main(void)
 		DrawText(("Time " + std::to_string(timer.GetGameTime()) + " deltaTime " + std::to_string(GetFrameTime())).c_str(),
 			360, 230, 40, GRAY);
 
-		//========== 
-
+		
 		if (GuiTextBox(Rectangle({ 25, 215, 125, 30 }), textBoxText, 64, textBoxEditMode)) textBoxEditMode = !textBoxEditMode;
 
 
@@ -767,7 +842,7 @@ int main(void)
 
 		//draw every world object
 
-		for (WorldObject* wobj : allWorldObjs)
+		for (WorldObject* wobj :gameManager.allWorldObjs)
 		{
 			wobj->Draw();
 		}
@@ -780,8 +855,11 @@ int main(void)
 
 		EndTextureMode();
 
+		// =====================
 
-		// Draw the main texture (flipped vertically to correct for upside-down rendering)
+		// Draw all the created textures (order: background -> main -> UI)  
+		// (flipped vertically to correct for upside-down rendering)
+
 		Rectangle sourceRec = {
 			0,
 			0,
@@ -798,9 +876,8 @@ int main(void)
 		Vector2 origin = { 0, 0 };
 
 		DrawTexturePro(mainTexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
-
-		// Draw the stylus texture on top (also flipped)
 		DrawTexturePro(stylusOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
+		DrawTexturePro(UITexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
 
 
 		EndDrawing();
@@ -820,6 +897,8 @@ int main(void)
 	//--------------------------------------------------------------------------------------
 	//UnloadShader(stylus_shader_first_pass);
 	//UnloadTexture(texture);       // Texture unloading
+	//UnloadSound();
+	CloseAudioDevice();
 
 	CloseWindow();                // Close window and OpenGL context
 	//--------------------------------------------------------------------------------------

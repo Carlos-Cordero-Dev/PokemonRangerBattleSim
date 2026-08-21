@@ -1,0 +1,12 @@
+{
+  "effects": [
+    {
+      "type": "HazardObject",
+      "name": "garchomp_claw",
+      "visualAnimation": "garchomp_idle",
+      "width": 50,
+      "height": 50,
+      "lifetimeSec": 0.1
+    }
+  ]
+}

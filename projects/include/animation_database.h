@@ -32,7 +32,11 @@ struct AnimationData
 class AnimationDatabase
 {
 public:
-	AnimationDatabase() {};
+
+	static AnimationDatabase& Instance() {
+		static AnimationDatabase instance;
+		return instance;
+	}
 
 	//animName must match .prkf name file for propper keyframe data loading
 	void LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,

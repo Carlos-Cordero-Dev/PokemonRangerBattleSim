@@ -9,7 +9,7 @@
 class WorldObject
 {
 public:
-
+	WorldObject(SpriteAnimation* animation);
 	WorldObject(const std::vector<SpriteAnimation*>& animations);
 	virtual ~WorldObject() = default;
 

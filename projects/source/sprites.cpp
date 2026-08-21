@@ -67,11 +67,17 @@ void SpriteAnimation::Update(int posX, int posY)
 }
 void SpriteAnimation::Draw(int posX, int posY)
 {
-	DrawTexture(animData_->textures[currentFrame].texture, posX, posY, WHITE);
+	if (animData_)
+	{
+		DrawTexture(animData_->textures[currentFrame].texture, posX, posY, WHITE);
+	}
 }
 
 void SpriteAnimation::DrawRotScale(int posX, int posY, float rotDeg, float scale)
 {
-	Vector2 pos = { posX, posY };
-	DrawTextureEx(animData_->textures[currentFrame].texture, pos, rotDeg, scale , WHITE);
+	if (animData_)
+	{
+		Vector2 pos = { posX, posY };
+		DrawTextureEx(animData_->textures[currentFrame].texture, pos, rotDeg, scale, WHITE);
+	}
 }

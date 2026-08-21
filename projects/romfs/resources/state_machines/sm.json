@@ -19,10 +19,18 @@
       "onEnter": [
 	    { "type": "SetAnimation", "animation": "attack" },
         { 
-		  "type": "SpawnHitbox",
-		  "width": 50, "height": 50,
-		  "speed":0,
-		  "dirX":0,"dirY":0
+		  "type": "SpawnHazardObject",
+		  "effect": "garchomp_claw",
+		  "offsetX": 0,"offsetY": 0,
+		  "spawnDelaySec":1
+		},
+		{ 
+		  "type": "SpawnProjectileObject",
+		  "effect": "garchomp_shot",
+		  "offsetX": 0,"offsetY": 0,
+		  "dirX":-1,"dirY":0,
+		  "speed": 10,
+		  "spawnDelaySec":1
 		},
         { "type": "StartTimer", "name": "attackTimer", "duration": 1.0 }
       ],

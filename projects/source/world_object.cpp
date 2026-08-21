@@ -3,6 +3,29 @@
 #include "animation_database.h"
 #include "timer.h"
 
+WorldObject::WorldObject(SpriteAnimation* animation)
+{
+	//deep copy so updating an object doesnt cause the anim of other to update too
+
+	this->animations.reserve(1);
+	this->animations.push_back(new SpriteAnimation(*animation));
+	//bad: this->animations = animations;
+
+	position.x = 0;
+	position.y = 0;
+
+	scale = 1.0f;
+	rotationDeg = 0.0f;
+
+	boundingBox = Rectangle();
+	boundingBox.x = position.x;
+	boundingBox.y = position.y;
+
+	//TODO: eventually this comes from metadata from each frame
+	boundingBox.width = animation->animData_->textures[0].texture.width;
+	boundingBox.height = animation->animData_->textures[0].texture.height;
+}
+
 WorldObject::WorldObject(const std::vector<SpriteAnimation*>& animations)
 {
 	//deep copy so updating an object doesnt cause the anim of other to update too

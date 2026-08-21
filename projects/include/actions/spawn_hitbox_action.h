@@ -9,6 +9,7 @@
 
 class SpawnHitboxAction : public Action {
 public:
+    std::unique_ptr<FloatValue> delaySec;
     std::unique_ptr<FloatValue> width;
     std::unique_ptr<FloatValue> height;
     std::unique_ptr<FloatValue> speed;
@@ -24,11 +25,10 @@ public:
             p->position.x,
             p->position.y,
             width->Get() * p->scale,
-            height->Get() * p->scale
+            height->Get() * p->scale,
+			{ dirX->Get() * speed->Get(), dirY->Get() * speed->Get()},
+            delaySec->Get()
         );
-
-        h->velocity.x = dirX->Get() * speed->Get();
-        h->velocity.y = dirY->Get() * speed->Get();
 
         GameManager::GetInstance().activeHitboxes.push_back(h);
 

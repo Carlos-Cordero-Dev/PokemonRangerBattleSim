@@ -1,0 +1,12 @@
+{
+  "effects": [
+    {
+      "type": "ProjectileObject",
+      "name": "garchomp_shot",
+      "visualAnimation": "garchomp_idle",
+      "width": 50,
+      "height": 50,
+      "lifetimeSec": 3
+    }
+  ]
+}
