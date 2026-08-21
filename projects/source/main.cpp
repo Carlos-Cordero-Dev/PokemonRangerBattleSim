@@ -638,9 +638,7 @@ int main(void)
 		{
 			if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
 			{
-				printf("\noncol h before");
 				hitbox->OnCollision();
-				printf("\noncol h after");
 
 				//reset stylus
 				ResetTop(&top);
@@ -650,7 +648,6 @@ int main(void)
 				topObject->position.y = -100;
 
 				top.wasDamaged = true;
-				printf("\noncol h cleared");
 				break;
 
 			}
@@ -663,9 +660,7 @@ int main(void)
 		{
 			if (PolygonCollidingWithBox(top.stack, wobj->boundingBox))
 			{
-				printf("\noncol w before");
 				wobj->OnCollision();
-				printf("\noncol w after");
 
 				//reset stylus
 				ResetTop(&top);
@@ -675,7 +670,6 @@ int main(void)
 				topObject->position.y = -100;
 
 				top.wasDamaged = true;
-				printf("\noncol w cleared");
 				break;
 			}
 		}
