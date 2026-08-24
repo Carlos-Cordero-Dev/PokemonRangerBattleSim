@@ -25,12 +25,19 @@ void Pokemon::AssignStateMachine(StateMachine* stateMachine)
 
 void Pokemon::SetAnimationState(const std::string& animationName)
 {
+	AnimationState nextState = AnimationState::kIdle;
+
 	if (animationName == "idle")
-		animationState = AnimationState::kIdle;
+		nextState = AnimationState::kIdle;
 	else if (animationName == "move")
-		animationState = AnimationState::kMove;
+		nextState = AnimationState::kMove;
 	else if (animationName == "attack")
-		animationState = AnimationState::kAttack;
+		nextState = AnimationState::kAttack;
+	if (animationState != nextState)
+	{
+		animationState = nextState;
+		animations[animationState]->Reset();
+	}
 }
 void Pokemon::Update()
 {

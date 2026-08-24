@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "world.h"
 #include "hitbox.h"
+#include "world.h"
 
 #include "animation_database.h"
 
@@ -30,6 +31,9 @@ void SpriteAnimation::Update(int posX, int posY)
 	this->totalTimePassed += deltaTime;
 
 	float keyframeDelay = animData_->keyframes[currentFrame].delaySec;
+	
+	
+	// === APPLY DELAY ===
 	//check if not at default -1.0f delay keyframe
 	if (keyframeDelay > 0.0f)
 	{
@@ -41,22 +45,12 @@ void SpriteAnimation::Update(int posX, int posY)
 
 			//move to next keyframe
 			currentFrame++;
-			if (currentFrame > animData_->numberOfTextures - 1) currentFrame = 0;
+			if (currentFrame >= animData_->totalFrames)
+			{
+				currentFrame = 0;
+				finished = true;
+			}
 			//potentially stop if not needed to loop?
-
-
-			////check if new frame has a hitbox and spawn it
-			//if (animData_->keyframes[currentFrame].hitboxHeight > 0.0f && animData_->keyframes[currentFrame].hitboxWidth > 0.0f)
-			//{
-			//	printf("spawned hitbox"); 
-
-			//	GameManager::GetInstance()->activeHitboxes.push_back(new Hitbox(
-			//		animData_->keyframes[currentFrame].hitboxCenterOffsetX + posX,
-			//		animData_->keyframes[currentFrame].hitboxCenterOffsetY + posY,
-			//		animData_->keyframes[currentFrame].hitboxHeight,
-			//		animData_->keyframes[currentFrame].hitboxWidth
-			//	));
-			//}
 		}
 	}
 	else 
@@ -64,12 +58,33 @@ void SpriteAnimation::Update(int posX, int posY)
 		//printf("\nDefault -1 keyframe");
 	}
 
+	// === SPAWN KEYFRAME HITBOXES ===
+	for (const AnimationEvent& event : animData_->keyframes[currentFrame].events) {
+		if (event.type == AnimationEventType::MeleeHitbox) {
+
+			HitboxAnimationEvent& hbEvent = (HitboxAnimationEvent&)event;
+			//TODO: SPAWN HITBOX
+			//printf("\nSpawned hitbox from animation event at frame %d", currentFrame);
+
+			GameManager& gm = GameManager::GetInstance();
+			gm.singleFrameHitboxes.push_back(new Hitbox(
+				posX + hbEvent.offsetX,
+				posY + hbEvent.offsetY,
+				hbEvent.width,
+				hbEvent.height,
+				{ 0.0f, 0.0f },
+				0.0f
+			));
+		}
+	}
+
 }
 void SpriteAnimation::Draw(int posX, int posY)
 {
 	if (animData_)
 	{
-		DrawTexture(animData_->textures[currentFrame].texture, posX, posY, WHITE);
+		int textureIndex = animData_->keyframes[currentFrame].textureIndex;
+		DrawTexture(animData_->textures[textureIndex].texture, posX, posY, WHITE);
 	}
 }
 
@@ -78,6 +93,15 @@ void SpriteAnimation::DrawRotScale(int posX, int posY, float rotDeg, float scale
 	if (animData_)
 	{
 		Vector2 pos = { posX, posY };
-		DrawTextureEx(animData_->textures[currentFrame].texture, pos, rotDeg, scale, WHITE);
+		const int textureIndex = animData_->keyframes[currentFrame].textureIndex;
+		DrawTextureEx(animData_->textures[textureIndex].texture, pos, rotDeg, scale, WHITE);
 	}
+}
+
+void SpriteAnimation::Reset()
+{
+	currentFrame = 0;
+	timePassed = 0.0f;
+	totalTimePassed = 0.0f;
+	finished = false;
 }

@@ -6,11 +6,37 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <cctype>
 
 #include "raylib.h"
 
 #include "constants.h"
 #include "sprites.h"
+
+static void TrimWhitespace(std::string& text)
+{
+	const auto first = text.find_first_not_of(" \t\r\n");
+	if (first == std::string::npos) {
+		text.clear();
+		return;
+	}
+
+	const auto last = text.find_last_not_of(" \t\r\n");
+	text = text.substr(first, last - first + 1);
+}
+
+static bool ValidateKeyframeTextureIndices(const AnimationData& animation, const std::string& animationName)
+{
+	for (const KeyFrame& keyframe : animation.keyframes) {
+		if (keyframe.textureIndex < 0 || keyframe.textureIndex >= animation.numberOfTextures) {
+			printf("\nAnimation '%s' references texture index %d, but only has %d textures",
+				animationName.c_str(), keyframe.textureIndex, animation.numberOfTextures);
+			return false;
+		}
+	}
+
+	return true;
+}
 
 std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file_path)
 {
@@ -37,31 +63,48 @@ std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file
 			continue;
 		}
 
-		std::stringstream ss(line);
+		std::stringstream lineStream(line);
+		std::string segment;
+		std::getline(lineStream, segment, '|');
+		TrimWhitespace(segment);
 
-		float delay = 0.0f;
-		float centerOffsetX = 0.0f;
-		float centerOffsetY = 0.0f;
-		float height = 0.0f;
-		float width = 0.0f;
-
-		ss >> delay;
-
-		if (ss.fail())
-			continue;
-
+		std::stringstream keyframeStream(segment);
 		KeyFrame kf;
+		if (!(keyframeStream >> kf.textureIndex >> kf.delaySec)) {
+			printf("\nInvalid keyframe in %s: %s", file_path.c_str(), line.c_str());
+			continue;
+		}
 
-		//only mandatory field is delay
-		kf.delaySec = delay;
+		while (std::getline(lineStream, segment, '|'))
+		{
+			TrimWhitespace(segment);
+			if (segment.empty()) {
+				printf("\nEmpty animation event in %s: %s", file_path.c_str(), line.c_str());
+				continue;
+			}
 
-		//// optional hitbox data
-		//if (ss >> centerOffsetX >> centerOffsetY >> height >> width) {
-		//	kf.hitboxCenterOffsetX = centerOffsetX;
-		//	kf.hitboxCenterOffsetY = centerOffsetY;
-		//	kf.hitboxHeight = height;
-		//	kf.hitboxWidth = width;
-		//}
+			std::stringstream eventStream(segment);
+			std::string eventName;
+			eventStream >> eventName;
+
+			if (eventName == "melee_hitbox") {
+
+				HitboxAnimationEvent hbEvent;
+
+				if (!(eventStream >> hbEvent.offsetX >> hbEvent.offsetY >> hbEvent.width
+					>> hbEvent.height)) {
+					printf("\nInvalid melee_hitbox event in %s: %s", file_path.c_str(), line.c_str());
+					continue;
+				}
+				
+				kf.events.push_back(hbEvent);
+
+			}
+			else
+			{
+				printf("\nUnknown animation event '%s' in %s", eventName.c_str(), file_path.c_str());
+			}
+		}
 
 		currentAnim.push_back(kf);
 	}
@@ -141,7 +184,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 
 
 			Texture2D texture = LoadTexture(filePath.c_str());
-			
+
 
 			// Add the texture to the vector with its name
 			if (!animName.empty())
@@ -166,6 +209,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 						{
 							animations[i]->keyframes = keyframes[i];
 						}
+						ValidateKeyframeTextureIndices(*animations[i], animName);
 
 					}
 
@@ -235,6 +279,8 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 	}
 
 	anim->numberOfTextures = anim->textures.size();
+	anim->totalFrames = anim->keyframes.size();
+	ValidateKeyframeTextureIndices(*anim, animName);
 
 	// Store in animation map
 	animData.emplace(animName, anim);

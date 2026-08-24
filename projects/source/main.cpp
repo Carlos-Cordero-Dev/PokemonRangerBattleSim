@@ -71,6 +71,7 @@
 
 #include "conditions/distance_condition.h"
 #include "conditions/timer_finished_condition.h"
+#include "conditions/animation_finished_condition.h"
 
 #include "attack_effect/attack_effect_factory.h"
 #include "attack_effect/hazard_object_attack_effect.h"
@@ -320,6 +321,11 @@ int main(void)
 		return c;
 		});
 
+	conditionFactory.Register("AnimationFinished", [](const Json& j) {
+			auto c = std::make_unique<AnimationFinishedCondition>();
+			//c->name = j["name"];
+			return c;
+		});
 
 	auto& actionFactory = ActionFactory::Instance();
 
@@ -615,6 +621,10 @@ int main(void)
 			}
 		}
 
+		// === CLEAR SINGLE FRAME HITBOXES ===
+		// must be done before any update
+		gameManager.singleFrameHitboxes.clear();
+
 		//update every single world object
 		topObject->Update();
 
@@ -635,6 +645,27 @@ int main(void)
 
 		//check top collision with hitboxes
 		for (Hitbox* hitbox : gameManager.activeHitboxes)
+		{
+			if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
+			{
+				hitbox->OnCollision();
+
+				//reset stylus
+				ResetTop(&top);
+				DestroyStackNoDepth(&enclosedPoly);
+				enclosedAuxPoints.clear();
+				topObject->position.x = -100;
+				topObject->position.y = -100;
+
+				top.wasDamaged = true;
+				break;
+
+			}
+			//clear hitbox as it only exists this frame
+			//TODO: okey maybe dont clear the hitbox bc what if the hitbox interacts with the environment
+		}
+		//check to collision with single frame hitboxes
+		for (Hitbox* hitbox : gameManager.singleFrameHitboxes)
 		{
 			if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
 			{
@@ -843,6 +874,10 @@ int main(void)
 
 		//debug draw hitboxes
 		for (Hitbox* hitbox : GameManager::GetInstance().activeHitboxes)
+		{
+			hitbox->ShowHitbox();
+		}
+		for (Hitbox* hitbox : GameManager::GetInstance().singleFrameHitboxes)
 		{
 			hitbox->ShowHitbox();
 		}

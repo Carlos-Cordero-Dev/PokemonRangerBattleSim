@@ -22,4 +22,5 @@ public:
 	std::vector<WorldObject*> allWorldObjs;
 	std::vector<EnclosableObject*> allEnclosableObjs;
 
+	std::vector<Hitbox*> singleFrameHitboxes;
 };

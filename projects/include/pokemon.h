@@ -21,17 +21,15 @@ public:
 
 	StateMachine* stateMachine = nullptr;
 
-private:
-
-	int id = 0;
-
 	enum AnimationState
 	{
 		kIdle = 0,
 		kMove = 1,
 		kAttack = 2,
 	};
-
 	//its assumed it gets changed by the state machine designed for this specific pkmn
 	AnimationState animationState;
+private:
+
+	int id = 0;
 };

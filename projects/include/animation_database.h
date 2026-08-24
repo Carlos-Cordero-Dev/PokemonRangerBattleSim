@@ -7,16 +7,31 @@
 
 struct TextureData;
 
+enum class AnimationEventType {
+	MeleeHitbox
+};
+
+struct AnimationEvent {
+	AnimationEventType type;
+	std::string eventName; //unused
+};
+
+struct HitboxAnimationEvent : AnimationEvent {
+	HitboxAnimationEvent() : AnimationEvent() {
+		type = AnimationEventType::MeleeHitbox;
+	}
+	//note: these should never be negative values
+	float offsetX = 0.0f;
+	float offsetY = 0.0f;
+	float height = 0.0f;
+	float width = 0.0f;
+};
+
 struct KeyFrame
 {
+	int textureIndex = 0;//TODO: index should match the name of the texture: ex pikachu_down_0 should be 0
 	float delaySec = 0.0f; //time to spend in this frame
-	////only used when frame has a hitbox
-	////spawn point of the hitbox in relation to the origin of the sprite that spawns it
-	//float hitboxCenterOffsetX = 0.0f;
-	//float hitboxCenterOffsetY = 0.0f;
-	////note: these should never be negative values
-	//float hitboxHeight = 0.0f;
-	//float hitboxWidth = 0.0f;
+	std::vector<AnimationEvent> events;
 };
 
 struct AnimationData
@@ -25,8 +40,9 @@ struct AnimationData
 	std::vector<KeyFrame> keyframes;
 
 	std::string name;
-	int id = 0;
-	int numberOfTextures = 0;
+	//int id = 0; //unused
+	int numberOfTextures = 0;// as many textures as an animation has
+	int totalFrames = 0; //includes repeating indices so 0 1 2 1 2 is 5 frames
 };
 
 class AnimationDatabase

@@ -29,7 +29,7 @@ public:
 	void Update(int posX, int posY);
 	void Draw(int posX, int posY);
 	void DrawRotScale(int posX, int posY, float rotDeg, float scale);
-
+	void Reset();
 	//TODO: if pause is ever needed these are useful
 	// 	enum class AnimState
 	//{
@@ -41,13 +41,14 @@ public:
 	//void Play();
 
 	bool loop = false;
+	bool finished = false;
 	AnimationData* animData_ = nullptr;
+	int currentFrame = 0;
 
 private:
 	SpriteAnimation();
 private:
 
-	int currentFrame = 0;
 	int framesPassedSinceLastAnimUpdate = 0;
 	int lastRealFrame = 0;
 

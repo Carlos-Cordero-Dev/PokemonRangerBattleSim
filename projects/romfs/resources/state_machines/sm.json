@@ -24,6 +24,13 @@
 		  "offsetX": 0,"offsetY": 0,
 		  "spawnDelaySec":1
 		},
+        { "type": "StartTimer", "name": "attackTimer", "duration": 1.0 }
+      ]
+    },
+    {
+      "name": "Attack2",
+      "onEnter": [
+	    { "type": "SetAnimation", "animation": "attack" },
 		{ 
 		  "type": "SpawnProjectileObject",
 		  "effect": "garchomp_shot",
@@ -48,8 +55,15 @@
         { "type": "DistanceToTargetLess", "value": 10 }
       ]
     },
+	{
+	  "from":"Attack",
+      "to":"Move",
+	  "conditions":[
+	    {"type":"AnimationFinished"}
+	  ]
+	},
     {
-      "from": "Attack",
+      "from": "Attack2",
       "to": "Move",
       "conditions": [
         { "type": "TimerFinished", "name": "attackTimer" }
