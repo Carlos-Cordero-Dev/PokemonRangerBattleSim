@@ -50,9 +50,12 @@
   "transitions": [
     {
       "from": "Move",
-      "to": "Attack",
-      "conditions": [
-        { "type": "DistanceToTargetLess", "value": 10 }
+	  "to": [
+			{ "state": "Attack", "weight": 75 },
+			{ "state": "Attack2", "weight": 25 }
+	   ],      
+	   "conditions": [
+       { "type": "DistanceToTargetLess", "value": 10 }
       ]
     },
 	{

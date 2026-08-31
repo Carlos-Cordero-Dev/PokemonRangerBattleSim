@@ -49,9 +49,14 @@ public:
             }
 
             if (valid) {
-                currentState->OnExit();
-                currentState = t.to;
-                currentState->OnEnter();
+                State* nextState = t.PickTarget();
+
+                if (nextState) {
+                    currentState->OnExit();
+                    currentState = nextState;
+                    currentState->OnEnter();
+                }
+
                 break;
             }
         }
