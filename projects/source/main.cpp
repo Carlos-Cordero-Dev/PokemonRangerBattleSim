@@ -38,6 +38,7 @@
 #include "animation_database.h"
 //#include "geometry_shader_support.h"
 #include "backdrop.h"
+#include "ui_layer.h"
 #include "sprites.h"
 #include "timer.h"
 #include "controls.h"
@@ -66,12 +67,14 @@
 #include "actions/set_animation_action.h"
 #include "actions/spawn_hazard_object_action.h"
 #include "actions/spawn_projectile_object_action.h"
+#include "actions/set_target_to_touch_action.h"
 
 #include "conditions/condition_factory.h"
 
 #include "conditions/distance_condition.h"
 #include "conditions/timer_finished_condition.h"
 #include "conditions/animation_finished_condition.h"
+#include "conditions/top_touching_screen_condition.h"
 
 #include "attack_effect/attack_effect_factory.h"
 #include "attack_effect/hazard_object_attack_effect.h"
@@ -237,9 +240,10 @@ int main(void)
 
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required) 
+	UILayer ui;
 
 	Backdrop backdrop;
-	backdrop.Load(RESOURCES_FOLDER + std::string("sprites/backdrop.png"));
+	backdrop.Load(RESOURCES_FOLDER + std::string("backdrops/bg1.png"));
 
 	AnimationDatabase& animDatabase = AnimationDatabase::Instance();
 
@@ -282,7 +286,14 @@ int main(void)
 	std::vector<Vector2> enclosedAuxPoints;
 	std::vector<Vector2> enclosedIndicatorParticlePositions; //initial positions
 	std::vector<Vector2> lerpingEIParticlePositions; //during lerping positions
-	Vector2 enclosedTrackingPosition;
+	Vector2 enclosedTrackingPosition = { -100.0f, -100.0f};
+
+	std::vector<Vector2> destroyedIndicatorParticlePositions;
+	std::vector<Vector2> lerpingDIParticlePositions;
+
+	const float KDestroyParticlesTravelDistance = 200.0f;
+	const float KDestroyParticlesTravelTimeSec = 0.3f;
+	float destroyParticlesElapsedTime = 0.0f;
 
 	//state machines
 	 
@@ -323,8 +334,12 @@ int main(void)
 
 	conditionFactory.Register("AnimationFinished", [](const Json& j) {
 			auto c = std::make_unique<AnimationFinishedCondition>();
-			//c->name = j["name"];
 			return c;
+		});
+
+	conditionFactory.Register("TopTouchingScreen", [](const Json& j) {
+		auto c = std::make_unique<TopTouchingScreenCondition>();
+		return c;
 		});
 
 	auto& actionFactory = ActionFactory::Instance();
@@ -344,6 +359,11 @@ int main(void)
 		return a;
 		});
 
+	actionFactory.Register("SetTargetToTouch", [](const Json& j) {
+		auto a = std::make_unique<SetTargetToTouchAction>();
+		return a;
+		});
+
 	actionFactory.Register("SpawnHitbox", [](const Json& j) {
 		auto a = std::make_unique<SpawnHitboxAction>();
 
@@ -360,7 +380,7 @@ int main(void)
 	actionFactory.Register("StartTimer", [](const Json& j) {
 		auto a = std::make_unique<StartTimerAction>();
 		a->name = j["name"];
-		a->duration = j["duration"];
+		a->duration = ParseFloatValue(j["duration"]);
 		return a;
 		});
 
@@ -420,7 +440,7 @@ int main(void)
 	AttackEffectDatabase::Instance().LoadFromFile(RESOURCES_FOLDER + std::string("attack_effects/hazard_object_af.json"));
 	AttackEffectDatabase::Instance().LoadFromFile(RESOURCES_FOLDER + std::string("attack_effects/projectile_object_af.json"));
 
-	Json j = LoadJson(RESOURCES_FOLDER + std::string("state_machines/sm.json"));
+	Json j = LoadJson(RESOURCES_FOLDER + std::string("state_machines/walk_around_occassionally_attack.json"));
 	//TODO: either leave the owner here or in AssignMachine state, but not in both
 	StateMachine* sm = BuildStateMachine(j, nullptr/*owner*/);
 	//world object creation
@@ -438,6 +458,7 @@ int main(void)
 	wo->position = Vector2({ 100, 100 });
 
 	WorldObject* topObject = new WorldObject(stylusAnims);
+	gameManager.topObjectPtr = topObject;
 	topObject->position = Vector2({ -100, -100 }); //offscreen
 	topObject->scale = 3.0f;
 
@@ -596,28 +617,61 @@ int main(void)
 
 		if (enclosedIndicatorParticlePositions.size() > 0)
 		{
-			//continuous transition, same time spent regardless of distance
+			// invalid tracking pos check
+			if (enclosedTrackingPosition.x != -100.0f && enclosedTrackingPosition.y != -100.0f)
+			{
+				//printf("\nEnclosed tracking pos: %f, %f", enclosedTrackingPosition.x, enclosedTrackingPosition.y);
 
-			enclosingParticlesElapsedTime += timer.GetDeltaTime();
+				//continuous transition, same time spent regardless of distance
 
-			float interpFactor = enclosingParticlesElapsedTime / KEnclosingParticlesTravelTimeFromOutToCenterSec;
+				enclosingParticlesElapsedTime += timer.GetDeltaTime();
 
-			Vector2 center = enclosedTrackingPosition;
+				float interpFactor = enclosingParticlesElapsedTime / KEnclosingParticlesTravelTimeFromOutToCenterSec;
+
+				Vector2 center = enclosedTrackingPosition;
+
+				//move every particle
+				for (int i = 0; i < enclosedIndicatorParticlePositions.size(); i++)
+				{
+					Vector2 currParticlePos = Vector2Add(enclosedIndicatorParticlePositions[i],
+						Vector2Scale(Vector2Subtract(center, enclosedIndicatorParticlePositions[i]), interpFactor));
+
+					lerpingEIParticlePositions[i] = currParticlePos;
+				}
+
+				//reset on lerp > 1
+				if (interpFactor >= 1.0f)
+				{
+					enclosingParticlesElapsedTime = 0.0f;
+					enclosedIndicatorParticlePositions.clear();
+				}
+			}
+		}
+
+		if (destroyedIndicatorParticlePositions.size() > 0)
+		{
+			destroyParticlesElapsedTime += timer.GetDeltaTime();
+
+			float interpFactor = destroyParticlesElapsedTime / KDestroyParticlesTravelTimeSec;
 
 			//move every particle
-			for (int i = 0; i < enclosedIndicatorParticlePositions.size(); i++)
+			for (int i = 0; i < destroyedIndicatorParticlePositions.size(); i++)
 			{
-				Vector2 currParticlePos = Vector2Add(enclosedIndicatorParticlePositions[i],
-					Vector2Scale(Vector2Subtract(center, enclosedIndicatorParticlePositions[i]), interpFactor));
 
-				lerpingEIParticlePositions[i] = currParticlePos;
+				Vector2 targetParticlePos =
+					Vector2Add(destroyedIndicatorParticlePositions[i], Vector2{ 0.0f, -KDestroyParticlesTravelDistance });
+				
+				Vector2 currParticlePos = Vector2Add(destroyedIndicatorParticlePositions[i],
+					Vector2Scale(Vector2Subtract(targetParticlePos, destroyedIndicatorParticlePositions[i]), interpFactor));
+
+				lerpingDIParticlePositions[i] = currParticlePos;
 			}
 
 			//reset on lerp > 1
 			if (interpFactor >= 1.0f)
 			{
-				enclosingParticlesElapsedTime = 0.0f;
-				enclosedIndicatorParticlePositions.clear();
+				destroyParticlesElapsedTime = 0.0f;
+				destroyedIndicatorParticlePositions.clear();
 			}
 		}
 
@@ -651,6 +705,8 @@ int main(void)
 				hitbox->OnCollision();
 
 				//reset stylus
+				CalculateDestroyedIndicatorParticlePositions(top.stack, destroyedIndicatorParticlePositions);
+				lerpingDIParticlePositions.resize(destroyedIndicatorParticlePositions.size());
 				ResetTop(&top);
 				DestroyStackNoDepth(&enclosedPoly);
 				enclosedAuxPoints.clear();
@@ -672,6 +728,8 @@ int main(void)
 				hitbox->OnCollision();
 
 				//reset stylus
+				CalculateDestroyedIndicatorParticlePositions(top.stack, destroyedIndicatorParticlePositions);
+				lerpingDIParticlePositions.resize(destroyedIndicatorParticlePositions.size());
 				ResetTop(&top);
 				DestroyStackNoDepth(&enclosedPoly);
 				enclosedAuxPoints.clear();
@@ -694,6 +752,8 @@ int main(void)
 				wobj->OnCollision();
 
 				//reset stylus
+				CalculateDestroyedIndicatorParticlePositions(top.stack, destroyedIndicatorParticlePositions);
+				lerpingDIParticlePositions.resize(destroyedIndicatorParticlePositions.size());
 				ResetTop(&top);
 				DestroyStackNoDepth(&enclosedPoly);
 				enclosedAuxPoints.clear();
@@ -706,6 +766,7 @@ int main(void)
 		}
 
 
+		ui.Update();
 
 		// End of Update
 		// ---------------------------------------------------------------------------------
@@ -763,6 +824,14 @@ int main(void)
 			}
 		}
 
+		//destroyed particles
+		if (destroyedIndicatorParticlePositions.size() > 0)
+		{
+			for (Vector2 particlePos : lerpingDIParticlePositions)
+			{
+				DrawCircleV(particlePos, 3.0f, RED);
+			}
+		}
 
 		//draw stlyus tail
 		int numberOfNodes = GetStackDepth(top.stack);
@@ -817,7 +886,39 @@ int main(void)
 				next = next->nextCoord;
 			}
 
+			// EASY MODE: 
+			/*
+			struct TrailBand
+			{
+				float radius;
+				Color color;
+			};
 
+			const TrailBand trailBands[] = {
+				{ 12.0f, Color{ 15, 65, 255, 255 } },
+				{ 9.0f, Color{ 75, 150, 255, 255 } },
+				{ 6.0f, WHITE }
+			};
+
+			for (const TrailBand& band : trailBands)
+			{
+				for (Coord* current = top.stack; current->nextCoord != nullptr; current = current->nextCoord)
+				{
+					DrawLineEx(
+						Vector2{ current->x, current->y },
+						Vector2{ current->nextCoord->x, current->nextCoord->y },
+						band.radius * 2.0f,
+						band.color
+					);
+				}
+
+				for (Coord* current = top.stack; current != nullptr; current = current->nextCoord)
+				{
+					DrawCircleV(Vector2{ current->x, current->y }, band.radius, band.color);
+				}
+			}
+			*/
+			
 			//rlEnableBackfaceCulling();
 
 			//TODO: update yellow transition
@@ -838,7 +939,7 @@ int main(void)
 		BeginTextureMode(UITexOverlayRenTex);
 		ClearBackground(BLANK);
 
-		//ui.draw()
+		ui.Draw();
 
 		EndTextureMode();
 

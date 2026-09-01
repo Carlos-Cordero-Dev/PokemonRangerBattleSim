@@ -90,3 +90,5 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEncl
 void CalculateEnclosedShaderAreaPoints(Coord* enclosedPoints, std::vector<Vector2>& vectorToFill);
 
 void CalculateClosingIndicatorParticlePoints(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions);
+
+void CalculateDestroyedIndicatorParticlePositions(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions);

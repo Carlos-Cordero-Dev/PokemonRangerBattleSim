@@ -1,0 +1,5 @@
+
+windup animation > charge > windown animation: 
+state with condition on animation finished with no action -> move towards with animation that has hitbox -> same as windup but another animation
+
+idle walk around with chance to attack:

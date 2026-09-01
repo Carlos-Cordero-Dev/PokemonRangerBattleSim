@@ -4,6 +4,7 @@
 #include "sprites.h"
 #include "enclosable_object.h"
 #include "ranger_top.h"
+#include "particle_system.h"
 
 class Pokemon : public EnclosableObject
 {
@@ -12,7 +13,7 @@ public:
 
 	void Draw() override;
 	void OnEnclosed() override;
-	void OnEnclosedSetCenter(Vector2* newCenter);
+	void OnEnclosedEx(Vector2* newCenter, float incomingDamage);
 	void Update() override;
 	void Cleanup() override;
 
@@ -29,7 +30,12 @@ public:
 	};
 	//its assumed it gets changed by the state machine designed for this specific pkmn
 	AnimationState animationState;
-private:
+	
+	ParticleSystem* particleSystem = nullptr;
+	bool isEnclosed = false; //lasts for enclosedTimer seconds after OnEnclosed is called, then it goes back to false
+	float currHealth = 100.0f;
+	float maxHealth = 100.0f;
 
+private:
 	int id = 0;
 };

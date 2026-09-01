@@ -299,9 +299,16 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEncl
 					if (pokemonEnclosable)
 					{
 						//TODO: what happens when multiple objects are enclosed at the same time? maybe interpolate the center or something
-						pokemonEnclosable->OnEnclosedSetCenter(outEnclosedCenter);
+						pokemonEnclosable->OnEnclosedEx(outEnclosedCenter, 5.0f);
 					}
-					else enclosableObj->OnEnclosed();
+					else
+					{
+						// signal not valid enclosed center
+						outEnclosedCenter->x = -100.0f;
+						outEnclosedCenter->y = -100.0f;
+
+						enclosableObj->OnEnclosed();
+					}
 				}
 
 			}
@@ -417,4 +424,27 @@ void CalculateClosingIndicatorParticlePoints(Coord* enclosedPoints, std::vector<
 
 		aux = aux->nextCoord;
 	}
+}
+
+
+void CalculateDestroyedIndicatorParticlePositions(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions)
+{
+	constexpr int kMaxParticleCount = 20;
+	Coord* aux = enclosedPoints;
+	float enclosedTotalLength = 0.0f;
+	//calculate length
+
+	Vector2 particlePos;
+
+	while (aux && aux->nextCoord)
+	{
+		Vector2 currentPos = { aux->x,aux->y };
+		Vector2 nextPos = { aux->nextCoord->x,aux->nextCoord->y };
+		particlePos = currentPos;
+
+		outParticlePositions.push_back(particlePos);
+
+		aux = aux->nextCoord;
+	}
+	//printf("\nlength %f", enclosedTotalLength);
 }

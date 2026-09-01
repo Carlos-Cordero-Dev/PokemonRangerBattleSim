@@ -21,6 +21,7 @@ public:
 	std::vector<HazardObject*> activeHazardObjects;
 	std::vector<WorldObject*> allWorldObjs;
 	std::vector<EnclosableObject*> allEnclosableObjs;
+	WorldObject* topObjectPtr = nullptr;
 
 	std::vector<Hitbox*> singleFrameHitboxes;
 };

@@ -30,6 +30,8 @@ void Hitbox::Update(float dt)
 	}
 	else //isActive
 	{
+
+
 		boundingBox.x += velocity.x * dt;
 		boundingBox.y += velocity.y * dt;
 	}
@@ -60,7 +62,7 @@ void Hitbox::ShowHitbox()
 			boundingBox.y,
 			boundingBox.width,
 			boundingBox.height,
-			YELLOW
+			GRAY
 		);
 	}
 }

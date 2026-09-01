@@ -44,6 +44,16 @@
       "onUpdate": [
         { "type": "TickTimer", "name": "attackTimer" }
       ]
+    },
+    {
+      "name": "Attack3",
+      "onEnter": [
+	    { "type": "SetAnimation", "animation": "attack" },
+		{ "type": "SetTargetToTouch" }
+      ],
+      "onUpdate": [
+        { "type": "MoveTowardsTarget", "speed": 140 }
+      ]
     }
   ],
 
@@ -59,6 +69,13 @@
       ]
     },
 	{
+	  "from": "Move",
+	  "to": "Attack3",
+	   "conditions": [
+		{ "type": "TopTouchingScreen" }
+	   ]
+	},
+	{
 	  "from":"Attack",
       "to":"Move",
 	  "conditions":[
@@ -70,6 +87,13 @@
       "to": "Move",
       "conditions": [
         { "type": "TimerFinished", "name": "attackTimer" }
+      ]
+    },
+	{
+      "from": "Attack3",
+      "to": "Move",
+      "conditions": [
+       { "type": "DistanceToTargetLess", "value": 0.1 }
       ]
     }
   ],

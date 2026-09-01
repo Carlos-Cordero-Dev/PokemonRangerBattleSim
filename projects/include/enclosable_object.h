@@ -14,4 +14,9 @@ public:
 	virtual void OnEnclosed() = 0;
 
 	virtual ~EnclosableObject() = default;
+
+protected:
+	float lastEnclosedTime = 0.0f;
+	float enclosedTimer = 0.0f;
+	float enclosedTimeLimit = 3.0f;
 };
