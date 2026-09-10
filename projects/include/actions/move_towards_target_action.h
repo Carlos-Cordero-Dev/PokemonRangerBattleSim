@@ -23,18 +23,21 @@ public:
            target.x - owner->position.x,
            target.y - owner->position.y
         };
-
         float len = sqrt(dir.x * dir.x + dir.y * dir.y);
-        if (len > 0.001f) {
-            dir.x /= len;
-            dir.y /= len;
 
-            if (dir.x < 0.0f) p->SetFacingDirection(dir.y < 0.0f ? FacingDirection::UpLeft : FacingDirection::DownLeft);
-            else p->SetFacingDirection(dir.y < 0.0f ? FacingDirection::UpRight : FacingDirection::DownRight);
+        float moveDistance = speed->Get() * dt;
+        if (len <= moveDistance)
+        {
+            owner->position = target;
+            return;
         }
 
-        
+        dir.x /= len;
+        dir.y /= len;
 
+        if (dir.x < 0.0f) p->SetFacingDirection(dir.y < 0.0f ? FacingDirection::UpLeft : FacingDirection::DownLeft);
+        else p->SetFacingDirection(dir.y < 0.0f ? FacingDirection::UpRight : FacingDirection::DownRight);
+        
         owner->position.x += dir.x * speed->Get() * dt;
         owner->position.y += dir.y * speed->Get() * dt;
     }
