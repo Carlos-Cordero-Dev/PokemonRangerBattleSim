@@ -417,8 +417,14 @@ int main(void)
 		a->projectileObjectType = j["effect"];
 		a->offsetX = ParseFloatValue(j["offsetX"]);
 		a->offsetY = ParseFloatValue(j["offsetY"]);
-		a->dirX = ParseFloatValue(j["dirX"]);
-		a->dirY = ParseFloatValue(j["dirY"]);
+		a->useFacingDirection = j.value("useFacingDirection", false);
+		if (a->useFacingDirection) {
+			a->spreadDegrees = ParseFloatValue(j.value("spreadDegrees", Json(0.0f)));
+		}
+		else {
+			a->dirX = ParseFloatValue(j["dirX"]);
+			a->dirY = ParseFloatValue(j["dirY"]);
+		}
 		a->speed = ParseFloatValue(j["speed"]);
 		a->spawnDelaySec = ParseFloatValue(j["spawnDelaySec"]);
 		return a;
@@ -587,10 +593,12 @@ int main(void)
 			if (enclosedPokemon)
 			{
 				enclosedTrackingPosition = newEnclosedCenter;
-				CalculateEnclosedShaderAreaPoints(enclosedPoly, enclosedAuxPoints);
 				CalculateClosingIndicatorParticlePoints(enclosedPoly, enclosedIndicatorParticlePositions);
 				lerpingEIParticlePositions.resize(enclosedIndicatorParticlePositions.size());
 			}
+
+			CalculateEnclosedShaderAreaPoints(enclosedPoly, enclosedAuxPoints);
+
 			printf("\nB end");
 
 			//NOTE: yellow transition is always destroyed if another appears
@@ -754,6 +762,27 @@ int main(void)
 			//clear hitbox as it only exists this frame
 			//TODO: okey maybe dont clear the hitbox bc what if the hitbox interacts with the environment
 		}
+
+		//check top collision with hitboxes active for the current animation keyframe
+		for (Hitbox* hitbox : gameManager.singleKeyframeHitboxes)
+		{
+			if (PolygonCollidingWithBox(top.stack, hitbox->boundingBox))
+			{
+				hitbox->OnCollision();
+
+				CalculateDestroyedIndicatorParticlePositions(top.stack, destroyedIndicatorParticlePositions);
+				lerpingDIParticlePositions.resize(destroyedIndicatorParticlePositions.size());
+				ResetTop(&top);
+				DestroyStackNoDepth(&enclosedPoly);
+				enclosedAuxPoints.clear();
+				topObject->position.x = -100;
+				topObject->position.y = -100;
+
+				top.wasDamaged = true;
+				break;
+			}
+		}
+
 
 		//check top collision with world objects
 		for (WorldObject* wobj : gameManager.allWorldObjs)
@@ -990,6 +1019,10 @@ int main(void)
 			hitbox->ShowHitbox();
 		}
 		for (Hitbox* hitbox : GameManager::GetInstance().singleFrameHitboxes)
+		{
+			hitbox->ShowHitbox();
+		}
+		for (Hitbox* hitbox : GameManager::GetInstance().singleKeyframeHitboxes)
 		{
 			hitbox->ShowHitbox();
 		}

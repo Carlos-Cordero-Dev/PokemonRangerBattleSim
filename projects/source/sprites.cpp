@@ -4,9 +4,12 @@
 #include "world.h"
 #include "hitbox.h"
 #include "raymath.h"
-#include "world.h"
 
 #include "animation_database.h"
+
+SpriteAnimation::SpriteAnimation(AnimationData* animData) : animData_(animData)
+{
+}
 
 SpriteAnimation::SpriteAnimation(const SpriteAnimation& other)
 {
@@ -23,6 +26,67 @@ SpriteAnimation::SpriteAnimation(const SpriteAnimation& other)
 	this->finished = false;
 }
 
+
+SpriteAnimation::~SpriteAnimation()
+{
+	ClearKeyframeHitboxes();
+}
+
+void SpriteAnimation::ClearKeyframeHitboxes()
+{
+	auto& registeredHitboxes = GameManager::GetInstance().singleKeyframeHitboxes;
+	for (const std::unique_ptr<Hitbox>& hitbox : keyframeHitboxes) {
+		registeredHitboxes.erase(
+			std::remove(registeredHitboxes.begin(), registeredHitboxes.end(), hitbox.get()),
+			registeredHitboxes.end());
+	}
+	keyframeHitboxes.clear();
+}
+
+void SpriteAnimation::SpawnCurrentKeyframeHitboxes(int posX, int posY)
+{
+	ClearKeyframeHitboxes();
+	keyframeHitboxOwnerPosition = {
+		static_cast<float>(posX),
+		static_cast<float>(posY)
+	};
+
+	GameManager& gameManager = GameManager::GetInstance();
+	for (const std::unique_ptr<AnimationEvent>& event : animData_->keyframes[currentFrame].events) {
+		if (event->type != AnimationEventType::MeleeHitbox)
+			continue;
+
+		const HitboxAnimationEvent* hitboxEvent =
+			static_cast<const HitboxAnimationEvent*>(event.get());
+		auto hitbox = std::make_unique<Hitbox>(
+			posX + hitboxEvent->offsetX,
+			posY + hitboxEvent->offsetY,
+			hitboxEvent->width,
+			hitboxEvent->height,
+			Vector2{ 0.0f, 0.0f },
+			0.0f);
+
+		gameManager.singleKeyframeHitboxes.push_back(hitbox.get());
+		keyframeHitboxes.push_back(std::move(hitbox));
+	}
+}
+
+void SpriteAnimation::MoveKeyframeHitboxes(int posX, int posY)
+{
+	const Vector2 movement = {
+		posX - keyframeHitboxOwnerPosition.x,
+		posY - keyframeHitboxOwnerPosition.y
+	};
+	for (const std::unique_ptr<Hitbox>& hitbox : keyframeHitboxes) {
+		hitbox->boundingBox.x += movement.x;
+		hitbox->boundingBox.y += movement.y;
+	}
+	keyframeHitboxOwnerPosition = {
+		static_cast<float>(posX),
+		static_cast<float>(posY)
+	};
+}
+
 void SpriteAnimation::SetAnimationData(AnimationData* animData, bool preservePlayback)
 {
 	if (!animData || animData->keyframes.empty() || animData->textures.empty())
@@ -31,10 +95,12 @@ void SpriteAnimation::SetAnimationData(AnimationData* animData, bool preservePla
 	animData_ = animData;
 	if (!preservePlayback)
 	{
+		ClearKeyframeHitboxes();
 		currentFrame = 0;
 		timePassed = 0.0f;
 		totalTimePassed = 0.0f;
 		finished = false;
+		frameEventPending = true;
 		return;
 	}
 
@@ -56,8 +122,11 @@ void SpriteAnimation::Update(int posX, int posY)
 	this->totalTimePassed += deltaTime;
 
 	float keyframeDelay = animData_->keyframes[currentFrame].delaySec;
-	
-	
+	bool enteredNewFrame = frameEventPending;
+	frameEventPending = false;
+	if (!enteredNewFrame)
+		MoveKeyframeHitboxes(posX, posY);
+
 	// === APPLY DELAY ===
 	//check if not at default -1.0f delay keyframe
 	if (keyframeDelay > 0.0f)
@@ -70,6 +139,7 @@ void SpriteAnimation::Update(int posX, int posY)
 
 			//move to next keyframe
 			currentFrame++;
+			enteredNewFrame = true;
 			if (currentFrame >= animData_->totalFrames)
 			{
 				if (animData_->loop) {
@@ -88,24 +158,8 @@ void SpriteAnimation::Update(int posX, int posY)
 	}
 
 	// === SPAWN KEYFRAME HITBOXES ===
-	for (const AnimationEvent& event : animData_->keyframes[currentFrame].events) {
-		if (event.type == AnimationEventType::MeleeHitbox) {
-
-			HitboxAnimationEvent& hbEvent = (HitboxAnimationEvent&)event;
-			//TODO: SPAWN HITBOX
-			//printf("\nSpawned hitbox from animation event at frame %d", currentFrame);
-
-			GameManager& gm = GameManager::GetInstance();
-			gm.singleFrameHitboxes.push_back(new Hitbox(
-				posX + hbEvent.offsetX,
-				posY + hbEvent.offsetY,
-				hbEvent.width,
-				hbEvent.height,
-				{ 0.0f, 0.0f },
-				0.0f
-			));
-		}
-	}
+	if (enteredNewFrame)
+		SpawnCurrentKeyframeHitboxes(posX, posY);
 
 }
 void SpriteAnimation::Draw(int posX, int posY)
@@ -186,8 +240,10 @@ Vector2 SpriteAnimation::GetCurrentTextureSize() const
 
 void SpriteAnimation::Reset()
 {
+	ClearKeyframeHitboxes();
 	currentFrame = 0;
 	timePassed = 0.0f;
 	totalTimePassed = 0.0f;
 	finished = false;
+	frameEventPending = true;
 }

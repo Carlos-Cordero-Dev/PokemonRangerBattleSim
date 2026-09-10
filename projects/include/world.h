@@ -24,4 +24,5 @@ public:
 	WorldObject* topObjectPtr = nullptr;
 
 	std::vector<Hitbox*> singleFrameHitboxes;
+	std::vector<Hitbox*> singleKeyframeHitboxes;
 };

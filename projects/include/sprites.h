@@ -5,12 +5,14 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <memory>
 
 #include "raylib.h"
 
 #include "constants.h"
 
-class AnimationData;
+class AnimationData; //fd
+class Hitbox;
 
 // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 struct TextureData {
@@ -23,8 +25,9 @@ class SpriteAnimation
 
 public:
 	//TODO: if nullptr animData prolly should create a no sprite sprite
-	explicit SpriteAnimation(AnimationData* animData = nullptr) : animData_(animData) {};
+	explicit SpriteAnimation(AnimationData* animData = nullptr);
 	SpriteAnimation(const SpriteAnimation& other);
+	~SpriteAnimation();
 
 	void SetAnimationData(AnimationData* animData, bool preservePlayback);
 	void Update(int posX, int posY);
@@ -51,6 +54,13 @@ public:
 	int currentFrame = 0;
 
 private:
+	void ClearKeyframeHitboxes();
+	void SpawnCurrentKeyframeHitboxes(int posX, int posY);
+	void MoveKeyframeHitboxes(int posX, int posY);
+	std::vector<std::unique_ptr<Hitbox>> keyframeHitboxes;
+	Vector2 keyframeHitboxOwnerPosition = { 0.0f, 0.0f };
+
+	bool frameEventPending = true;
 
 	int framesPassedSinceLastAnimUpdate = 0;
 	int lastRealFrame = 0;

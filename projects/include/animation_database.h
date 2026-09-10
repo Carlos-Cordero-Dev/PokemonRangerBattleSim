@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 #include "json_loader.h"
 
@@ -16,6 +17,7 @@ enum class AnimationEventType {
 struct AnimationEvent {
 	AnimationEventType type;
 	std::string eventName; //unused
+	virtual ~AnimationEvent() = default;
 };
 
 struct HitboxAnimationEvent : AnimationEvent {
@@ -33,7 +35,7 @@ struct KeyFrame
 {
 	int textureIndex = 0;//TODO: index should match the name of the texture: ex pikachu_down_0 should be 0
 	float delaySec = 0.0f; //time to spend in this frame
-	std::vector<AnimationEvent> events;
+	std::vector<std::unique_ptr<AnimationEvent>> events; //this vector is never modified it gets its contents copied via std::move then the copy gets auto released
 };
 
 struct AnimationData

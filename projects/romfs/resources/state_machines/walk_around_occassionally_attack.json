@@ -25,19 +25,43 @@
       ]
     },
     {
-      "name": "Attack",
-      "onEnter": [
-	    { "type": "SetAnimation", "animation": "attack" }
+	  "name": "Attack_0",
+	  "onEnter": [
+		{ "type": "SetAnimation", "animation": "attack_0" },
+		{
+		  "type": "SetTarget",
+		  "x": { "type": "random_range", "min": 100, "max": 500 },
+		  "y": { "type": "random_range", "min": 200, "max": 600 }
+		}
+	  ],
+	  "onUpdate": [
+		{ "type": "MoveTowardsTarget", "speed": 200 }
 	  ]
-    }
+	},
+	{
+	  "name": "Attack_1",
+	  "onEnter": [
+		{ "type": "SetAnimation", "animation": "attack_1" },
+		{
+		  "type": "SpawnProjectileObject",
+		  "effect": "garchomp_shot",
+		  "offsetX": 0,
+		  "offsetY": 0,
+		  "useFacingDirection": true,
+		  "spreadDegrees": 0,
+		  "speed": 10,
+		  "spawnDelaySec": 1
+		}
+	  ]
+	}
   ],
-
   "transitions": [
 	{
       "from": "Move",
 	  "to": [
 			{ "state": "Idle", "weight": 95 },
-			{ "state": "Attack", "weight": 5 }
+			{ "state": "Attack_0", "weight": 2.5 },
+			{ "state": "Attack_1", "weight": 2.5 }
 	   ],      
 	   "conditions": [
        { "type": "DistanceToTargetLess", "value": 0.1 }
@@ -46,15 +70,27 @@
     {
       "from": "Idle",
 	  "to": [
-			{ "state": "Move", "weight": 70 },
-			{ "state": "Attack", "weight": 30 }
+			{ "state": "Move", "weight": 40 },
+			{ "state": "Attack_0", "weight": 40 },
+			{ "state": "Attack_1", "weight": 20 }
+		
 	   ],      
 	   "conditions": [
        { "type": "TimerFinished", "name": "idleTimer" }
       ]
     },
 	{
-	  "from":"Attack",
+	  "from":"Attack_0",
+      "to": [
+			{ "state": "Move", "weight": 40 },
+			{ "state": "Idle", "weight": 60 }
+	   ],  
+	  "conditions":[
+       { "type": "DistanceToTargetLess", "value": 0.1 }
+	  ]
+	},
+	{
+	  "from":"Attack_1",
       "to": [
 			{ "state": "Move", "weight": 40 },
 			{ "state": "Idle", "weight": 60 }
@@ -64,6 +100,5 @@
 	  ]
 	}
   ],
-
   "initialState": "Move"
 }

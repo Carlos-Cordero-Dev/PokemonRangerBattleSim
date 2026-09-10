@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <cmath>
+
 #include "action.h"
 #include "action_values.h"
 #include "pokemon.h"
@@ -21,6 +23,8 @@ public:
     std::unique_ptr<FloatValue> dirY;
     std::unique_ptr<FloatValue> speed;
     std::unique_ptr<FloatValue> spawnDelaySec;
+    bool useFacingDirection = false;
+    std::unique_ptr<FloatValue> spreadDegrees;
 
     void Execute(WorldObject* owner, float dt) override {
 
@@ -31,7 +35,29 @@ public:
 
 		AnimationDatabase& animDB = AnimationDatabase::Instance();
 
-		Vector2 normDir = Vector2Normalize({ dirX->Get(), dirY->Get() });
+        Vector2 normDir;
+        if (useFacingDirection) {
+            switch (p->facingDir) {
+            case FacingDirection::UpLeft:    normDir = { -1.0f, -1.0f }; break;
+            case FacingDirection::UpRight:   normDir = { 1.0f, -1.0f }; break;
+            case FacingDirection::DownLeft:  normDir = { -1.0f, 1.0f }; break;
+            case FacingDirection::DownRight: normDir = { 1.0f, 1.0f }; break;
+            default:                         normDir = { -1.0f, 1.0f }; break;
+            }
+
+            const float spreadRadians = spreadDegrees->Get() * DEG2RAD;
+            const float angleOffset = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * spreadRadians;
+            const float cosine = cosf(angleOffset);
+            const float sine = sinf(angleOffset);
+            normDir = Vector2Normalize({
+                normDir.x * cosine - normDir.y * sine,
+                normDir.x * sine + normDir.y * cosine
+                });
+        }
+        else {
+            normDir = Vector2Normalize({ dirX->Get(), dirY->Get() });
+        }
+
         //TODO: it probably doesnt make sense that the hitbox is independent of the object
         Hitbox* h = new Hitbox(
             p->position.x + offsetX->Get() * p->scale,

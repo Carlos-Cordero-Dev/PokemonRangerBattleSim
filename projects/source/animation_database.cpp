@@ -164,7 +164,7 @@ std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file
 		if (line.empty())
 		{
 			if (!currentAnim.empty()) {
-				keyframes.push_back(currentAnim);
+				keyframes.push_back(std::move(currentAnim));
 				currentAnim.clear();
 			}
 			continue;
@@ -196,15 +196,18 @@ std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file
 
 			if (eventName == "melee_hitbox") {
 
-				HitboxAnimationEvent hbEvent;
+				auto hitboxEvent = std::make_unique<HitboxAnimationEvent>();
 
-				if (!(eventStream >> hbEvent.offsetX >> hbEvent.offsetY >> hbEvent.width
-					>> hbEvent.height)) {
-					printf("\nInvalid melee_hitbox event in %s: %s", file_path.c_str(), line.c_str());
+				if (!(eventStream >> hitboxEvent->offsetX
+					>> hitboxEvent->offsetY
+					>> hitboxEvent->width
+					>> hitboxEvent->height)) {
+					printf("\nInvalid melee_hitbox event in %s: %s",
+						file_path.c_str(), line.c_str());
 					continue;
 				}
-				
-				kf.events.push_back(hbEvent);
+
+				kf.events.push_back(std::move(hitboxEvent));
 
 			}
 			else
@@ -213,12 +216,12 @@ std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file
 			}
 		}
 
-		currentAnim.push_back(kf);
+		currentAnim.push_back(std::move(kf));
 	}
 
 	// Push last animation if file does not end with blank line
 	if (!currentAnim.empty()) {
-		keyframes.push_back(currentAnim);
+		keyframes.push_back(std::move(currentAnim));
 	}
 
 	return keyframes;
@@ -314,7 +317,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 						animations[i]->numberOfTextures = animations[i]->textures.size();
 						if (keyframes.size() > 0)
 						{
-							animations[i]->keyframes = keyframes[i];
+							animations[i]->keyframes = std::move(keyframes[i]);
 						}
 						ValidateKeyframeTextureIndices(*animations[i], animName);
 
@@ -368,7 +371,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 		anim->keyframes[0].delaySec = -1.0f;
 	}
 	else {
-		anim->keyframes = keyframes[0];
+		anim->keyframes = std::move(keyframes[0]);
 	}
 
 	// Load all textures from folder
