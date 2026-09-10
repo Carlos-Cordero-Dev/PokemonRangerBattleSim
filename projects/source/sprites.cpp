@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "world.h"
 #include "hitbox.h"
+#include "raymath.h"
 #include "world.h"
 
 #include "animation_database.h"
@@ -19,13 +20,37 @@ SpriteAnimation::SpriteAnimation(const SpriteAnimation& other)
 
 	this->timePassed = 0.0f;
 	this->totalTimePassed = 0.0f;
+	this->finished = false;
 }
 
+void SpriteAnimation::SetAnimationData(AnimationData* animData, bool preservePlayback)
+{
+	if (!animData || animData->keyframes.empty() || animData->textures.empty())
+		return;
+
+	animData_ = animData;
+	if (!preservePlayback)
+	{
+		currentFrame = 0;
+		timePassed = 0.0f;
+		totalTimePassed = 0.0f;
+		finished = false;
+		return;
+	}
+
+	if (currentFrame >= static_cast<int>(animData_->keyframes.size()))
+		currentFrame = static_cast<int>(animData_->keyframes.size()) - 1;
+}
 
 void SpriteAnimation::Update(int posX, int posY)
 {
 	//inspired by: https://github.com/jkatsanis/SpriteEngineUI/blob/main/Engine/Engine/Core/Source/Sprite/Components/Animator/Animation.cpp
-	
+
+	if (!animData_ || animData_->keyframes.empty())
+		return;
+	if (finished && !animData_->loop)
+		return;
+
 	float deltaTime = Timer::GetInstance().GetDeltaTime();
 	this->timePassed += deltaTime;
 	this->totalTimePassed += deltaTime;
@@ -47,7 +72,11 @@ void SpriteAnimation::Update(int posX, int posY)
 			currentFrame++;
 			if (currentFrame >= animData_->totalFrames)
 			{
-				currentFrame = 0;
+				if (animData_->loop) {
+					currentFrame = 0;
+				}
+				else currentFrame = animData_->totalFrames - 1;
+
 				finished = true;
 			}
 			//potentially stop if not needed to loop?
@@ -81,21 +110,78 @@ void SpriteAnimation::Update(int posX, int posY)
 }
 void SpriteAnimation::Draw(int posX, int posY)
 {
-	if (animData_)
-	{
-		int textureIndex = animData_->keyframes[currentFrame].textureIndex;
-		DrawTexture(animData_->textures[textureIndex].texture, posX, posY, WHITE);
-	}
+	if (!animData_ || animData_->keyframes.empty() || animData_->textures.empty())
+		return;
+		
+	int textureIndex = animData_->keyframes[currentFrame].textureIndex;
+	DrawTexture(animData_->textures[textureIndex].texture, posX, posY, WHITE);
+	
 }
 
-void SpriteAnimation::DrawRotScale(int posX, int posY, float rotDeg, float scale)
+void SpriteAnimation::DrawRotScale(int posX, int posY, float rotDeg, float scale, bool flipX)
 {
-	if (animData_)
-	{
-		Vector2 pos = { posX, posY };
-		const int textureIndex = animData_->keyframes[currentFrame].textureIndex;
-		DrawTextureEx(animData_->textures[textureIndex].texture, pos, rotDeg, scale, WHITE);
-	}
+	if (!animData_ || animData_->keyframes.empty() || animData_->textures.empty())
+		return;
+
+	const int textureIndex = animData_->keyframes[currentFrame].textureIndex;
+	const Texture2D texture = animData_->textures[textureIndex].texture;
+	const Rectangle source = {
+		0.0f,
+		0.0f,
+		flipX ? -static_cast<float>(texture.width) : static_cast<float>(texture.width),
+		static_cast<float>(texture.height)
+	};
+	const Rectangle destination = {
+		static_cast<float>(posX),
+		static_cast<float>(posY),
+		static_cast<float>(texture.width) * scale,
+		static_cast<float>(texture.height) * scale
+	};
+
+	DrawTexturePro(texture, source, destination, Vector2Zero(), rotDeg, WHITE);
+}
+
+void SpriteAnimation::DrawRotScaleCentered(float centerX, float centerY, float rotDeg, float scale, bool flipX)
+{
+	if (!animData_ || animData_->keyframes.empty() || animData_->textures.empty())
+		return;
+
+	const int textureIndex = animData_->keyframes[currentFrame].textureIndex;
+	const Texture2D texture = animData_->textures[textureIndex].texture;
+	const Rectangle source = {
+		0.0f,
+		0.0f,
+		flipX ? -static_cast<float>(texture.width) : static_cast<float>(texture.width),
+		static_cast<float>(texture.height)
+	};
+	const Rectangle destination = {
+		centerX,
+		centerY,
+		static_cast<float>(texture.width) * scale,
+		static_cast<float>(texture.height) * scale
+	};
+	const Vector2 origin = {
+		destination.width / 2.0f,
+		destination.height / 2.0f
+	};
+
+	DrawTexturePro(texture, source, destination, origin, rotDeg, WHITE);
+}
+
+Vector2 SpriteAnimation::GetCurrentTextureSize() const
+{
+	if (!animData_ || animData_->keyframes.empty() || animData_->textures.empty())
+		return Vector2Zero();
+
+	const int textureIndex = animData_->keyframes[currentFrame].textureIndex;
+	if (textureIndex < 0 || textureIndex >= static_cast<int>(animData_->textures.size()))
+		return Vector2Zero();
+
+	const Texture2D texture = animData_->textures[textureIndex].texture;
+	return {
+		static_cast<float>(texture.width),
+		static_cast<float>(texture.height)
+	};
 }
 
 void SpriteAnimation::Reset()

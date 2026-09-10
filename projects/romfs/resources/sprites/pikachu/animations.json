@@ -1,0 +1,41 @@
+{
+  "id": "pikachu",
+  "animations": {
+    "idle": {
+      "down_left": {
+        "path": "idle/down_left",
+        "animation": "pikachu_idle_down_left",
+		"loop": true
+      },
+	  "up_left": {
+        "path": "idle/up_left",
+        "animation": "pikachu_idle_up_left",
+		"loop": true
+      }
+    },
+    "move": {
+      "down_left": {
+        "path": "run/down_left",
+        "animation": "pikachu_run_down_left",
+		"loop": true
+      },
+      "up_left": {
+        "path": "run/up_left",
+        "animation": "pikachu_run_up_left",
+		"loop": true
+      }
+    },
+    "attack": {
+      "down_left": {
+        "path": "attack/down_left",
+        "animation": "pikachu_attack_down_left",
+  		"loop": false
+      },
+      "up_left": {
+        "path": "attack/up_left",
+        "animation": "pikachu_attack_up_left",
+  		"loop": false
+      }
+    }
+  }
+}

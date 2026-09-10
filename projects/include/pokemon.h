@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "animation_database.h"
 #include "sprites.h"
 #include "enclosable_object.h"
 #include "ranger_top.h"
@@ -9,7 +10,7 @@
 class Pokemon : public EnclosableObject
 {
 public:
-	Pokemon(const std::vector<SpriteAnimation*>& animations);
+	explicit Pokemon(const AnimationSet& animations);
 
 	void Draw() override;
 	void OnEnclosed() override;
@@ -18,24 +19,26 @@ public:
 	void Cleanup() override;
 
 	void AssignStateMachine(StateMachine* stateMachine);
-	void SetAnimationState(const std::string& animationMame);
+	void SetAnimationState(const std::string& animationName);
+	void SetFacingDirection(FacingDirection direction);
+	bool IsAnimationFinished() const;
+	const AnimationVariant* ResolveAnimation() const;
 
 	StateMachine* stateMachine = nullptr;
 
-	enum AnimationState
-	{
-		kIdle = 0,
-		kMove = 1,
-		kAttack = 2,
-	};
-	//its assumed it gets changed by the state machine designed for this specific pkmn
-	AnimationState animationState;
-	
 	ParticleSystem* particleSystem = nullptr;
 	bool isEnclosed = false; //lasts for enclosedTimer seconds after OnEnclosed is called, then it goes back to false
 	float currHealth = 100.0f;
 	float maxHealth = 100.0f;
 
+	SpriteAnimation animationPlayer;
+	AnimationSet animationSet;
+	FacingDirection facingDir;
+	
+	// must match one of the animation names in the state machine
+	std::string animationState;
+
 private:
 	int id = 0;
+	bool restartAnimation = true;
 };

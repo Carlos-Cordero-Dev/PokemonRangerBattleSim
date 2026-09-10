@@ -23,12 +23,17 @@ class SpriteAnimation
 
 public:
 	//TODO: if nullptr animData prolly should create a no sprite sprite
-	SpriteAnimation(AnimationData* animData) : animData_(animData) {};
+	explicit SpriteAnimation(AnimationData* animData = nullptr) : animData_(animData) {};
 	SpriteAnimation(const SpriteAnimation& other);
 
+	void SetAnimationData(AnimationData* animData, bool preservePlayback);
 	void Update(int posX, int posY);
 	void Draw(int posX, int posY);
-	void DrawRotScale(int posX, int posY, float rotDeg, float scale);
+	void DrawRotScale(int posX, int posY, float rotDeg, float scale, bool flipX = false);
+	void DrawRotScaleCentered(float centerX, float centerY, float rotDeg, float scale, bool flipX = false);
+	Vector2 GetCurrentTextureSize() const;
+
+	bool IsFinished() const { return finished; }
 	void Reset();
 	//TODO: if pause is ever needed these are useful
 	// 	enum class AnimState
@@ -45,8 +50,6 @@ public:
 	AnimationData* animData_ = nullptr;
 	int currentFrame = 0;
 
-private:
-	SpriteAnimation();
 private:
 
 	int framesPassedSinceLastAnimUpdate = 0;

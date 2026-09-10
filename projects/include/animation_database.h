@@ -5,6 +5,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include "json_loader.h"
+
 struct TextureData;
 
 enum class AnimationEventType {
@@ -43,7 +45,27 @@ struct AnimationData
 	//int id = 0; //unused
 	int numberOfTextures = 0;// as many textures as an animation has
 	int totalFrames = 0; //includes repeating indices so 0 1 2 1 2 is 5 frames
+	bool loop = true;
 };
+
+struct AnimationVariant
+{
+	AnimationData* data = nullptr;
+	bool flipX = false;
+};
+
+enum FacingDirection {
+	UpLeft = 0,
+	UpRight,
+	DownLeft,
+	DownRight
+};
+
+using DirectionalAnimations =
+std::unordered_map<FacingDirection, AnimationVariant>;
+
+using AnimationSet =
+std::unordered_map<std::string, DirectionalAnimations>;
 
 class AnimationDatabase
 {
@@ -53,6 +75,9 @@ public:
 		static AnimationDatabase instance;
 		return instance;
 	}
+
+	AnimationSet LoadAnimationSet(const Json& json);
+
 
 	//animName must match .prkf name file for propper keyframe data loading
 	void LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,

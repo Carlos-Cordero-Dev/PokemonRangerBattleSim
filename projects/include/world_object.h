@@ -19,7 +19,7 @@ public:
 
 	virtual void OnCollision() { printf("worldobj collided"); };
 
-	void UpdateBBoxPosition();
+	void UpdateBBox();
 public:
 
 	//NOTE: position is always centered, boundinBox is topleft aligned and gets h,w/2 subtracted every time it needs to get drawn
@@ -29,6 +29,7 @@ public:
 	bool canCollide = true;
 	
 	Rectangle boundingBox;
+	float baseWidth, baseHeight;
 
 	// vector in case children want to have multiple animations, but worldObjects can only have one sprite so to 
 	// not mess with the base impl of worldobject, so only objects with no state can exist in worldobject form.

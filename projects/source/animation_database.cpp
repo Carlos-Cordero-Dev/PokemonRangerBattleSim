@@ -2,6 +2,7 @@
 #include "animation_database.h"
 
 #include <string>
+#include <algorithm>
 #include <unordered_map>
 #include <filesystem>
 #include <fstream>
@@ -12,6 +13,7 @@
 
 #include "constants.h"
 #include "sprites.h"
+//#include "external/nlohmann/json.hpp"
 
 static void TrimWhitespace(std::string& text)
 {
@@ -36,6 +38,111 @@ static bool ValidateKeyframeTextureIndices(const AnimationData& animation, const
 	}
 
 	return true;
+}
+
+static void AddMirroredVariant(
+	AnimationSet& set,
+	const std::string& action,
+	FacingDirection source,
+	FacingDirection destination)
+{
+	auto actionIt = set.find(action);
+	if (actionIt == set.end())
+		return;
+
+	auto sourceIt = actionIt->second.find(source);
+
+	if (sourceIt != actionIt->second.end())
+		actionIt->second.emplace(destination, AnimationVariant{ sourceIt->second.data, true });
+}
+
+static FacingDirection ParseDirection(const std::string& name)
+{
+    if (name == "up_left")
+        return FacingDirection::UpLeft;
+
+    if (name == "up_right")
+        return FacingDirection::UpRight;
+
+    if (name == "down_left")
+        return FacingDirection::DownLeft;
+
+    if (name == "down_right")
+        return FacingDirection::DownRight;
+
+	//default
+    return FacingDirection::DownLeft;
+}
+
+AnimationSet AnimationDatabase::LoadAnimationSet(const Json& json)
+{
+	AnimationSet set;
+
+	if (!json.contains("animations") || !json["animations"].is_object()) {
+		printf("\nAnimation manifest has no 'animations' object");
+		return set;
+	}
+
+	const std::string pokemonId = json.value("id", "");
+
+	for (const auto& [action, directions] : json["animations"].items())
+	{
+		if (!directions.is_object()) {
+			printf("\nAnimation action '%s' must contain a direction object", action.c_str());
+			continue;
+		}
+
+		for (const auto& [directionName, config] : directions.items())
+		{
+			const std::optional<FacingDirection> direction = ParseDirection(directionName);
+			if (!direction) {
+				printf("\nUnknown animation direction '%s' for action '%s'",
+					directionName.c_str(), action.c_str());
+				continue;
+			}
+
+			if (!config.contains("path") || !config.contains("animation")) {
+				printf("\nAnimation '%s/%s' requires 'path' and 'animation'",
+					action.c_str(), directionName.c_str());
+				continue;
+			}
+
+			std::string path = config["path"].get<std::string>();
+			if (path.rfind("sprites/", 0) != 0) {
+				if (pokemonId.empty()) {
+					printf("\nAnimation '%s/%s' uses a relative path but the manifest has no 'id'",
+						action.c_str(), directionName.c_str());
+					continue;
+				}
+
+				path = "sprites/" + pokemonId + "/" + path;
+			}
+			const std::string animationName = config["animation"].get<std::string>();
+			AnimationData* animation = GetAnimationDataFromName(animationName);
+
+			if (!animation) {
+				LoadAnimDataFromFolder(path, animationName);
+				animation = GetAnimationDataFromName(animationName);
+			}
+
+			if (!animation) {
+				printf("\nFailed to load animation '%s' for '%s/%s'",
+					animationName.c_str(), action.c_str(), directionName.c_str());
+				continue;
+			}
+
+			animation->loop = config.value("loop", true);
+
+			set[action][*direction] = { animation, false };
+		}
+	}
+
+	for (auto& [action, directions] : set) {
+		AddMirroredVariant(set, action, FacingDirection::DownLeft, FacingDirection::DownRight);
+		AddMirroredVariant(set, action, FacingDirection::UpLeft, FacingDirection::UpRight);
+	}
+
+	return set;
 }
 
 std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file_path)
@@ -234,7 +341,15 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,
 	const std::string& animName)
 {
+	if (GetAnimationDataFromName(animName))
+		return;
+
 	std::string basePath = RESOURCES_FOLDER + basePathFromResourceFolder;
+
+	if (!std::filesystem::exists(basePath)) {
+		printf("\nAnimation folder does not exist: %s", basePath.c_str());
+		return;
+	}
 
 	// Load keyframes if file exists
 	std::vector<std::vector<KeyFrame>> keyframes;
@@ -245,6 +360,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 
 	// Create one animation
 	AnimationData* anim = new AnimationData();
+	anim->name = animName;
 
 	// Default keyframe if none exist
 	if (keyframes.empty()) {
@@ -256,6 +372,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 	}
 
 	// Load all textures from folder
+	std::vector<std::filesystem::path> texturePaths;
 	for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(basePath)) {
 
 		if (!dirEntry.is_regular_file())
@@ -265,11 +382,31 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 		if (extension != ".png" && extension != ".jpg" && extension != ".jpeg")
 			continue;
 
-		std::string filePath = dirEntry.path().string();
+		texturePaths.push_back(dirEntry.path());
+	}
+
+	std::sort(texturePaths.begin(), texturePaths.end(),
+		[](const std::filesystem::path& left, const std::filesystem::path& right) {
+			const std::string leftStem = left.stem().string();
+			const std::string rightStem = right.stem().string();
+			const bool leftIsNumber = !leftStem.empty() && std::all_of(
+				leftStem.begin(), leftStem.end(), [](unsigned char c) { return std::isdigit(c); });
+			const bool rightIsNumber = !rightStem.empty() && std::all_of(
+				rightStem.begin(), rightStem.end(), [](unsigned char c) { return std::isdigit(c); });
+
+		if (leftIsNumber && rightIsNumber && leftStem.size() != rightStem.size())
+			return leftStem.size() < rightStem.size();
+
+		return leftStem < rightStem;
+	});
+
+	for (const std::filesystem::path& texturePath : texturePaths) {
+
+		std::string filePath = texturePath.string();
 		std::replace(filePath.begin(), filePath.end(), '\\', '/');
 
 		// Create texture name from file (no subfolder logic needed anymore)
-		std::string textureName = dirEntry.path().stem().string();
+		std::string textureName = texturePath.stem().string();
 		textureName += "_" + animName;
 
 		// Load texture
@@ -280,6 +417,12 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 
 	anim->numberOfTextures = anim->textures.size();
 	anim->totalFrames = anim->keyframes.size();
+	if (anim->textures.empty()) {
+		printf("\nAnimation '%s' has no textures in %s", animName.c_str(), basePath.c_str());
+		delete anim;
+		return;
+	}
+
 	ValidateKeyframeTextureIndices(*anim, animName);
 
 	// Store in animation map

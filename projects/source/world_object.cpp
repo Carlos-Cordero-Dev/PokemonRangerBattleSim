@@ -22,8 +22,13 @@ WorldObject::WorldObject(SpriteAnimation* animation)
 	boundingBox.y = position.y;
 
 	//TODO: eventually this comes from metadata from each frame
-	boundingBox.width = animation->animData_->textures[0].texture.width;
-	boundingBox.height = animation->animData_->textures[0].texture.height;
+	if (!animations.empty() && animations[0] && animations[0]->animData_ &&
+		!animations[0]->animData_->textures.empty()) {
+		baseWidth = animations[0]->animData_->textures[0].texture.width;
+		boundingBox.width = baseWidth;
+		baseHeight = animations[0]->animData_->textures[0].texture.height;
+		boundingBox.height = baseHeight;
+	}
 }
 
 WorldObject::WorldObject(const std::vector<SpriteAnimation*>& animations)
@@ -46,25 +51,30 @@ WorldObject::WorldObject(const std::vector<SpriteAnimation*>& animations)
 	boundingBox.y = position.y;
 
 	//TODO: eventually this comes from metadata from each frame
-	boundingBox.width = animations[0]->animData_->textures[0].texture.width;
-	boundingBox.height = animations[0]->animData_->textures[0].texture.height;
+	if (!animations.empty() && animations[0] && animations[0]->animData_ &&
+		!animations[0]->animData_->textures.empty()) {
+		baseWidth = animations[0]->animData_->textures[0].texture.width;
+		boundingBox.width = baseWidth;
+		baseHeight = animations[0]->animData_->textures[0].texture.height;
+		boundingBox.height = baseHeight;
+	}
 
 }
 
 void WorldObject::Draw()
 {
 	//TODO: technically this boundbox w/h should be the w/h of the sprite, not the bb
-	animations[0]->DrawRotScale(
-		position.x - boundingBox.width * scale / 2,
-		position.y - boundingBox.height * scale / 2,
+	animations[0]->DrawRotScaleCentered(
+		position.x,
+		position.y,
 		rotationDeg, scale);
 	
 	//debug draw bounding box
 	DrawRectangleLines(
 		boundingBox.x,
 		boundingBox.y,
-		boundingBox.width * scale,
-		boundingBox.height * scale,
+		boundingBox.width,
+		boundingBox.height,
 		RED
 	);
 	//DrawRectangleLinesEx(boundingBox,1.0f,RED);
@@ -77,14 +87,17 @@ void WorldObject::Update()
 {
 	animations[0]->Update(position.x,position.y);
 
-	UpdateBBoxPosition();
+	UpdateBBox();
 }
 
-void WorldObject::UpdateBBoxPosition()
+void WorldObject::UpdateBBox()
 {
+	boundingBox.width = baseWidth * scale;
+	boundingBox.height = baseHeight * scale;
+
 	//TODO: center everything bc theres a missmatch between the bb thats top left aligned and some stuff thats "center" aligned -w,-h etc
-	boundingBox.x = position.x - boundingBox.width * scale/ 2;
-	boundingBox.y = position.y - boundingBox.height * scale / 2;
+	boundingBox.x = position.x - boundingBox.width/ 2;
+	boundingBox.y = position.y - boundingBox.height/ 2;
 }
 
 void WorldObject::Cleanup()

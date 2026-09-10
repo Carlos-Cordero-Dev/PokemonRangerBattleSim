@@ -12,6 +12,7 @@ public:
         Pokemon* p = static_cast<Pokemon*>(owner);
         auto& bb = p->stateMachine->blackboard;
 
-        return p->animations[p->animationState]->finished;
+        Pokemon* pokemon = dynamic_cast<Pokemon*>(owner);
+        return pokemon && pokemon->IsAnimationFinished();
     }
 };

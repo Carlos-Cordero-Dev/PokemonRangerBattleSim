@@ -250,13 +250,20 @@ int main(void)
 	//TODO: if we assume we are doing it with the todo below: remove the random ints and just take path and custom name, cause you know its
 	// 1 animation in the folder and just count the files
 
-	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/left_down", "garchomp_attack_left_down");
-	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/left_up", "garchomp_attack_left_up");
-	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/right_down", "garchomp_attack_right_down");
-	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/right_up", "garchomp_attack_right_up");
+	// OLD ANIMATIONS
+	//animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/left_down", "garchomp_attack_left_down");
+	//animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/left_up", "garchomp_attack_left_up");
+	//animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/right_down", "garchomp_attack_right_down");
+	//animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/right_up", "garchomp_attack_right_up");
 
-	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/run", "garchomp_run");
-	animDatabase.LoadAnimDataFromFolder("sprites/garchomp/idle","garchomp_idle");
+	//animDatabase.LoadAnimDataFromFolder("sprites/garchomp/run", "garchomp_run");
+	//animDatabase.LoadAnimDataFromFolder("sprites/garchomp/idle","garchomp_idle");
+
+
+	const Json pikachuAnimationManifest = LoadJson(
+		RESOURCES_FOLDER + std::string("sprites/pikachu/animations.json"));
+	AnimationSet pikachuAnimations = animDatabase.LoadAnimationSet(pikachuAnimationManifest);
+
 
 	animDatabase.LoadAnimDataFromFolder("sprites/stylus/top", "top_idle_spin");
 
@@ -264,10 +271,10 @@ int main(void)
 	// there must be 1 folder per anim and so when you call GetAnimationDataFromName make it match to the one at LoadAnimDataFromFolder you gave it.
 	// prkf files should be fine cause they support single anims
 
-	std::vector<SpriteAnimation*> garchompAnims;
-	garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("garchomp_idle") }); //0 = idle
-	garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("garchomp_run") }); // 1 = move
-	garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("garchomp_attack_left_down") }); // 2 = attack
+	//std::vector<SpriteAnimation*> garchompAnims;
+	//garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("garchomp_idle") }); //0 = idle
+	//garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("garchomp_run") }); // 1 = move
+	//garchompAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("garchomp_attack_left_down") }); // 2 = attack
 
 	std::vector<SpriteAnimation*> stylusAnims;
 	stylusAnims.emplace_back(new SpriteAnimation{ animDatabase.GetAnimationDataFromName("top_idle_spin") });
@@ -454,16 +461,14 @@ int main(void)
 
 	// =====================
 
-	WorldObject* wo = new WorldObject(garchompAnims);
-	wo->position = Vector2({ 100, 100 });
-
 	WorldObject* topObject = new WorldObject(stylusAnims);
 	gameManager.topObjectPtr = topObject;
 	topObject->position = Vector2({ -100, -100 }); //offscreen
 	topObject->scale = 3.0f;
 
-	Pokemon* p = new Pokemon(garchompAnims);
-	p->position = Vector2({ 500, 100 });
+	Pokemon* p = new Pokemon(pikachuAnimations);
+	p->position = Vector2({ 100, 100 });
+	p->scale = 2.0f;
 	p->AssignStateMachine(sm);
 
 	//TODO: below tasks to be automated so basically find a way to register anyway object created, it can be a function 
@@ -474,7 +479,6 @@ int main(void)
 	gameManager.allEnclosableObjs.emplace_back(p);
 
 	//std::vector<WorldObject*> allWorldObjs;
-	gameManager.allWorldObjs.emplace_back(wo);
 	gameManager.allWorldObjs.emplace_back(p);
 
 
@@ -550,7 +554,9 @@ int main(void)
 
 		// poly closed, calculate enclosed particles positions
 		Coord* currEnclosedPoly = nullptr;
-		if (checkTopIntersection(&top, gameManager.allEnclosableObjs, currEnclosedPoly, &enclosedTrackingPosition))
+		Vector2 newEnclosedCenter = { -100.0f, -100.0f };
+
+		if (checkTopIntersection(&top, gameManager.allEnclosableObjs, currEnclosedPoly, &newEnclosedCenter))
 		{
 			//printf("INTERSECTED\n");
 			//ShowStack(enclosedPoly);
@@ -572,17 +578,24 @@ int main(void)
 			//reset enclosing particles
 			enclosedIndicatorParticlePositions.clear();
 			enclosingParticlesElapsedTime = 0.0f;
-
 			enclosedPoly = currEnclosedPoly;
-			CalculateEnclosedShaderAreaPoints(enclosedPoly, enclosedAuxPoints);
-			CalculateClosingIndicatorParticlePoints(enclosedPoly, enclosedIndicatorParticlePositions);
-			lerpingEIParticlePositions.resize(enclosedIndicatorParticlePositions.size());
+
+			const bool enclosedPokemon =
+				newEnclosedCenter.x != -100.0f &&
+				newEnclosedCenter.y != -100.0f;
+
+			if (enclosedPokemon)
+			{
+				enclosedTrackingPosition = newEnclosedCenter;
+				CalculateEnclosedShaderAreaPoints(enclosedPoly, enclosedAuxPoints);
+				CalculateClosingIndicatorParticlePoints(enclosedPoly, enclosedIndicatorParticlePositions);
+				lerpingEIParticlePositions.resize(enclosedIndicatorParticlePositions.size());
+			}
 			printf("\nB end");
 
 			//NOTE: yellow transition is always destroyed if another appears
 			// catch circles can stack, so circles have lifetime (particles)
 		}
-
 
 		//update points - time dependent
 		yellowTransitionElapsedTime += timer.GetDeltaTime();
@@ -617,35 +630,33 @@ int main(void)
 
 		if (enclosedIndicatorParticlePositions.size() > 0)
 		{
-			// invalid tracking pos check
-			if (enclosedTrackingPosition.x != -100.0f && enclosedTrackingPosition.y != -100.0f)
+
+			//printf("\nEnclosed tracking pos: %f, %f", enclosedTrackingPosition.x, enclosedTrackingPosition.y);
+
+			//continuous transition, same time spent regardless of distance
+
+			enclosingParticlesElapsedTime += timer.GetDeltaTime();
+
+			float interpFactor = enclosingParticlesElapsedTime / KEnclosingParticlesTravelTimeFromOutToCenterSec;
+
+			Vector2 center = enclosedTrackingPosition;
+
+			//move every particle
+			for (int i = 0; i < enclosedIndicatorParticlePositions.size(); i++)
 			{
-				//printf("\nEnclosed tracking pos: %f, %f", enclosedTrackingPosition.x, enclosedTrackingPosition.y);
+				Vector2 currParticlePos = Vector2Add(enclosedIndicatorParticlePositions[i],
+					Vector2Scale(Vector2Subtract(center, enclosedIndicatorParticlePositions[i]), interpFactor));
 
-				//continuous transition, same time spent regardless of distance
-
-				enclosingParticlesElapsedTime += timer.GetDeltaTime();
-
-				float interpFactor = enclosingParticlesElapsedTime / KEnclosingParticlesTravelTimeFromOutToCenterSec;
-
-				Vector2 center = enclosedTrackingPosition;
-
-				//move every particle
-				for (int i = 0; i < enclosedIndicatorParticlePositions.size(); i++)
-				{
-					Vector2 currParticlePos = Vector2Add(enclosedIndicatorParticlePositions[i],
-						Vector2Scale(Vector2Subtract(center, enclosedIndicatorParticlePositions[i]), interpFactor));
-
-					lerpingEIParticlePositions[i] = currParticlePos;
-				}
-
-				//reset on lerp > 1
-				if (interpFactor >= 1.0f)
-				{
-					enclosingParticlesElapsedTime = 0.0f;
-					enclosedIndicatorParticlePositions.clear();
-				}
+				lerpingEIParticlePositions[i] = currParticlePos;
 			}
+
+			//reset on lerp > 1
+			if (interpFactor >= 1.0f)
+			{
+				enclosingParticlesElapsedTime = 0.0f;
+				enclosedIndicatorParticlePositions.clear();
+			}
+			
 		}
 
 		if (destroyedIndicatorParticlePositions.size() > 0)
