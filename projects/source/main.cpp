@@ -80,6 +80,11 @@
 #include "attack_effect/hazard_object_attack_effect.h"
 #include "attack_effect/projectile_object_attack_effect.h"
 #include "attack_effect/attack_effect_database.h"
+
+#include "particles/damanged_particles.h"
+#include "particles/enclosing_particles.h"
+#include "particles/yellow_transition_particles.h"
+
 /*
 what do I need man:
 
@@ -209,6 +214,12 @@ int main(void)
 	RenderTexture2D UITexOverlayRenTex = LoadRenderTexture(screenWidth, screenHeight);
 	RenderTexture2D stylusOverlayRenTex = LoadRenderTexture(screenWidth, screenHeight);
 
+	constexpr int trailPixelScale = 2;
+	const int trailRenderWidth = renderWidth / trailPixelScale;
+	const int trailRenderHeight = renderHeight / trailPixelScale;
+	RenderTexture2D stylusTrailRenTex = LoadRenderTexture(trailRenderWidth, trailRenderHeight);
+	SetTextureFilter(stylusTrailRenTex.texture, TEXTURE_FILTER_POINT);
+
 	//texture of stylus shader in Texture2D version to be able to do DrawTexture
 	//Texture2D stylusOverlay;
 	//stylusOverlay.id = stylus_texture;
@@ -293,40 +304,11 @@ int main(void)
 	SetTargetFPS(500);
 
 	Top top;
-	Coord* enclosedPoly = nullptr;
-	std::vector<Vector2> enclosedAuxPoints;
-	std::vector<Vector2> enclosedIndicatorParticlePositions; //initial positions
-	std::vector<Vector2> lerpingEIParticlePositions; //during lerping positions
-	Vector2 enclosedTrackingPosition = { -100.0f, -100.0f};
-
-	std::vector<Vector2> destroyedIndicatorParticlePositions;
-	std::vector<Vector2> lerpingDIParticlePositions;
-
-	const float KDestroyParticlesTravelDistance = 200.0f;
-	const float KDestroyParticlesTravelTimeSec = 0.3f;
-	float destroyParticlesElapsedTime = 0.0f;
+	EnclosingParticles enclosingParticles;
+	DamagedParticles damagedParticles;
+	YellowTransitionParticles yellowTransitionParticles;
 
 	//state machines
-	 
-	//	//default pokemon state machie
-	//StateMachine* pokemondefaultStateMachine = new StateMachine();
-	//{//scope cause im like that (no reason whatsoever)
-	//	//TODO: this should probably be a function but tbh this WILL be an external application passing in the FSM
-	//	IdleState* idleState = new IdleState();
-	//	MoveState* moveState = new MoveState();
-	//	AttackState* attackState = new AttackState();
-	//	std::vector<State*> pdsm_ownedStates = { idleState , moveState, attackState };
-
-	//	idleState->on_idle_timer_finished = moveState;
-
-	//	moveState->on_move_action_completed = attackState;
-
-	//	attackState->on_attack_completed = idleState;
-
-	//	pokemondefaultStateMachine->currentState = idleState;
-	//	pokemondefaultStateMachine->ownedStates = pdsm_ownedStates;
-
-	//}
 
 	// READ SM FROM JSON 
 	auto& conditionFactory = ConditionFactory::Instance();
@@ -502,10 +484,6 @@ int main(void)
 	Timer& timer = Timer::GetInstance();
 	timer.SetTimeScale(1.0f);
 
-	float yellowTransitionElapsedTime = 0.0f;
-	const float KEnclosingParticlesTravelTimeFromOutToCenterSec = 0.3f;
-	float enclosingParticlesElapsedTime = 0.0f;
-
 	while (!WindowShouldClose())    // Detect window close button or ESC key
 	{
 
@@ -564,8 +542,13 @@ int main(void)
 			{
 				printf("\nA");
 				ResetTop(&top);
-				DestroyStackNoDepth(&enclosedPoly);
-				enclosedAuxPoints.clear();
+
+				//DestroyStackNoDepth(&enclosingParticles.enclosedPoly);
+				//DestroyStackNoDepth(&yellowTransitionParticles.enclosedPoly);
+				
+				enclosingParticles.Reset();
+				yellowTransitionParticles.Reset();
+
 				//printf("\nReset");
 
 				//TODO: propper disable just in case instead of offscreen
@@ -595,135 +578,31 @@ int main(void)
 
 		if (checkTopIntersection(&top, gameManager.allEnclosableObjs, currEnclosedPoly, &newEnclosedCenter))
 		{
-			//printf("INTERSECTED\n");
-			//ShowStack(enclosedPoly);
-			//DestroyStackNoDepth(&enclosedPoly);
-			printf("\nB");
-
-			// prior frame existed enclosed poly > clear it, set it to new one
-			if (enclosedPoly)
-			{
-				printf("\nB2");
-
-				//yellow transition is always destroyed if another appears
-				DestroyStackNoDepth(&enclosedPoly);
-				enclosedAuxPoints.clear();
-				printf("\nB2 end");
-
-			}
-
-			//reset enclosing particles
-			enclosedIndicatorParticlePositions.clear();
-			enclosingParticlesElapsedTime = 0.0f;
-			enclosedPoly = currEnclosedPoly;
-
+			enclosingParticles.Reset();
 			const bool enclosedPokemon =
 				newEnclosedCenter.x != -100.0f &&
 				newEnclosedCenter.y != -100.0f;
 
 			if (enclosedPokemon)
 			{
-				enclosedTrackingPosition = newEnclosedCenter;
-				CalculateClosingIndicatorParticlePoints(enclosedPoly, enclosedIndicatorParticlePositions);
-				lerpingEIParticlePositions.resize(enclosedIndicatorParticlePositions.size());
+				enclosingParticles.on_enclosed_pokemon(newEnclosedCenter, currEnclosedPoly);
 			}
 
-			CalculateEnclosedShaderAreaPoints(enclosedPoly, enclosedAuxPoints);
-
-			printf("\nB end");
+			yellowTransitionParticles.on_intersection(currEnclosedPoly);
 
 			//NOTE: yellow transition is always destroyed if another appears
 			// catch circles can stack, so circles have lifetime (particles)
 		}
 
 		//update points - time dependent
-		yellowTransitionElapsedTime += timer.GetDeltaTime();
-		int enclosedPointsCount = enclosedAuxPoints.size();
-		 
-		if (yellowTransitionElapsedTime > kYellowTransitionShrinkingFrequencySec)
-		{
-			yellowTransitionElapsedTime = 0.0f;
-
-			for (int i = 0; i < enclosedPointsCount; i += 4)
-			{
-				// horizontal lines higher "thickness"
-				// vertical lines little to no thickness
-
-				//counter-clockwise
-				Vector2 topLeft = enclosedAuxPoints[i + 0];
-				Vector2 topRight = enclosedAuxPoints[i + 1];
-				Vector2 botLeft = enclosedAuxPoints[i + 2];
-				Vector2 botRight = enclosedAuxPoints[i + 3];
-				//determine up direction
-				//TODO: this has to go somewhere else and make it deltatime dependant and kYellowTransitionUpdateSpeed dependant
-				Vector2 upDir = Vector2Normalize(Vector2Subtract(botLeft, topLeft));
-
-				enclosedAuxPoints[i + 0].y += upDir.y * KYellowTransitionShrinkingFactor;
-				enclosedAuxPoints[i + 1].y += upDir.y * KYellowTransitionShrinkingFactor;
-				enclosedAuxPoints[i + 2].y -= upDir.y * KYellowTransitionShrinkingFactor;
-				enclosedAuxPoints[i + 3].y -= upDir.y * KYellowTransitionShrinkingFactor;
-			}
-		}
+		yellowTransitionParticles.step(timer.GetDeltaTime());
 
 		//enclosed particles (TODO: I think the timer always matches 1to1 with the yellow transiton, maybe combine them)
 
-		if (enclosedIndicatorParticlePositions.size() > 0)
-		{
+		enclosingParticles.step(timer.GetDeltaTime());
 
-			//printf("\nEnclosed tracking pos: %f, %f", enclosedTrackingPosition.x, enclosedTrackingPosition.y);
 
-			//continuous transition, same time spent regardless of distance
-
-			enclosingParticlesElapsedTime += timer.GetDeltaTime();
-
-			float interpFactor = enclosingParticlesElapsedTime / KEnclosingParticlesTravelTimeFromOutToCenterSec;
-
-			Vector2 center = enclosedTrackingPosition;
-
-			//move every particle
-			for (int i = 0; i < enclosedIndicatorParticlePositions.size(); i++)
-			{
-				Vector2 currParticlePos = Vector2Add(enclosedIndicatorParticlePositions[i],
-					Vector2Scale(Vector2Subtract(center, enclosedIndicatorParticlePositions[i]), interpFactor));
-
-				lerpingEIParticlePositions[i] = currParticlePos;
-			}
-
-			//reset on lerp > 1
-			if (interpFactor >= 1.0f)
-			{
-				enclosingParticlesElapsedTime = 0.0f;
-				enclosedIndicatorParticlePositions.clear();
-			}
-			
-		}
-
-		if (destroyedIndicatorParticlePositions.size() > 0)
-		{
-			destroyParticlesElapsedTime += timer.GetDeltaTime();
-
-			float interpFactor = destroyParticlesElapsedTime / KDestroyParticlesTravelTimeSec;
-
-			//move every particle
-			for (int i = 0; i < destroyedIndicatorParticlePositions.size(); i++)
-			{
-
-				Vector2 targetParticlePos =
-					Vector2Add(destroyedIndicatorParticlePositions[i], Vector2{ 0.0f, -KDestroyParticlesTravelDistance });
-				
-				Vector2 currParticlePos = Vector2Add(destroyedIndicatorParticlePositions[i],
-					Vector2Scale(Vector2Subtract(targetParticlePos, destroyedIndicatorParticlePositions[i]), interpFactor));
-
-				lerpingDIParticlePositions[i] = currParticlePos;
-			}
-
-			//reset on lerp > 1
-			if (interpFactor >= 1.0f)
-			{
-				destroyParticlesElapsedTime = 0.0f;
-				destroyedIndicatorParticlePositions.clear();
-			}
-		}
+		damagedParticles.step(timer.GetDeltaTime());
 
 		// === CLEAR SINGLE FRAME HITBOXES ===
 		// must be done before any update
@@ -755,11 +634,12 @@ int main(void)
 				hitbox->OnCollision();
 
 				//reset stylus
-				CalculateDestroyedIndicatorParticlePositions(top.stack, destroyedIndicatorParticlePositions);
-				lerpingDIParticlePositions.resize(destroyedIndicatorParticlePositions.size());
+				damagedParticles.calc_positions_from_enclosed_points(top.stack);
+
+				enclosingParticles.Reset();
+				yellowTransitionParticles.Reset();
+
 				ResetTop(&top);
-				DestroyStackNoDepth(&enclosedPoly);
-				enclosedAuxPoints.clear();
 				topObject->position.x = -100;
 				topObject->position.y = -100;
 
@@ -778,11 +658,12 @@ int main(void)
 				hitbox->OnCollision();
 
 				//reset stylus
-				CalculateDestroyedIndicatorParticlePositions(top.stack, destroyedIndicatorParticlePositions);
-				lerpingDIParticlePositions.resize(destroyedIndicatorParticlePositions.size());
+				damagedParticles.calc_positions_from_enclosed_points(top.stack);
+
+				enclosingParticles.Reset();
+				yellowTransitionParticles.Reset();
+
 				ResetTop(&top);
-				DestroyStackNoDepth(&enclosedPoly);
-				enclosedAuxPoints.clear();
 				topObject->position.x = -100;
 				topObject->position.y = -100;
 
@@ -801,11 +682,12 @@ int main(void)
 			{
 				hitbox->OnCollision();
 
-				CalculateDestroyedIndicatorParticlePositions(top.stack, destroyedIndicatorParticlePositions);
-				lerpingDIParticlePositions.resize(destroyedIndicatorParticlePositions.size());
+				damagedParticles.calc_positions_from_enclosed_points(top.stack);
+
+				enclosingParticles.Reset();
+				yellowTransitionParticles.Reset();
+
 				ResetTop(&top);
-				DestroyStackNoDepth(&enclosedPoly);
-				enclosedAuxPoints.clear();
 				topObject->position.x = -100;
 				topObject->position.y = -100;
 
@@ -823,11 +705,12 @@ int main(void)
 				wobj->OnCollision();
 
 				//reset stylus
-				CalculateDestroyedIndicatorParticlePositions(top.stack, destroyedIndicatorParticlePositions);
-				lerpingDIParticlePositions.resize(destroyedIndicatorParticlePositions.size());
+				damagedParticles.calc_positions_from_enclosed_points(top.stack);
+
+				enclosingParticles.Reset();
+				yellowTransitionParticles.Reset();
+
 				ResetTop(&top);
-				DestroyStackNoDepth(&enclosedPoly);
-				enclosedAuxPoints.clear();
 				topObject->position.x = -100;
 				topObject->position.y = -100;
 
@@ -853,126 +736,37 @@ int main(void)
 
 		// === STYLUS TEXTURE === 
 
-		BeginTextureMode(stylusOverlayRenTex);
+		BeginTextureMode(stylusTrailRenTex);
 		ClearBackground(BLANK);
-
 
 		//DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
 
-		rlSetBlendMode(BLEND_ALPHA);
+		//rlSetBlendMode(BLEND_ALPHA);
 
-
-		// yellow transition - (needs to be rendered even if player doesnt touch screen)
-
-		//rlDisableBackfaceCulling(); //this does nothing, cool!
-		if (!enclosedAuxPoints.empty())
-		{
-			for (int i = 0; i < enclosedPointsCount; i += 4)
-			{
-				// horizontal lines higher "thickness"
-				// vertical lines little to no thickness
-
-				//counter-clockwise
-				Vector2 topLeft = enclosedAuxPoints[i + 0];
-				Vector2 topRight = enclosedAuxPoints[i + 1];
-				Vector2 botLeft = enclosedAuxPoints[i + 2];
-				Vector2 botRight = enclosedAuxPoints[i + 3];
-
-				DrawTriangle(topLeft, botLeft, topRight, YELLOW);
-				DrawTriangle(topLeft, topRight, botLeft, YELLOW); //dupe
-
-				DrawTriangle(topRight, botLeft, botRight, YELLOW);
-				DrawTriangle(topRight, botRight, botLeft, YELLOW); //dupe
-
-			}
-		}
-		//enclosed particles
-		if (enclosedIndicatorParticlePositions.size() > 0)
-		{
-			for (Vector2 particlePos : lerpingEIParticlePositions)
-			{
-				DrawCircleV(particlePos,3.0f,RED);
-			}
-		}
-
-		//destroyed particles
-		if (destroyedIndicatorParticlePositions.size() > 0)
-		{
-			for (Vector2 particlePos : lerpingDIParticlePositions)
-			{
-				DrawCircleV(particlePos, 3.0f, RED);
-			}
-		}
+		Camera2D trailCamera = {};
+		trailCamera.zoom = 1.0f / static_cast<float>(trailPixelScale);
+		BeginMode2D(trailCamera);
 
 		//draw stlyus tail
 		int numberOfNodes = GetStackDepth(top.stack);
 
 		if (touch.x != 0 && touch.y != 0 && numberOfNodes > 0)
 		{
-
-			//printf("num of nodes: %d\n", numberOfNodes);
-			float trailThickness = 10.0f;
-
-			Coord* current = top.stack;
-			Coord* next = top.stack->nextCoord;
-
-
-			// --- First pass: draw all circles ---
-
-			SetShaderValue(stylus_circle_shader, trailThicknessCircleLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
-
-			for (int i = 0; i < numberOfNodes - 1; i++)
-			{
-				float startPos[2] = { current->x, current->y };
-				// Set uniforms
-				SetShaderValue(stylus_circle_shader, circleCenterLoc, startPos, SHADER_UNIFORM_VEC2);
-
-				BeginShaderMode(stylus_circle_shader);
-				DrawCircleV({ startPos[0], startPos[1] }, trailThickness, WHITE);
-				EndShaderMode();
-
-				current = next;
-				next = next->nextCoord;
-			}
-
-			// --- Second pass: draw all lines ---
-			current = top.stack;
-			next = current->nextCoord;
-
-			SetShaderValue(stylus_line_shader, trailThicknessStylusLoc, &trailThickness, SHADER_UNIFORM_FLOAT);
-
-			for (int i = 0; i < numberOfNodes - 2; i++)
-			{
-				float startPos[2] = { current->x, current->y };
-				float endPos[2] = { next->x, next->y };
-
-				// Set uniforms
-				SetShaderValue(stylus_line_shader, lineStartLoc, startPos, SHADER_UNIFORM_VEC2);
-				SetShaderValue(stylus_line_shader, lineEndLoc, endPos, SHADER_UNIFORM_VEC2);
-				BeginShaderMode(stylus_line_shader);
-				DrawLineEx({ startPos[0], startPos[1] }, { endPos[0], endPos[1] }, trailThickness * 2.0f, WHITE);
-				EndShaderMode();
-
-				current = next;
-				next = next->nextCoord;
-			}
-
-			// EASY MODE: 
-			/*
 			struct TrailBand
 			{
 				float radius;
 				Color color;
 			};
 
-			const TrailBand trailBands[] = {
-				{ 12.0f, Color{ 15, 65, 255, 255 } },
-				{ 9.0f, Color{ 75, 150, 255, 255 } },
-				{ 6.0f, WHITE }
+			static const TrailBand trailBands[] = {
+				{ 8.0f, Color{ 36, 199, 255, 255 } },
+				{ 6.0f, Color{ 85, 247, 255, 255 } },
+				{ 2.3f, WHITE }
 			};
 
 			for (const TrailBand& band : trailBands)
 			{
+
 				for (Coord* current = top.stack; current->nextCoord != nullptr; current = current->nextCoord)
 				{
 					DrawLineEx(
@@ -988,14 +782,50 @@ int main(void)
 					DrawCircleV(Vector2{ current->x, current->y }, band.radius, band.color);
 				}
 			}
-			*/
-			
-			//rlEnableBackfaceCulling();
-
-			//TODO: update yellow transition
-			// horizontal lines higher "thickness"
-			// vertical lines little to no thickness
 		}
+
+
+		// === particles ===
+		yellowTransitionParticles.Draw();
+		enclosingParticles.Draw();
+		damagedParticles.Draw();
+
+		EndMode2D();
+		EndTextureMode();
+
+		// === STYLUS TEXTURE === 
+
+		BeginTextureMode(stylusOverlayRenTex);
+		ClearBackground(BLANK);
+
+
+		//DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
+
+		rlSetBlendMode(BLEND_ALPHA);
+
+
+		Rectangle trailSourceRec = {
+			0,
+			0,
+			static_cast<float>(trailRenderWidth),
+			static_cast<float>(-trailRenderHeight)
+		};
+		Rectangle trailDestRec = {
+			0,
+			0,
+			static_cast<float>(renderWidth),
+			static_cast<float>(renderHeight)
+		};
+		DrawTexturePro(stylusTrailRenTex.texture, trailSourceRec, trailDestRec, Vector2{ 0, 0 }, 0.0f, WHITE);
+		
+			
+			
+		//rlEnableBackfaceCulling();
+
+		//TODO: update yellow transition
+		// horizontal lines higher "thickness"
+		// vertical lines little to no thickness
+
 
 		topObject->Draw();
 

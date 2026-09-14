@@ -333,37 +333,6 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEncl
 	return false;
 }
 
-void CalculateEnclosedShaderAreaPoints(Coord* enclosedPoints, std::vector<Vector2>& vectorToFill)
-{
-	constexpr float kEnclosedYOffset = 30.0f;
-
-	Coord* aux = enclosedPoints;
-	Coord* auxNext = enclosedPoints->nextCoord;
-	bool completed = false;
-
-	while (!completed)
-	{
-		if (aux->nextCoord == nullptr)
-		{
-			//circle back to begginig
-			auxNext = enclosedPoints;
-			completed = true;
-		}
-
-		Vector2 topLeft = { aux->x,aux->y + kEnclosedYOffset };
-		Vector2 topRight = { auxNext->x,auxNext->y + kEnclosedYOffset };
-		Vector2 botLeft = { aux->x,aux->y - kEnclosedYOffset };
-		Vector2 botRight = { auxNext->x,auxNext->y - kEnclosedYOffset };
-
-		vectorToFill.emplace_back(topLeft);
-		vectorToFill.emplace_back(topRight);
-		vectorToFill.emplace_back(botLeft);
-		vectorToFill.emplace_back(botRight);
-
-		aux = auxNext;
-		auxNext = auxNext->nextCoord;
-	}
-}
 
 void CalculateClosingIndicatorParticlePoints(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions)
 {

@@ -87,8 +87,6 @@ Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord* endNode);
 // return true when enclosed any object, false otherwise
 bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEnclosableObjs, Coord*& outEnclosedPolygon, Vector2* outEnclosedCenter);
 
-void CalculateEnclosedShaderAreaPoints(Coord* enclosedPoints, std::vector<Vector2>& vectorToFill);
-
 void CalculateClosingIndicatorParticlePoints(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions);
 
 void CalculateDestroyedIndicatorParticlePositions(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions);
