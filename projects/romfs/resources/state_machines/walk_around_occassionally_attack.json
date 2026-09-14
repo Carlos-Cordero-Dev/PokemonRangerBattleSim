@@ -14,11 +14,7 @@
       "name": "Move",
       "onEnter": [
 	    { "type": "SetAnimation", "animation": "move" },
-		{
-		  "type": "SetTarget",
-		  "x": { "type": "random_range", "min": 100, "max": 500 },
-		  "y": { "type": "random_range", "min": 200, "max": 600 }
-		}
+		{ "type": "SetTarget", "area": "playable" }
       ],
       "onUpdate": [
         { "type": "MoveTowardsTarget", "speed": 120 }

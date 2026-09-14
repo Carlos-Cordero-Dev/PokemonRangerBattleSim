@@ -287,6 +287,7 @@ int main(void)
 	//---------------------------------------------------------------------------------------
 	// Main game loop
 	GameManager& gameManager = GameManager::GetInstance();
+	gameManager.playableArea = backdrop.GetPlayableArea(renderWidth, renderHeight);
 
 	std::string text = "Frame ";
 	SetTargetFPS(500);
@@ -363,8 +364,11 @@ int main(void)
 	actionFactory.Register("SetTarget", [](const Json& j) {
 		auto a = std::make_unique<SetTargetAction>();
 
-		a->targetX = ParseFloatValue(j["x"]);
-		a->targetY = ParseFloatValue(j["y"]);
+		a->usePlayableArea = j.value("area", "") == "playable";
+		if (!a->usePlayableArea) {
+			a->targetX = ParseFloatValue(j["x"]);
+			a->targetY = ParseFloatValue(j["y"]);
+		}
 
 		return a;
 		});
@@ -476,7 +480,11 @@ int main(void)
 	topObject->scale = 3.0f;
 
 	Pokemon* p = new Pokemon(pikachuAnimations);
-	p->position = Vector2({ 100, 100 });
+	//spawn in the middle
+	p->position = {
+	gameManager.playableArea.x + gameManager.playableArea.width * 0.5f,
+	gameManager.playableArea.y + gameManager.playableArea.height * 0.5f
+	};
 	p->scale = 2.0f;
 	p->AssignStateMachine(sm);
 

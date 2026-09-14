@@ -17,6 +17,15 @@ TODO:
 -example: hitbox action active while move action (bc spawn hitbox action ended)
 -Remove malloc from every frame, do it at the start of program
 
+- UI UX: 
+  info:
+	- Time passed
+	- Available companions / in battle powerups?
+	- original displays stats in topscreen
+  pause (MANDATORY originally doesnt exist):
+	- you have to be able to stop time
+	- 
+
 course of action:
 1: stable battle first with literally everything you can think of
 2: abstract functionality to XAML and WPF (.NET, C#)
