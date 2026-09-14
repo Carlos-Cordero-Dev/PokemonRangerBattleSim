@@ -9,6 +9,13 @@ void Backdrop::Load(const std::string& backdrop_path)
 	backdropTexture.name = backdrop_path;
 }
 
+float Backdrop::GetWidth(int renderHeight)
+{
+    const float scale = static_cast<float>(renderHeight) / backdropTexture.texture.height;
+    const float backdropWidth = backdropTexture.texture.width * scale;
+    return backdropWidth;
+}
+
 void Backdrop::DrawCenteredBackdrop(int renderWidth, int renderHeight) const
 {
     const float scale = static_cast<float>(renderHeight) / backdropTexture.texture.height;

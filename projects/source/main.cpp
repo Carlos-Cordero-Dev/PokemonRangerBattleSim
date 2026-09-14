@@ -132,6 +132,9 @@ int main(void)
     int screenHeight = 720;
 	int renderWidth = screenWidth;
 	int renderHeight = screenHeight;
+	int playableAreaWidth = screenWidth;
+	int playableAreaHeight = screenHeight;
+
 
     char textBoxText[64] = "Text box";
     bool textBoxEditMode = false;
@@ -523,13 +526,32 @@ int main(void)
 		const float viewportX = (outputWidth - viewportWidth) * 0.5f;
 		const float viewportY = (outputHeight - viewportHeight) * 0.5f;
 
+		// TODO: probably move to a constant, matches with backdrop rn
+		const float playableAreaWidth = backdrop.GetWidth(renderHeight);
+		const float playableAreaXstart = (renderWidth - playableAreaWidth) * 0.5f;
+		
 		// Convert physical mouse/touch coordinates to fixed 1920x1080 coordinates.
-		prbs::Vector2 touch = GetTouch();
-		touch.x = (touch.x - viewportX) / scale;
-		touch.y = (touch.y - viewportY) / scale;
+		prbs::Vector2 rawTouch = GetTouch();
+		Vector2 touch;
+		touch.x = (rawTouch.x - viewportX) / scale;
+		touch.y = (rawTouch.y - viewportY) / scale;
 
-		if (touch.x == 0 && touch.y == 0)
+		const bool touchInsidePlayableArea =
+			touch.x >= playableAreaXstart &&
+			touch.x <= playableAreaXstart + playableAreaWidth &&
+			touch.y >= 0 &&
+			touch.y <= renderHeight;
+
+		if (!touchInsidePlayableArea)
 		{
+			//clamp touch to playable area
+			touch.x = std::clamp(touch.x, playableAreaXstart, playableAreaXstart + playableAreaWidth);
+			touch.y = std::clamp(touch.y, 10.0f, static_cast<float>(renderHeight));
+		}
+
+		if (rawTouch.x == 0 && rawTouch.y == 0)
+		{
+			// no touch
 			if (top.stack != nullptr)
 			{
 				printf("\nA");
@@ -549,6 +571,7 @@ int main(void)
 		}
 		else if(!top.wasDamaged)
 		{
+			// touch detected
 			InsertTopCoord(&top, touch.x, touch.y);
 
 			topObject->position.x = touch.x;

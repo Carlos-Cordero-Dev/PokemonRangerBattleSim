@@ -10,6 +10,7 @@ public:
     void DrawCenteredBackdrop(int renderWidth, int renderHeight) const;
 
     void Load(const std::string& backdrop_path);
+	float GetWidth(int renderHeight);
 
 private:
 	TextureData backdropTexture;
