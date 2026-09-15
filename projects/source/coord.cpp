@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h> //memory stuff
 
-#include "FIFO.h"
+#include "coord.h"
 
 int currDepth = 0;
 

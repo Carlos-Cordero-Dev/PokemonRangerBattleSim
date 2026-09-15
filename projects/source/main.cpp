@@ -42,9 +42,9 @@
 #include "sprites.h"
 #include "timer.h"
 #include "controls.h"
-#include "FIFO.h"
+#include "coord.h"
 #include "player_polygon.h"
-#include "ranger_top.h"
+#include "top.h"
 
 #include "world.h"
 #include "world_object.h"
@@ -280,6 +280,7 @@ int main(void)
 
 
 	animDatabase.LoadAnimDataFromFolder("sprites/stylus/top", "top_idle_spin");
+	animDatabase.LoadAnimDataFromFolder("sprites/stylus/tail_start_end","tail_start_end");
 
 	//TODO: A bit lengthy, you have to make it so animations can only be in one folder so instead of all 4 attack anim in the same folder
 	// there must be 1 folder per anim and so when you call GetAnimationDataFromName make it match to the one at LoadAnimDataFromFolder you gave it.
@@ -304,9 +305,18 @@ int main(void)
 	SetTargetFPS(500);
 
 	Top top;
+	top.trail_end_anim = new SpriteAnimation{ animDatabase.GetAnimationDataFromName("tail_start_end") };
+	top.trail_start_anim = new SpriteAnimation{ animDatabase.GetAnimationDataFromName("tail_start_end") };
+	top.tail_anim_scale = 1.5f;
+	top.wo = new WorldObject(stylusAnims);
+	gameManager.topObjectPtr = top.wo;
+	top.wo->position = Vector2({ -100, -100 }); //offscreen
+	top.wo->scale = 2.0f;
+
 	EnclosingParticles enclosingParticles;
 	DamagedParticles damagedParticles;
 	YellowTransitionParticles yellowTransitionParticles;
+
 
 	//state machines
 
@@ -452,14 +462,7 @@ int main(void)
 	// Note: Audio must be loaded after ever other external resource
 	InitAudioDevice();
 
-
-
 	// =====================
-
-	WorldObject* topObject = new WorldObject(stylusAnims);
-	gameManager.topObjectPtr = topObject;
-	topObject->position = Vector2({ -100, -100 }); //offscreen
-	topObject->scale = 3.0f;
 
 	Pokemon* p = new Pokemon(pikachuAnimations);
 	//spawn in the middle
@@ -552,8 +555,8 @@ int main(void)
 				//printf("\nReset");
 
 				//TODO: propper disable just in case instead of offscreen
-				topObject->position.x = -100;
-				topObject->position.y = -100;
+				top.wo->position.x = -100;
+				top.wo->position.y = -100;
 
 				printf("\nA end");
 			}
@@ -565,8 +568,8 @@ int main(void)
 			// touch detected
 			InsertTopCoord(&top, touch.x, touch.y);
 
-			topObject->position.x = touch.x;
-			topObject->position.y = touch.y;
+			top.wo->position.x = touch.x + Top::kFromTouchOffset.x;
+			top.wo->position.y = touch.y + Top::kFromTouchOffset.y;
 		}
 
 		ComputeAndUpdateDistance(&top);
@@ -609,7 +612,7 @@ int main(void)
 		gameManager.singleFrameHitboxes.clear();
 
 		//update every single world object
-		topObject->Update();
+		top.Update();
 
 		//wo->Update();
 		//p->Update();
@@ -640,8 +643,8 @@ int main(void)
 				yellowTransitionParticles.Reset();
 
 				ResetTop(&top);
-				topObject->position.x = -100;
-				topObject->position.y = -100;
+				top.wo->position.x = -100;
+				top.wo->position.y = -100;
 
 				top.wasDamaged = true;
 				break;
@@ -664,8 +667,8 @@ int main(void)
 				yellowTransitionParticles.Reset();
 
 				ResetTop(&top);
-				topObject->position.x = -100;
-				topObject->position.y = -100;
+				top.wo->position.x = -100;
+				top.wo->position.y = -100;
 
 				top.wasDamaged = true;
 				break;
@@ -688,8 +691,8 @@ int main(void)
 				yellowTransitionParticles.Reset();
 
 				ResetTop(&top);
-				topObject->position.x = -100;
-				topObject->position.y = -100;
+				top.wo->position.x = -100;
+				top.wo->position.y = -100;
 
 				top.wasDamaged = true;
 				break;
@@ -711,8 +714,8 @@ int main(void)
 				yellowTransitionParticles.Reset();
 
 				ResetTop(&top);
-				topObject->position.x = -100;
-				topObject->position.y = -100;
+				top.wo->position.x = -100;
+				top.wo->position.y = -100;
 
 				top.wasDamaged = true;
 				break;
@@ -826,8 +829,7 @@ int main(void)
 		// horizontal lines higher "thickness"
 		// vertical lines little to no thickness
 
-
-		topObject->Draw();
+		top.Draw();
 
 		//DrawCurrentPolygonOnlyLines(top.stack);
 

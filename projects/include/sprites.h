@@ -33,7 +33,7 @@ public:
 	void Update(int posX, int posY);
 	void Draw(int posX, int posY);
 	void DrawRotScale(int posX, int posY, float rotDeg, float scale, bool flipX = false);
-	void DrawRotScaleCentered(float centerX, float centerY, float rotDeg, float scale, bool flipX = false);
+	void DrawRotScaleCentered(float centerX, float centerY, float rotDeg = 0.0f, float scale = 1.0f, bool flipX = false);
 	Vector2 GetCurrentTextureSize() const;
 
 	bool IsFinished() const { return finished; }

@@ -4,7 +4,7 @@
 #include "animation_database.h"
 #include "sprites.h"
 #include "enclosable_object.h"
-#include "ranger_top.h"
+#include "top.h"
 #include "particle_system.h"
 
 class Pokemon : public EnclosableObject

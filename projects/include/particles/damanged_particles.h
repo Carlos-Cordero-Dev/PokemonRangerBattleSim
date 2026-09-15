@@ -1,7 +1,7 @@
 #pragma once
 
 #include "particle_system.h"
-#include "ranger_top.h"
+#include "top.h"
 
 class DamagedParticles : public ParticleSystem
 {
@@ -54,6 +54,28 @@ inline void DamagedParticles::Draw()
 	{
 		DrawCircleV(particlePosition, 3.0f, RED);
 	}
+}
+
+static void CalculateDestroyedIndicatorParticlePositions(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions)
+{
+	constexpr int kMaxParticleCount = 20;
+	Coord* aux = enclosedPoints;
+	float enclosedTotalLength = 0.0f;
+	//calculate length
+
+	Vector2 particlePos;
+
+	while (aux && aux->nextCoord)
+	{
+		Vector2 currentPos = { aux->x,aux->y };
+		Vector2 nextPos = { aux->nextCoord->x,aux->nextCoord->y };
+		particlePos = currentPos;
+
+		outParticlePositions.push_back(particlePos);
+
+		aux = aux->nextCoord;
+	}
+	//printf("\nlength %f", enclosedTotalLength);
 }
 
 inline void DamagedParticles::calc_positions_from_enclosed_points(Coord* enclosedPoints)

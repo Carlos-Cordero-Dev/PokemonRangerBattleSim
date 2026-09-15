@@ -2,7 +2,7 @@
 #ifndef __PLAYER_POLYGON_H__
 #define __PLAYER_POLYGON_H__
 
-#include "FIFO.h"
+#include "coord.h"
 #include "constants.h"
 
 void DrawCircle(int radius,int x, int y);

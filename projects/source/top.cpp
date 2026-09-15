@@ -1,8 +1,42 @@
 
-#include "ranger_top.h"
+#include "top.h"
+
 #include "constants.h"
 #include "enclosable_object.h"
 #include "pokemon.h"
+
+Top::Top()
+{
+}
+
+void Top::Update()
+{
+	if (wo)
+	{
+		wo->Update();
+	}
+}
+
+
+void Top::Draw()
+{
+
+	if (stack)
+	{
+		//update animation
+		trail_start_anim->Update(stack->x, stack->y);
+		trail_start_anim->DrawRotScaleCentered(stack->x, stack->y, 0.0f, tail_anim_scale);
+		Coord* lastCoord = BotStack(stack, 0);
+		trail_end_anim->Update(lastCoord->x, lastCoord->y);
+		trail_end_anim->DrawRotScaleCentered(lastCoord->x, lastCoord->y, 0.0f, tail_anim_scale);
+	}
+
+	if (wo)
+	{
+		wo->Draw();
+	}
+}
+
 
 void InsertTopCoord(Top* top, int x, int y)
 {
@@ -114,14 +148,14 @@ void ResetTop(Top* top)
 //======= intersection stuff  =============================================
 
 // Check if point r is on segment pq
-bool onSegment(Coord* p, Coord* q, Coord* r) {
+static bool onSegment(Coord* p, Coord* q, Coord* r) {
 	return r->x <= std::max(p->x, q->x) && r->x >= std::min(p->x, q->x) &&
 		r->y <= std::max(p->y, q->y) && r->y >= std::min(p->y, q->y);
 }
 
 // Determine the orientation of the triplet (p, q, r)
 // 0 -> collinear, 1 -> clockwise, 2 -> counterclockwise
-int orientation(Coord* p, Coord* q, Coord* r) {
+static int orientation(Coord* p, Coord* q, Coord* r) {
 	int val = (q->y - p->y) * (r->x - q->x) -
 		(q->x - p->x) * (r->y - q->y);
 	if (val == 0) return 0;           // Collinear
@@ -129,7 +163,7 @@ int orientation(Coord* p, Coord* q, Coord* r) {
 }
 
 // Check if two segments p1q1 and p2q2 intersect
-bool doIntersect(Coord* p1, Coord* q1, Coord* p2, Coord* q2) {
+static bool doIntersect(Coord* p1, Coord* q1, Coord* p2, Coord* q2) {
 	// Find the orientations
 	int o1 = orientation(p1, q1, p2);
 	int o2 = orientation(p1, q1, q2);
@@ -148,7 +182,7 @@ bool doIntersect(Coord* p1, Coord* q1, Coord* p2, Coord* q2) {
 	return false; // Doesn't fall in any of the cases
 }
 
-bool getIntersectionPoint(Coord* p1, Coord* q1, Coord* p2, Coord* q2, Coord& intersection) {
+static bool getIntersectionPoint(Coord* p1, Coord* q1, Coord* p2, Coord* q2, Coord& intersection) {
 	// Line equations: p1 + t1 * (q1 - p1) = p2 + t2 * (q2 - p2)
 	int a1 = q1->y - p1->y;
 	int b1 = p1->x - q1->x;
@@ -169,7 +203,7 @@ bool getIntersectionPoint(Coord* p1, Coord* q1, Coord* p2, Coord* q2, Coord& int
 }
 
 // Shoelace formula to calculate the area of a polygon
-double calculatePolygonArea(Coord* start, Coord* end) {
+static double calculatePolygonArea(Coord* start, Coord* end) {
 	if (!start || !end) return 0.0;
 
 	double area = 0.0;
@@ -333,87 +367,3 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEncl
 	return false;
 }
 
-
-void CalculateClosingIndicatorParticlePoints(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions)
-{
-	constexpr int kMaxParticleCount = 20;
-
-
-	Coord* aux = enclosedPoints;
-
-	float enclosedTotalLength = 0.0f;
-
-	//calculate length
-	while (aux && aux->nextCoord)
-	{
-		enclosedTotalLength += Dist(aux, aux->nextCoord);
-
-		aux = aux->nextCoord;
-	}
-	//printf("\nlength %f", enclosedTotalLength);
-
-
-	//default distribution at (TODO : ??? > 20 maybe idk help me)
-	float defaultStep = enclosedTotalLength / kMaxParticleCount;
-	aux = enclosedPoints;
-
-	float currLength = 0.0f;
-	float currStep = defaultStep;
-	float leftoverLength = 0.0f; //small overflow in length should mean the point is generated where the overflow lands
-
-	while (aux && aux->nextCoord)
-	{
-		currLength += Dist(aux, aux->nextCoord);
-		while (currStep < currLength)
-		{
-			int i = 1;
-			Vector2 currentPos = { aux->x,aux->y };
-			Vector2 nextPos = { aux->nextCoord->x,aux->nextCoord->y };
-			Vector2 dir = Vector2Normalize(Vector2Subtract(nextPos, currentPos));
-
-			Vector2 particlePos;
-			//quick hack to only account for leftover overflow the first time in each segment
-			if (leftoverLength > 0.0f)
-			{
-				particlePos = Vector2Add(currentPos, Vector2Scale(dir, leftoverLength));
-
-			}
-			else
-			{
-
-				particlePos = Vector2Add(currentPos ,Vector2Scale( dir , defaultStep *i ));
-				i++;
-			}
-
-			outParticlePositions.push_back(particlePos);
-
-			currStep += defaultStep;
-		}
-		leftoverLength = currStep - currLength;
-
-		aux = aux->nextCoord;
-	}
-}
-
-
-void CalculateDestroyedIndicatorParticlePositions(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions)
-{
-	constexpr int kMaxParticleCount = 20;
-	Coord* aux = enclosedPoints;
-	float enclosedTotalLength = 0.0f;
-	//calculate length
-
-	Vector2 particlePos;
-
-	while (aux && aux->nextCoord)
-	{
-		Vector2 currentPos = { aux->x,aux->y };
-		Vector2 nextPos = { aux->nextCoord->x,aux->nextCoord->y };
-		particlePos = currentPos;
-
-		outParticlePositions.push_back(particlePos);
-
-		aux = aux->nextCoord;
-	}
-	//printf("\nlength %f", enclosedTotalLength);
-}

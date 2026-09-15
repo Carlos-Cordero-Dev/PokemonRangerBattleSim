@@ -1,5 +1,5 @@
 #include "collision.h"
-#include "FIFO.h"
+#include "coord.h"
 
 #include <stdio.h>
 #include <stdlib.h>

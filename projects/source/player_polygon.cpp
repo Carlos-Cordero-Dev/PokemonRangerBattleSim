@@ -14,7 +14,7 @@
 #endif
 
 #include "constants.h"
-#include "FIFO.h"
+#include "coord.h"
 
 void DrawCircle(int radius,int x, int y)
 {

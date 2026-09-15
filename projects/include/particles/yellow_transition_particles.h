@@ -1,7 +1,7 @@
 #pragma once
 
 #include "particle_system.h"
-#include "ranger_top.h"
+#include "top.h"
 
 class YellowTransitionParticles : public ParticleSystem
 {

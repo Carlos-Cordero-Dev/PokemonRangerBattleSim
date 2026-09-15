@@ -1,7 +1,6 @@
 
 
-#ifndef __FIFO_H__
-#define __FIFO_H__
+#pragma once
 
 struct Coord
 { //only used for fifo stack implementation
@@ -35,5 +34,3 @@ void DestroyStackNoDepth(Coord** stack);
 int GetStackDepth(Coord* stack);
 
 void freeCoordsBackward(Coord* start, Coord* end);
-
-#endif
