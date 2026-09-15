@@ -6,6 +6,8 @@
 class DamagedParticles : public ParticleSystem
 {
 public:
+	DamagedParticles();
+
 	void step(float dt) override;
 	void Reset() override;
 	void Draw() override;
@@ -13,46 +15,64 @@ public:
 	void calc_positions_from_enclosed_points(Coord* enclosedPoints);
 
 private:
-	static constexpr float kTravelDistance = 200.0f;
-	static constexpr float kTravelTimeSec = 0.3f;
+
+	static constexpr float kDefaultTravelSpeed = 300.0f;
+	static constexpr float kMinStartAcceleration = 1.0f;
+	static constexpr float kMaxStartAcceleration = 4.0f;
+	static constexpr float kLifetime = 4.0f;
+	static constexpr float kFadeFactor = 0.08f;
+	static constexpr float kStartFade = 1.0f;
+
 	float elapsedTime = 0.0f;
+	float currAlpha = 1.0f;
 
 	std::vector<Vector2> initialPositions;
 	std::vector<Vector2> currentPositions;
+	std::vector<float> initialAccelerations;
+	std::vector<float> currAccelerations;
+
 };
+
+DamagedParticles::DamagedParticles()
+{
+	Reset();
+}
 
 inline void DamagedParticles::step(float dt)
 {
 	if (initialPositions.empty()) return;
 
-	elapsedTime += dt;
-	const float interpolationFactor = elapsedTime / kTravelTimeSec;
 
-	for (size_t i = 0; i < initialPositions.size(); ++i)
+	for (int i = 0; i < initialPositions.size(); ++i)
 	{
-		const Vector2 targetPosition = Vector2Add(
-			initialPositions[i], Vector2{ 0.0f, -kTravelDistance });
+		currAccelerations[i] += initialAccelerations[i] * dt;
 
-		currentPositions[i] = Vector2Add(
-			initialPositions[i],
-			Vector2Scale(Vector2Subtract(targetPosition, initialPositions[i]), interpolationFactor));
+		float distanceToTravel = kDefaultTravelSpeed * currAccelerations[i] * dt;
+		currentPositions[i].y -= distanceToTravel;
 	}
 
-	if (interpolationFactor >= 1.0f) Reset();
+	elapsedTime += dt;
+	currAlpha = std::max<float>(0.0f, currAlpha - (kFadeFactor * dt));
+	if (elapsedTime >= kLifetime) Reset();
 }
 
 inline void DamagedParticles::Reset()
 {
 	initialPositions.clear();
 	currentPositions.clear();
+	currAccelerations.clear();
+	initialAccelerations.clear();
 	elapsedTime = 0.0f;
+	currAlpha = kStartFade;
 }
 
 inline void DamagedParticles::Draw()
 {
+	const Color particleColor = Fade(WHITE, currAlpha);
+
 	for (const Vector2 particlePosition : currentPositions)
 	{
-		DrawCircleV(particlePosition, 3.0f, RED);
+		DrawCircleV(particlePosition, 3.0f, particleColor);
 	}
 }
 
@@ -83,4 +103,13 @@ inline void DamagedParticles::calc_positions_from_enclosed_points(Coord* enclose
 	Reset();
 	CalculateDestroyedIndicatorParticlePositions(enclosedPoints, initialPositions);
 	currentPositions = initialPositions;
+	currAccelerations.assign(initialPositions.size(), 1.0f);
+	initialAccelerations.assign(initialPositions.size(), 1.0f);
+
+	for (int i = 0; i < initialPositions.size(); ++i)
+	{
+		initialAccelerations[i] = GetRandomValue(
+			static_cast<int>(kMinStartAcceleration * 100),
+			static_cast<int>(kMaxStartAcceleration * 100)) / 100.0f;
+	}
 }
