@@ -1,10 +1,14 @@
 #pragma once
 
+#include <algorithm>
+#include <filesystem>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "attack_effect.h"
 #include "attack_effect_factory.h"
+#include "animation_database.h"
 
 class AttackEffectDatabase {
 public:
@@ -32,6 +36,20 @@ public:
                 return false;
             }
 
+            if (effectJson.contains("visualAnimation")) {
+                if (!effectJson["visualAnimation"].is_string()) {
+                    printf("Attack effect '%s' has an invalid visualAnimation\n", name.c_str());
+                    return false;
+                }
+
+                const std::string animationName = effectJson["visualAnimation"];
+                if (!AnimationDatabase::Instance().LoadAnimDataByName(animationName)) {
+                    printf("Attack effect '%s' could not load animation '%s'\n",
+                        name.c_str(), animationName.c_str());
+                    return false;
+                }
+            }
+
             std::unique_ptr<AttackEffect> effect = AttackEffectFactory::Instance().Create(effectJson);
             if (!effect) {
                 return false;
@@ -46,6 +64,31 @@ public:
 
     bool LoadFromFile(const std::string& path) {
         return LoadFromJson(LoadJson(path));
+    }
+
+    bool LoadFromFolder(const std::string& path) {
+        if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
+            printf("Attack effects folder does not exist: %s\n", path.c_str());
+            return false;
+        }
+
+        std::vector<std::filesystem::path> jsonPaths;
+        for (const auto& entry : std::filesystem::directory_iterator(path)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".json")
+                jsonPaths.push_back(entry.path());
+        }
+
+        std::sort(jsonPaths.begin(), jsonPaths.end());
+
+        bool loadedAll = true;
+        for (const std::filesystem::path& jsonPath : jsonPaths) {
+            if (!LoadFromFile(jsonPath.string())) {
+                printf("Failed to load attack effects from: %s\n", jsonPath.string().c_str());
+                loadedAll = false;
+            }
+        }
+
+        return loadedAll;
     }
 
     const AttackEffect* Get(const std::string& name) const {

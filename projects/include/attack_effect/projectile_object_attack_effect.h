@@ -5,7 +5,8 @@
 class ProjectileObjectAttackEffect : public AttackEffect {
 public:
     std::string visualAnimation;
-    float width = 0.0f;
-    float height = 0.0f; 
+    float scale = 1.0f;
+    float rotationDeg = 0.0f;
     float lifetimeSec = 0.0f;
+    float rotationOffsetDeg = 0.0f;
 };

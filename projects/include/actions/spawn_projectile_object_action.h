@@ -6,7 +6,6 @@
 #include "action.h"
 #include "action_values.h"
 #include "pokemon.h"
-#include "hitbox.h"
 #include "world.h"
 
 #include "attack_effect/attack_effect_database.h"
@@ -23,6 +22,7 @@ public:
     std::unique_ptr<FloatValue> dirY;
     std::unique_ptr<FloatValue> speed;
     std::unique_ptr<FloatValue> spawnDelaySec;
+    bool aimAtPlayableCenter = false;
     bool useFacingDirection = false;
     std::unique_ptr<FloatValue> spreadDegrees;
 
@@ -35,8 +35,35 @@ public:
 
 		AnimationDatabase& animDB = AnimationDatabase::Instance();
 
+        const Vector2 spawnPosition = {
+            p->position.x + offsetX->Get() * p->scale,
+            p->position.y + offsetY->Get() * p->scale
+        };
+
         Vector2 normDir;
-        if (useFacingDirection) {
+
+        if (aimAtPlayableCenter) {
+            const Rectangle area = GameManager::GetInstance().playableArea;
+            const Vector2 center = {
+                area.x + area.width * 0.5f,
+                area.y + area.height * 0.5f
+            };
+            normDir = Vector2Normalize({
+                center.x - spawnPosition.x,
+                center.y - spawnPosition.y
+                });
+            if (normDir.x == 0.0f && normDir.y == 0.0f) {
+                switch (p->facingDir) {
+                case FacingDirection::UpLeft:    normDir = { -1.0f, -1.0f }; break;
+                case FacingDirection::UpRight:   normDir = { 1.0f, -1.0f }; break;
+                case FacingDirection::DownLeft:  normDir = { -1.0f, 1.0f }; break;
+                case FacingDirection::DownRight: normDir = { 1.0f, 1.0f }; break;
+                default:                         normDir = { 1.0f, 1.0f }; break;
+                }
+                normDir = Vector2Normalize(normDir);
+            }
+        }
+        else if (useFacingDirection) {
             switch (p->facingDir) {
             case FacingDirection::UpLeft:    normDir = { -1.0f, -1.0f }; break;
             case FacingDirection::UpRight:   normDir = { 1.0f, -1.0f }; break;
@@ -58,25 +85,43 @@ public:
             normDir = Vector2Normalize({ dirX->Get(), dirY->Get() });
         }
 
-        //TODO: it probably doesnt make sense that the hitbox is independent of the object
-        Hitbox* h = new Hitbox(
-            p->position.x + offsetX->Get() * p->scale,
-            p->position.y + offsetY->Get() * p->scale,
-            po_af->width * p->scale,
-            po_af->height * p->scale,
-            { normDir.x * speed->Get(), normDir.y * speed->Get() },
-            spawnDelaySec->Get()
-        );
-		SpriteAnimation* anim = new SpriteAnimation(animDB.GetAnimationDataFromName(po_af->visualAnimation));
-		ProjectileObject* po = new ProjectileObject(anim, 0.0f, po_af->lifetimeSec, h);
+        if (aimAtPlayableCenter || useFacingDirection) {
+            const float spreadRadians = spreadDegrees->Get() * DEG2RAD;
+            const float angleOffset = ((float)rand() / RAND_MAX * 2.0f - 1.0f) * spreadRadians;
+            const float cosine = cosf(angleOffset);
+            const float sine = sinf(angleOffset);
+            normDir = Vector2Normalize({
+                normDir.x * cosine - normDir.y * sine,
+                normDir.x * sine + normDir.y * cosine
+                });
+        }
 
-        po->position.x = p->position.x + offsetX->Get() * p->scale;
-		po->position.y = p->position.y + offsetY->Get() * p->scale;
-		po->scale = p->scale;
+        if (normDir.x != 0.0f || normDir.y != 0.0f) {
+            if (normDir.x < 0.0f)
+                p->SetFacingDirection(normDir.y < 0.0f
+                    ? FacingDirection::UpLeft
+                    : FacingDirection::DownLeft);
+            else
+                p->SetFacingDirection(normDir.y < 0.0f
+                    ? FacingDirection::UpRight
+                    : FacingDirection::DownRight);
+        }
+
+
+		SpriteAnimation* anim = new SpriteAnimation(animDB.GetAnimationDataFromName(po_af->visualAnimation));
+        ProjectileObject* po = new ProjectileObject(
+            anim,
+            0.0f,
+            po_af->lifetimeSec
+        );
+        po->position.x = p->position.x + offsetX->Get() * po_af->scale;
+		po->position.y = p->position.y + offsetY->Get() * po_af->scale;
+		po->scale = po_af->scale;
+        po->rotationDeg = std::atan2(normDir.y, normDir.x) * RAD2DEG
+            + po_af->rotationOffsetDeg;
 		po->velocity = { normDir.x * speed->Get(), normDir.y * speed->Get() };
 
         GameManager& gameManager = GameManager::GetInstance();
-        gameManager.activeHitboxes.push_back(h);
 		//gameManager.activeHazardObjects.push_back(ho);
 		gameManager.allWorldObjs.push_back(po);
 

@@ -14,7 +14,7 @@
       "name": "Move",
       "onEnter": [
 	    { "type": "SetAnimation", "animation": "move" },
-		{ "type": "SetTarget", "area": "playable" }
+		{ "type": "SetTarget", "area": "playable", "radius": 200}
       ],
       "onUpdate": [
         { "type": "MoveTowardsTarget", "speed": 120 }
@@ -26,12 +26,12 @@
 		{ "type": "SetAnimation", "animation": "attack_0" },
 		{
 		  "type": "SetTarget",
-		  "x": { "type": "random_range", "min": 100, "max": 500 },
-		  "y": { "type": "random_range", "min": 200, "max": 600 }
+		  "area": "through_playable_center",
+		  "travelDistance": 300
 		}
 	  ],
 	  "onUpdate": [
-		{ "type": "MoveTowardsTarget", "speed": 200 }
+		{ "type": "MoveTowardsTarget", "speed": 800 }
 	  ]
 	},
 	{
@@ -40,12 +40,12 @@
 		{ "type": "SetAnimation", "animation": "attack_1" },
 		{
 		  "type": "SpawnProjectileObject",
-		  "effect": "garchomp_shot",
+		  "effect": "pikachu_thunderjolt",
 		  "offsetX": 0,
 		  "offsetY": 0,
-		  "useFacingDirection": true,
+		  "aim": "playable_center",
 		  "spreadDegrees": 0,
-		  "speed": 10,
+		  "speed": 160,
 		  "spawnDelaySec": 1
 		}
 	  ]
@@ -55,7 +55,8 @@
 	{
       "from": "Move",
 	  "to": [
-			{ "state": "Idle", "weight": 95 },
+			{ "state": "Idle", "weight": 35 },
+			{ "state": "Move", "weight": 60 },
 			{ "state": "Attack_0", "weight": 2.5 },
 			{ "state": "Attack_1", "weight": 2.5 }
 	   ],      
@@ -66,9 +67,9 @@
     {
       "from": "Idle",
 	  "to": [
-			{ "state": "Move", "weight": 40 },
-			{ "state": "Attack_0", "weight": 40 },
-			{ "state": "Attack_1", "weight": 20 }
+			{ "state": "Move", "weight": 70 },
+			{ "state": "Attack_0", "weight": 15 },
+			{ "state": "Attack_1", "weight": 15 }
 		
 	   ],      
 	   "conditions": [

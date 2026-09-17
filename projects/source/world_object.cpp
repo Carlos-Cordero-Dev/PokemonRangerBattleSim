@@ -3,6 +3,8 @@
 #include "animation_database.h"
 #include "timer.h"
 
+#include <cmath>
+
 WorldObject::WorldObject(SpriteAnimation* animation)
 {
 	//deep copy so updating an object doesnt cause the anim of other to update too
@@ -29,6 +31,8 @@ WorldObject::WorldObject(SpriteAnimation* animation)
 		baseHeight = animations[0]->animData_->textures[0].texture.height;
 		boundingBox.height = baseHeight;
 	}
+
+	pendingDestroy = false;
 }
 
 WorldObject::WorldObject(const std::vector<SpriteAnimation*>& animations)
@@ -70,17 +74,37 @@ void WorldObject::Draw()
 		rotationDeg, scale);
 	
 	//debug draw bounding box
-	DrawRectangleLines(
-		boundingBox.x,
-		boundingBox.y,
-		boundingBox.width,
-		boundingBox.height,
-		RED
-	);
-	//DrawRectangleLinesEx(boundingBox,1.0f,RED);
+	//DrawRectangleLines(
+	//	boundingBox.x,
+	//	boundingBox.y,
+	//	boundingBox.width,
+	//	boundingBox.height,
+	//	RED
+	//);
+
+
+	const float halfWidth = boundingBox.width * 0.5f;
+	const float halfHeight = boundingBox.height * 0.5f;
+	const float radians = rotationDeg * DEG2RAD;
+	const float cosine = std::cos(radians);
+	const float sine = std::sin(radians);
+	const auto rotateCorner = [&](float localX, float localY) {
+		return Vector2{
+			position.x + localX * cosine - localY * sine,
+			position.y + localX * sine + localY * cosine
+		};
+		};
+	const Vector2 corners[4] = {
+		rotateCorner(-halfWidth, -halfHeight),
+		rotateCorner(halfWidth, -halfHeight),
+		rotateCorner(halfWidth, halfHeight),
+		rotateCorner(-halfWidth, halfHeight)
+	};
+	for (int edge = 0; edge < 4; ++edge)
+		DrawLineV(corners[edge], corners[(edge + 1) % 4], RED);
 
 	//debug center position
-	DrawCircleV(position, 5.5f, GREEN);
+	DrawCircleV(position, 2.5f, GREEN);
 }
 
 void WorldObject::Update()
@@ -96,8 +120,8 @@ void WorldObject::UpdateBBox()
 	boundingBox.height = baseHeight * scale;
 
 	//TODO: center everything bc theres a missmatch between the bb thats top left aligned and some stuff thats "center" aligned -w,-h etc
-	boundingBox.x = position.x - boundingBox.width/ 2;
-	boundingBox.y = position.y - boundingBox.height/ 2;
+	boundingBox.x = position.x - boundingBox.width * 0.5f;
+	boundingBox.y = position.y - boundingBox.height * 0.5f;
 }
 
 void WorldObject::Cleanup()

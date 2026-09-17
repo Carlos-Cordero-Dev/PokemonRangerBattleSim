@@ -14,14 +14,14 @@ public:
 
 	void calc_positions_from_enclosed_points(Coord* enclosedPoints);
 
+	static constexpr float kMinDistanceToInclueClosingPoint = 1.0f;
 private:
-
 	static constexpr float kDefaultTravelSpeed = 300.0f;
 	static constexpr float kMinStartAcceleration = 1.0f;
 	static constexpr float kMaxStartAcceleration = 4.0f;
 	static constexpr float kLifetime = 4.0f;
 	static constexpr float kFadeFactor = 0.08f;
-	static constexpr float kStartFade = 1.0f;
+	static constexpr float kStartFade = 0.95f;
 
 	float elapsedTime = 0.0f;
 	float currAlpha = 1.0f;
@@ -78,24 +78,24 @@ inline void DamagedParticles::Draw()
 
 static void CalculateDestroyedIndicatorParticlePositions(Coord* enclosedPoints, std::vector<Vector2>& outParticlePositions)
 {
-	constexpr int kMaxParticleCount = 20;
+	//constexpr int kMaxParticleCount = 20;
 	Coord* aux = enclosedPoints;
-	float enclosedTotalLength = 0.0f;
-	//calculate length
-
-	Vector2 particlePos;
+	int particleCount = 0;
 
 	while (aux && aux->nextCoord)
 	{
-		Vector2 currentPos = { aux->x,aux->y };
-		Vector2 nextPos = { aux->nextCoord->x,aux->nextCoord->y };
-		particlePos = currentPos;
+		const Vector2 particlePos = { aux->x, aux->y };
 
-		outParticlePositions.push_back(particlePos);
+		if (outParticlePositions.empty() ||
+			Vector2Distance(outParticlePositions.back(), particlePos) > DamagedParticles::kMinDistanceToInclueClosingPoint)
+		{
+			outParticlePositions.push_back(particlePos);
+			++particleCount;
+		}
+		//else printf("too close\n");
 
 		aux = aux->nextCoord;
 	}
-	//printf("\nlength %f", enclosedTotalLength);
 }
 
 inline void DamagedParticles::calc_positions_from_enclosed_points(Coord* enclosedPoints)

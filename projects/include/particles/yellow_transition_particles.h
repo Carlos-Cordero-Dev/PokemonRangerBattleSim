@@ -21,7 +21,7 @@ private:
 	static constexpr float kYellowTransitionShrinkingFrequencySec = 0.005f;
 	static constexpr float kInitialThickness = 30.0f;
 
-	static constexpr float kInitialFadeFactor = 0.75f;
+	static constexpr float kInitialFadeFactor = 0.95f;
 	static constexpr float kFadeSpeed = 0.0005f;
 };
 
@@ -49,7 +49,7 @@ inline void YellowTransitionParticles::Reset()
 	DestroyStackNoDepth(&ownedEnclosedPolygon);
 	areaPoints.clear();
 	elapsedTime = 0.0f;
-	currentFadeFactor = 1.0f;
+	currentFadeFactor = kInitialFadeFactor;
 }
 
 inline void YellowTransitionParticles::Draw()

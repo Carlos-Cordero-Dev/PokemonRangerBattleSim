@@ -85,6 +85,8 @@ public:
 	void LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,
 		const std::string& animName);
 
+	AnimationData* LoadAnimDataByName(const std::string& animName);
+
 	//NOTE: Legacy version
 	//loads from path, where 4,6  would be 4 animations with 6 frames each 
 	//animName is a custom, unique string that identfies a set of frames

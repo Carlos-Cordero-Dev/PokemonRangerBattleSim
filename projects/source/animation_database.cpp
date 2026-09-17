@@ -432,6 +432,48 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 	animData.emplace(animName, anim);
 }
 
+
+AnimationData* AnimationDatabase::LoadAnimDataByName(const std::string& animName)
+{
+	if (AnimationData* animation = GetAnimationDataFromName(animName))
+		return animation;
+
+	const std::filesystem::path resourceRoot = RESOURCES_FOLDER;
+	const std::filesystem::path spritesRoot = resourceRoot / "sprites";
+	const std::string keyframeFilename = animName + ".prkf";
+	std::filesystem::path animationFolder;
+
+	if (!std::filesystem::exists(spritesRoot)) {
+		printf("\nSprites folder does not exist: %s", spritesRoot.string().c_str());
+		return nullptr;
+	}
+
+	for (const auto& entry : std::filesystem::recursive_directory_iterator(spritesRoot)) {
+		if (!entry.is_regular_file() || entry.path().filename() != keyframeFilename)
+			continue;
+
+		if (!animationFolder.empty()) {
+			printf("\nAnimation '%s' is ambiguous; more than one matching .prkf file exists",
+				animName.c_str());
+			return nullptr;
+		}
+
+		animationFolder = entry.path().parent_path();
+	}
+
+	if (animationFolder.empty()) {
+		printf("\nAnimation '%s' was not found under %s",
+			animName.c_str(), spritesRoot.string().c_str());
+		return nullptr;
+	}
+
+	const std::string resourcePath =
+		std::filesystem::relative(animationFolder, resourceRoot).generic_string();
+	LoadAnimDataFromFolder(resourcePath, animName);
+	return GetAnimationDataFromName(animName);
+}
+
+
 AnimationData* AnimationDatabase::GetAnimationDataFromName(const std::string& name)
 {
 	auto it = animData.find(name);

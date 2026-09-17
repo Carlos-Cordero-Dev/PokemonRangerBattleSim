@@ -21,6 +21,7 @@ bool PolygonCollidingWithLine(Coord* stack, Point lineOrgin, Point lineEnd);
 
 bool PolygonCollidingWithBox(Coord* stack, float boxOriginX, float boxOriginY, float boxWidth, float boxHeight);
 bool PolygonCollidingWithBox(Coord* stack,Rectangle bb);
+bool PolygonCollidingWithRotatedBox(Coord* stack, Rectangle bb, float rotationDeg);
 
 bool PolygonHeadCollidingWithLine(Coord* stack, int lineCount /*starting from head*/, Point lineOrgin, Point lineEnd);
 

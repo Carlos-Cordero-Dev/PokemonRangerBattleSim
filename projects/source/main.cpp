@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <cmath>
 
 // debug
 #ifdef DEBUG
@@ -307,11 +308,11 @@ int main(void)
 	Top top;
 	top.trail_end_anim = new SpriteAnimation{ animDatabase.GetAnimationDataFromName("tail_start_end") };
 	top.trail_start_anim = new SpriteAnimation{ animDatabase.GetAnimationDataFromName("tail_start_end") };
-	top.tail_anim_scale = 1.5f;
+	top.tail_anim_scale = 3.25f;
 	top.wo = new WorldObject(stylusAnims);
 	gameManager.topObjectPtr = top.wo;
 	top.wo->position = Vector2({ -100, -100 }); //offscreen
-	top.wo->scale = 2.0f;
+	top.wo->scale = 3.15f;
 
 	EnclosingParticles enclosingParticles;
 	DamagedParticles damagedParticles;
@@ -356,8 +357,12 @@ int main(void)
 	actionFactory.Register("SetTarget", [](const Json& j) {
 		auto a = std::make_unique<SetTargetAction>();
 
-		a->usePlayableArea = j.value("area", "") == "playable";
-		if (!a->usePlayableArea) {
+		a->area = j.value("area", "");
+		if (j.contains("radius"))
+			a->radius = ParseFloatValue(j["radius"]);
+		if (j.contains("travelDistance"))
+			a->travelDistance = ParseFloatValue(j["travelDistance"]);
+		if (a->area.empty()) {
 			a->targetX = ParseFloatValue(j["x"]);
 			a->targetY = ParseFloatValue(j["y"]);
 		}
@@ -416,8 +421,9 @@ int main(void)
 		a->projectileObjectType = j["effect"];
 		a->offsetX = ParseFloatValue(j["offsetX"]);
 		a->offsetY = ParseFloatValue(j["offsetY"]);
+		a->aimAtPlayableCenter = j.value("aim", "") == "playable_center";
 		a->useFacingDirection = j.value("useFacingDirection", false);
-		if (a->useFacingDirection) {
+		if (a->aimAtPlayableCenter || a->useFacingDirection) {
 			a->spreadDegrees = ParseFloatValue(j.value("spreadDegrees", Json(0.0f)));
 		}
 		else {
@@ -443,14 +449,14 @@ int main(void)
 	attackEffectFactory.Register("ProjectileObject", [](const Json& j) {
 		auto effect = std::make_unique<ProjectileObjectAttackEffect>();
 		effect->visualAnimation = j["visualAnimation"];
-		effect->width = j.value("width", 0.0f);
-		effect->height = j.value("height", 0.0f);
+		effect->scale = j.value("scale", 1.0f);
+		effect->rotationDeg = j.value("rotationDeg", 0.0f);
 		effect->lifetimeSec = j.value("lifetimeSec", 0.0f);
+		effect->rotationOffsetDeg = j.value("rotationOffsetDeg", 0.0f);
 		return effect;
 		});
 
-	AttackEffectDatabase::Instance().LoadFromFile(RESOURCES_FOLDER + std::string("attack_effects/hazard_object_af.json"));
-	AttackEffectDatabase::Instance().LoadFromFile(RESOURCES_FOLDER + std::string("attack_effects/projectile_object_af.json"));
+	AttackEffectDatabase::Instance().LoadFromFolder(RESOURCES_FOLDER + std::string("attack_effects"));
 
 	Json j = LoadJson(RESOURCES_FOLDER + std::string("state_machines/walk_around_occassionally_attack.json"));
 	//TODO: either leave the owner here or in AssignMachine state, but not in both
@@ -467,10 +473,10 @@ int main(void)
 	Pokemon* p = new Pokemon(pikachuAnimations);
 	//spawn in the middle
 	p->position = {
-	gameManager.playableArea.x + gameManager.playableArea.width * 0.5f,
-	gameManager.playableArea.y + gameManager.playableArea.height * 0.5f
+		gameManager.playableArea.x + gameManager.playableArea.width * 0.5f,
+		gameManager.playableArea.y + gameManager.playableArea.height * 0.5f
 	};
-	p->scale = 2.0f;
+	p->scale = 3.0f;
 	p->AssignStateMachine(sm);
 
 	//TODO: below tasks to be automated so basically find a way to register anyway object created, it can be a function 
@@ -703,7 +709,10 @@ int main(void)
 		//check top collision with world objects
 		for (WorldObject* wobj : gameManager.allWorldObjs)
 		{
-			if (PolygonCollidingWithBox(top.stack, wobj->boundingBox))
+			const bool collidedWithBox = wobj->rotationDeg != 0.0f ? PolygonCollidingWithRotatedBox(top.stack, wobj->boundingBox, wobj->rotationDeg) :
+				PolygonCollidingWithBox(top.stack, wobj->boundingBox);
+
+			if (collidedWithBox)
 			{
 				wobj->OnCollision();
 
@@ -750,6 +759,10 @@ int main(void)
 		trailCamera.zoom = 1.0f / static_cast<float>(trailPixelScale);
 		BeginMode2D(trailCamera);
 
+		// yellow particles (must be behind stylus tail)
+		yellowTransitionParticles.Draw();
+
+
 		//draw stlyus tail
 		int numberOfNodes = GetStackDepth(top.stack);
 
@@ -760,11 +773,11 @@ int main(void)
 				float radius;
 				Color color;
 			};
-
+			constexpr float trailWidth = 10.0f;
 			static const TrailBand trailBands[] = {
-				{ 8.0f, Color{ 36, 199, 255, 255 } },
-				{ 6.0f, Color{ 85, 247, 255, 255 } },
-				{ 2.3f, WHITE }
+				{ 1.00f   * trailWidth, Color{ 36, 199, 255, 255 } },
+				{ 0.75f   * trailWidth, Color{ 85, 247, 255, 255 } },
+				{ 0.45f * trailWidth, WHITE }
 			};
 
 			for (const TrailBand& band : trailBands)
@@ -789,7 +802,6 @@ int main(void)
 
 
 		// === particles ===
-		yellowTransitionParticles.Draw();
 		enclosingParticles.Draw();
 		damagedParticles.Draw();
 
@@ -912,15 +924,35 @@ int main(void)
 		};
 		Vector2 origin = { 0, 0 };
 
-		DrawTexturePro(mainTexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
-		DrawTexturePro(stylusOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
+		// clip gameplay elements render area to the playable area
+		const Rectangle playableArea = gameManager.playableArea;
+		const int clipX = static_cast<int>(std::ceil(viewportX + playableArea.x * scale));
+		const int clipY = static_cast<int>(std::ceil(viewportY + playableArea.y * scale));
+		const int clipRight = static_cast<int>(std::floor(
+			viewportX + (playableArea.x + playableArea.width) * scale));
+		const int clipBottom = static_cast<int>(std::floor(
+			viewportY + (playableArea.y + playableArea.height) * scale));
+		const int clipWidth = clipRight - clipX;
+		const int clipHeight = clipBottom - clipY;
+
+		//ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+		if (clipWidth > 0 && clipHeight > 0) {
+			BeginScissorMode(clipX, clipY, clipWidth, clipHeight);
+		
+			DrawTexturePro(mainTexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
+			DrawTexturePro(stylusOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
+			
+			EndScissorMode();
+		}
+
 		DrawTexturePro(UITexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
 
 
 		EndDrawing();
 		//SwapScreenBuffer();
 		
-
+		// Per frame cleanup
+		gameManager.RemoveInactiveWorldObjects();
 
 		//----------------------------------------------------------------------------------
 		//wait or end of frame

@@ -18,6 +18,8 @@ public:
 		return instance;
 	}
 
+	void RemoveInactiveWorldObjects();
+
 public:
 	std::vector<Hitbox*> activeHitboxes;
 	std::vector<HazardObject*> activeHazardObjects;
@@ -29,3 +31,4 @@ public:
 	std::vector<Hitbox*> singleFrameHitboxes;
 	std::vector<Hitbox*> singleKeyframeHitboxes;
 };
+

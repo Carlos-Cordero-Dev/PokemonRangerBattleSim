@@ -27,7 +27,8 @@ public:
 	float scale;
 	float rotationDeg;
 	bool canCollide = true;
-	
+	bool pendingDestroy = false;
+
 	Rectangle boundingBox;
 	float baseWidth, baseHeight;
 

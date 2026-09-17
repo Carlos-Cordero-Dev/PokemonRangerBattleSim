@@ -46,6 +46,53 @@ bool IsIntersecting(Point a, Point b, Point c, Point d)
 	return (r >= 0.0f && r <= 1.0f) && (s >= 0.0f && s <= 1.0f);
 }
 
+
+bool PolygonCollidingWithRotatedBox(Coord* stack, Rectangle bb, float rotationDeg)
+{
+	if (std::fabs(rotationDeg) < 1e-6f)
+		return PolygonCollidingWithBox(stack, bb);
+
+	const float centerX = bb.x + bb.width * 0.5f;
+	const float centerY = bb.y + bb.height * 0.5f;
+	const float halfWidth = bb.width * 0.5f;
+	const float halfHeight = bb.height * 0.5f;
+	const float radians = rotationDeg * DEG2RAD;
+	const float cosine = std::cos(radians);
+	const float sine = std::sin(radians);
+
+	const auto rotateCorner = [&](float localX, float localY) {
+		return Point{
+			centerX + localX * cosine - localY * sine,
+			centerY + localX * sine + localY * cosine
+		};
+		};
+
+	const Point corners[4] = {
+		rotateCorner(-halfWidth, -halfHeight),
+		rotateCorner(halfWidth, -halfHeight),
+		rotateCorner(halfWidth, halfHeight),
+		rotateCorner(-halfWidth, halfHeight)
+	};
+
+	for (Coord* coord = stack; coord && coord->nextCoord; coord = coord->nextCoord) {
+		const Point polygonStart = { coord->x, coord->y };
+		const Point polygonEnd = { coord->nextCoord->x, coord->nextCoord->y };
+
+		for (int edge = 0; edge < 4; ++edge) {
+			if (IsIntersecting(
+				polygonStart,
+				polygonEnd,
+				corners[edge],
+				corners[(edge + 1) % 4])) {
+				printf("rotated collision\n");
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 bool PolygonCollidingWithLine(Coord* stack, Point lineOrgin, Point lineEnd)
 {
 	Coord* coord = stack;

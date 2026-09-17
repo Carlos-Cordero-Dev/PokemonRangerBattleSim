@@ -29,7 +29,7 @@ public:
 	SpriteAnimation* trail_end_anim = nullptr;
 	float tail_anim_scale = 1.0f;
 
-	static constexpr Vector2 kFromTouchOffset = { 0.0f, -20.0f };
+	static constexpr Vector2 kFromTouchOffset = { 0.0f, -27.0f };
 
 	Coord* stack = nullptr;
 	float distance = 0.0f;

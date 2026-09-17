@@ -6,8 +6,8 @@
 class ProjectileObject : public WorldObject {
 public:
 
-    ProjectileObject(SpriteAnimation* animation, float damage, float lifetimeSec, Hitbox* hb)
-		: WorldObject(animation), damage(damage), lifetimeSec(lifetimeSec), hb(hb) {
+    ProjectileObject(SpriteAnimation* animation, float damage, float lifetimeSec)
+		: WorldObject(animation), damage(damage), lifetimeSec(lifetimeSec) {
 	}
     void Update() override;
 	void Draw() override;
@@ -16,6 +16,4 @@ public:
     float lifetimeSec = 0.0f;
 	Vector2 velocity = { 0.0f, 0.0f };
     bool isActive = true;
-
-    Hitbox* hb;
 };

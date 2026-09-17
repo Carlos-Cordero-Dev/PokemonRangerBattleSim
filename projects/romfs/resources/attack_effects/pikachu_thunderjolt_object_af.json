@@ -1,0 +1,12 @@
+{
+  "effects": [
+    {
+      "type": "ProjectileObject",
+      "name": "pikachu_thunderjolt",
+      "visualAnimation": "thunderjolt",
+      "scale": 1.0,
+	  "rotationDeg": -90,
+      "lifetimeSec": 7
+    }
+  ]
+}

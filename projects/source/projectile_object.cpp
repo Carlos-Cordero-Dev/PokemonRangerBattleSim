@@ -15,6 +15,8 @@ void ProjectileObject::Update()
 		lifetimeSec -= dt;
 		if (lifetimeSec <= 0.0f) {
 			isActive = false;
+			//mark for deletion
+			pendingDestroy = true;
 		}
 
 		position.x += velocity.x * dt;
@@ -25,5 +27,6 @@ void ProjectileObject::Update()
 
 void ProjectileObject::Draw()
 {
-	WorldObject::Draw();
+	if (isActive)
+		WorldObject::Draw();
 }
