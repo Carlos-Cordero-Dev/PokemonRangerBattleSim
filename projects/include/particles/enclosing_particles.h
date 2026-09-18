@@ -50,7 +50,7 @@ inline void EnclosingParticles::Draw()
 {
 	for (const Vector2 particlePosition : currentPositions)
 	{
-		DrawCircleV(particlePosition, 3.0f, RED);
+		DrawCircleV(particlePosition, 3.0f, WHITE);
 	}
 }
 

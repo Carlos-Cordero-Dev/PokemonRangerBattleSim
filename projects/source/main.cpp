@@ -362,6 +362,10 @@ int main(void)
 			a->radius = ParseFloatValue(j["radius"]);
 		if (j.contains("travelDistance"))
 			a->travelDistance = ParseFloatValue(j["travelDistance"]);
+		if (j.contains("width"))
+			a->areaWidth = ParseFloatValue(j["width"]);
+		if (j.contains("height"))
+			a->areaHeight = ParseFloatValue(j["height"]);
 		if (a->area.empty()) {
 			a->targetX = ParseFloatValue(j["x"]);
 			a->targetY = ParseFloatValue(j["y"]);
@@ -477,6 +481,7 @@ int main(void)
 		gameManager.playableArea.y + gameManager.playableArea.height * 0.5f
 	};
 	p->scale = 3.0f;
+	p->shadowScale = 50.0f;
 	p->AssignStateMachine(sm);
 
 	//TODO: below tasks to be automated so basically find a way to register anyway object created, it can be a function 
@@ -555,7 +560,6 @@ int main(void)
 				//DestroyStackNoDepth(&enclosingParticles.enclosedPoly);
 				//DestroyStackNoDepth(&yellowTransitionParticles.enclosedPoly);
 				
-				enclosingParticles.Reset();
 				yellowTransitionParticles.Reset();
 
 				//printf("\nReset");
@@ -776,8 +780,8 @@ int main(void)
 			constexpr float trailWidth = 10.0f;
 			static const TrailBand trailBands[] = {
 				{ 1.00f   * trailWidth, Color{ 36, 199, 255, 255 } },
-				{ 0.75f   * trailWidth, Color{ 85, 247, 255, 255 } },
-				{ 0.45f * trailWidth, WHITE }
+				{ 0.70f   * trailWidth, Color{ 85, 247, 255, 255 } },
+				{ 0.40f * trailWidth, WHITE }
 			};
 
 			for (const TrailBand& band : trailBands)
@@ -935,7 +939,8 @@ int main(void)
 		const int clipWidth = clipRight - clipX;
 		const int clipHeight = clipBottom - clipY;
 
-		//ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+		ClearBackground(Color{ 34, 57, 48, 255 });
+
 		if (clipWidth > 0 && clipHeight > 0) {
 			BeginScissorMode(clipX, clipY, clipWidth, clipHeight);
 		
@@ -944,7 +949,7 @@ int main(void)
 			
 			EndScissorMode();
 		}
-
+		
 		DrawTexturePro(UITexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
 
 

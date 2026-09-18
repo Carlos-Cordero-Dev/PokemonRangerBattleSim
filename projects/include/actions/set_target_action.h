@@ -18,6 +18,7 @@ public:
     std::unique_ptr<FloatValue> targetX, targetY;
     std::unique_ptr<FloatValue> radius;
     std::unique_ptr<FloatValue> travelDistance;
+    std::unique_ptr<FloatValue> areaWidth, areaHeight;
     std::string area;
 
 
@@ -29,15 +30,24 @@ public:
             const Rectangle area = GameManager::GetInstance().playableArea;
             const float halfWidth = owner->boundingBox.width * 0.5f;
             const float halfHeight = owner->boundingBox.height * 0.5f;
-            const float minX = area.x + halfWidth;
-            const float maxX = area.x + area.width - halfWidth;
-            const float minY = area.y + halfHeight;
-            const float maxY = area.y + area.height - halfHeight;
+            const float centerX = area.x + area.width * 0.5f;
+            const float centerY = area.y + area.height * 0.5f;
+            const float targetAreaWidth = areaWidth
+                ? std::clamp(areaWidth->Get(), 0.0f, area.width)
+                : area.width;
+            const float targetAreaHeight = areaHeight
+                ? std::clamp(areaHeight->Get(), 0.0f, area.height)
+                : area.height;
+            const float minX = centerX - targetAreaWidth * 0.5f + halfWidth;
+            const float maxX = centerX + targetAreaWidth * 0.5f - halfWidth;
+            const float minY = centerY - targetAreaHeight * 0.5f + halfHeight;
+            const float maxY = centerY + targetAreaHeight * 0.5f - halfHeight;
+
 
             if (this->area == "through_playable_center") {
                 const Vector2 center = {
-                    area.x + area.width * 0.5f,
-                    area.y + area.height * 0.5f
+                    centerX,
+                    centerY
                 };
                 Vector2 direction = {
                     center.x - owner->position.x,
@@ -95,15 +105,19 @@ public:
                 const float distance = std::sqrt(randomY) * targetRadius;
 
                 p->stateMachine->blackboard.vectors["target"] = {
-                    std::clamp(owner->position.x + std::cos(angle) * distance, minX, maxX),
-                    std::clamp(owner->position.y + std::sin(angle) * distance, minY, maxY)
+                    minX <= maxX
+                        ? std::clamp(owner->position.x + std::cos(angle) * distance, minX, maxX)
+                        : centerX,
+                    minY <= maxY
+                        ? std::clamp(owner->position.y + std::sin(angle) * distance, minY, maxY)
+                        : centerY
                 };
                 return;
             }
 
             p->stateMachine->blackboard.vectors["target"] = {
-                minX <= maxX ? minX + randomX * (maxX - minX) : area.x + area.width * 0.5f,
-                minY <= maxY ? minY + randomY * (maxY - minY) : area.y + area.height * 0.5f
+                minX <= maxX ? minX + randomX * (maxX - minX) : centerX,
+                minY <= maxY ? minY + randomY * (maxY - minY) : centerY
             };
             return;
         }

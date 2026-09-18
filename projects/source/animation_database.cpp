@@ -56,6 +56,28 @@ static void AddMirroredVariant(
 		actionIt->second.emplace(destination, AnimationVariant{ sourceIt->second.data, true });
 }
 
+
+static TextureData LoadSpriteTexture(const std::string& filePath, const std::string& textureName)
+{
+	Image image = LoadImage(filePath.c_str());
+	Rectangle visibleBounds = {
+		0.0f,
+		0.0f,
+		static_cast<float>(image.width),
+		static_cast<float>(image.height)
+	};
+
+	if (image.data) {
+		const Rectangle alphaBounds = GetImageAlphaBorder(image, 0.01f);
+		if (alphaBounds.width > 0.0f && alphaBounds.height > 0.0f)
+			visibleBounds = alphaBounds;
+	}
+
+	Texture2D texture = LoadTextureFromImage(image);
+	UnloadImage(image);
+	return { texture, textureName, visibleBounds };
+}
+
 static FacingDirection ParseDirection(const std::string& name)
 {
     if (name == "up_left")
@@ -292,17 +314,13 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 
 			std::replace(filePath.begin(), filePath.end(), '\\', '/');
 
-
-			Texture2D texture = LoadTexture(filePath.c_str());
-
-
 			// Add the texture to the vector with its name
 			if (!animName.empty())
 			{
 				textureName = textureName.append(animName);
 			}
 
-			animations[currSpriteAnimIndex]->textures.push_back({ texture, textureName });
+			animations[currSpriteAnimIndex]->textures.push_back(LoadSpriteTexture(filePath, textureName));
 
 			currTextureIndex++;
 			if (currTextureIndex >= numOfTexturesPerAnimation)
@@ -413,9 +431,8 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 		textureName += "_" + animName;
 
 		// Load texture
-		Texture2D texture = LoadTexture(filePath.c_str());
+		anim->textures.push_back(LoadSpriteTexture(filePath, textureName));
 
-		anim->textures.push_back({ texture, textureName });
 	}
 
 	anim->numberOfTextures = anim->textures.size();

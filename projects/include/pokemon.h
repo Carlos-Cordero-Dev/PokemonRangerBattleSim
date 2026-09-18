@@ -34,11 +34,14 @@ public:
 	SpriteAnimation animationPlayer;
 	AnimationSet animationSet;
 	FacingDirection facingDir;
-	
+	float shadowScale = 1.0f;
+
 	// must match one of the animation names in the state machine
 	std::string animationState;
 
 private:
+	void DrawShadow();
+
 	int id = 0;
 	bool restartAnimation = true;
 };

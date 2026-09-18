@@ -14,7 +14,7 @@
       "name": "Move",
       "onEnter": [
 	    { "type": "SetAnimation", "animation": "move" },
-		{ "type": "SetTarget", "area": "playable", "radius": 200}
+		{ "type": "SetTarget", "area": "playable", "radius": 100, "width": 800, "height":400 }
       ],
       "onUpdate": [
         { "type": "MoveTowardsTarget", "speed": 120 }
@@ -31,7 +31,7 @@
 		}
 	  ],
 	  "onUpdate": [
-		{ "type": "MoveTowardsTarget", "speed": 800 }
+		{ "type": "MoveTowardsTarget", "speed": 250 }
 	  ]
 	},
 	{
@@ -45,7 +45,7 @@
 		  "offsetY": 0,
 		  "aim": "playable_center",
 		  "spreadDegrees": 0,
-		  "speed": 160,
+		  "speed": 300,
 		  "spawnDelaySec": 1
 		}
 	  ]

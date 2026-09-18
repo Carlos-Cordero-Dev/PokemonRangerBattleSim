@@ -178,7 +178,9 @@ void SpriteAnimation::DrawRotScale(int posX, int posY, float rotDeg, float scale
 		return;
 
 	const int textureIndex = animData_->keyframes[currentFrame].textureIndex;
-	const Texture2D texture = animData_->textures[textureIndex].texture;
+	const TextureData& textureData = animData_->textures[textureIndex];
+	const Texture2D texture = textureData.texture;
+
 	const Rectangle source = {
 		0.0f,
 		0.0f,
@@ -201,16 +203,25 @@ void SpriteAnimation::DrawRotScaleCentered(float centerX, float centerY, float r
 		return;
 
 	const int textureIndex = animData_->keyframes[currentFrame].textureIndex;
-	const Texture2D texture = animData_->textures[textureIndex].texture;
+	const TextureData& textureData = animData_->textures[textureIndex];
+	const Texture2D texture = textureData.texture;
 	const Rectangle source = {
 		0.0f,
 		0.0f,
 		flipX ? -static_cast<float>(texture.width) : static_cast<float>(texture.width),
 		static_cast<float>(texture.height)
 	};
+
+	const float visibleCenterX = textureData.visibleBounds.x
+		+ textureData.visibleBounds.width * 0.5f;
+	float centerCorrectionX = (texture.width * 0.5f - visibleCenterX) * scale;
+	if (flipX)
+		centerCorrectionX = -centerCorrectionX;
+	const float rotationRadians = rotDeg * DEG2RAD;
+
 	const Rectangle destination = {
-		centerX,
-		centerY,
+		centerX + centerCorrectionX * cosf(rotationRadians),
+		centerY + centerCorrectionX * sinf(rotationRadians),
 		static_cast<float>(texture.width) * scale,
 		static_cast<float>(texture.height) * scale
 	};

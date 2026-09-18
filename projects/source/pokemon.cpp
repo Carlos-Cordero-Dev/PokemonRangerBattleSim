@@ -1,9 +1,13 @@
 
 #include "pokemon.h"
+
 #include "timer.h"
 #include "world.h"
 #include "state_machine.h"
 #include "animation_database.h"
+
+#include <algorithm>
+#include <cmath>
 
 Pokemon::Pokemon(const AnimationSet& animations) : EnclosableObject({}) 
 {
@@ -102,6 +106,8 @@ void Pokemon::Update()
 
 void Pokemon::Draw()
 {
+	DrawShadow();
+
 	//TODO: technically this boundbox w/h should be the w/h of the sprite, not the bb
 
 	const AnimationVariant* animation = ResolveAnimation();
@@ -143,6 +149,24 @@ void Pokemon::Draw()
 
 	//debug center position
 	//DrawCircleV(position, 5.5f, GREEN);
+}
+
+
+void Pokemon::DrawShadow()
+{
+	if (shadowScale <= 0.0f)
+		return;
+
+	constexpr float kAspectRatio = 1.5f;
+	constexpr Vector2 kShadowYOffset = { 0.0f, 80.0f };
+
+	const float shadowWidth = shadowScale;
+	const float shadowHeight = shadowWidth / kAspectRatio;
+	const float centerY = boundingBox.y + kShadowYOffset.y - shadowHeight;
+	const float halfWidth = shadowWidth * 0.5f;
+	const float halfHeight = shadowHeight * 0.5f;
+
+	DrawEllipse(position.x + kShadowYOffset.x, centerY, halfWidth, halfHeight, Color{ 0, 0, 0, 150 });
 }
 
 void Pokemon::OnEnclosed()

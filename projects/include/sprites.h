@@ -18,6 +18,7 @@ class Hitbox;
 struct TextureData {
 	Texture2D texture;
 	std::string name;
+	Rectangle visibleBounds;
 };
 
 class SpriteAnimation
