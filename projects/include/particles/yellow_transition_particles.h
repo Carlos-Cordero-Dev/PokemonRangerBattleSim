@@ -14,41 +14,48 @@ public:
 private:
 	Coord* ownedEnclosedPolygon = nullptr;
 	std::vector<Vector2> areaPoints;
-	float elapsedTime = 0.0f;
+
 	float currentFadeFactor = 1.0f;
 
-	static constexpr float KYellowTransitionShrinkingFactor = 0.25f;
-	static constexpr float kYellowTransitionShrinkingFrequencySec = 0.005f;
+	static constexpr float kYellowTransitionShrinkingSpeed = 50.0f;
 	static constexpr float kInitialThickness = 30.0f;
 
 	static constexpr float kInitialFadeFactor = 0.95f;
-	static constexpr float kFadeSpeed = 0.0005f;
+	static constexpr float kFadeSpeed = 0.25f;
 };
 
 inline void YellowTransitionParticles::step(float dt)
 {
-	elapsedTime += dt;
+	if (areaPoints.empty()) return;
 
-	if (elapsedTime <= kYellowTransitionShrinkingFrequencySec) return;
+	const float shrinkDistance = kYellowTransitionShrinkingSpeed * dt;
+	bool fullyCollapsed = true;
 
-	elapsedTime = 0.0f;
 	for (size_t i = 0; i + 3 < areaPoints.size(); i += 4)
 	{
 		const Vector2 upDirection = Vector2Normalize(
 			Vector2Subtract(areaPoints[i + 2], areaPoints[i]));
 
-		areaPoints[i].y		+= upDirection.y * KYellowTransitionShrinkingFactor;
-		areaPoints[i + 1].y += upDirection.y * KYellowTransitionShrinkingFactor;
-		areaPoints[i + 2].y -= upDirection.y * KYellowTransitionShrinkingFactor;
-		areaPoints[i + 3].y -= upDirection.y * KYellowTransitionShrinkingFactor;
+		const float halfRemainingThickness =
+			Vector2Distance(areaPoints[i], areaPoints[i + 2]) * 0.5f;
+		const float stepDistance = std::min<float>(shrinkDistance, halfRemainingThickness);
+
+		areaPoints[i].y += upDirection.y * stepDistance;
+		areaPoints[i + 1].y += upDirection.y * stepDistance;
+		areaPoints[i + 2].y -= upDirection.y * stepDistance;
+		areaPoints[i + 3].y -= upDirection.y * stepDistance;
+
+		if (halfRemainingThickness > shrinkDistance) fullyCollapsed = false;
 	}
+
+	currentFadeFactor = std::max<float>(0.0f, currentFadeFactor - kFadeSpeed * dt);
+	if (fullyCollapsed || currentFadeFactor <= 0.0f) Reset();
 }
 
 inline void YellowTransitionParticles::Reset()
 {
 	DestroyStackNoDepth(&ownedEnclosedPolygon);
 	areaPoints.clear();
-	elapsedTime = 0.0f;
 	currentFadeFactor = kInitialFadeFactor;
 }
 
@@ -57,8 +64,6 @@ inline void YellowTransitionParticles::Draw()
 
 	Color particleColor = { 255, 255, 0, 255 };
 	particleColor.a = static_cast<unsigned char>(255.0f * currentFadeFactor);
-	currentFadeFactor -= kFadeSpeed;
-	if (currentFadeFactor < 0.0f) currentFadeFactor = 0.0f;
 
 	for (size_t i = 0; i + 3 < areaPoints.size(); i += 4)
 	{

@@ -37,15 +37,21 @@ public:
             }
 
             if (effectJson.contains("visualAnimation")) {
-                if (!effectJson["visualAnimation"].is_string()) {
-                    printf("Attack effect '%s' has an invalid visualAnimation\n", name.c_str());
+                if (!effectJson["visualAnimation"].is_string() ||
+                    !effectJson.contains("visualAnimationPath") ||
+                    !effectJson["visualAnimationPath"].is_string()) {
+                    printf("Attack effect '%s' requires string visualAnimation and visualAnimationPath values\n",
+                        name.c_str());
                     return false;
                 }
 
                 const std::string animationName = effectJson["visualAnimation"];
-                if (!AnimationDatabase::Instance().LoadAnimDataByName(animationName)) {
-                    printf("Attack effect '%s' could not load animation '%s'\n",
-                        name.c_str(), animationName.c_str());
+                const std::string animationPath = effectJson["visualAnimationPath"];
+                AnimationDatabase& animationDatabase = AnimationDatabase::Instance();
+                animationDatabase.LoadAnimDataFromFolder(animationPath, animationName);
+                if (!animationDatabase.GetAnimationDataFromName(animationName)) {
+                    printf("Attack effect '%s' could not load animation '%s' from '%s'\n",
+                        name.c_str(), animationName.c_str(), animationPath.c_str());
                     return false;
                 }
             }

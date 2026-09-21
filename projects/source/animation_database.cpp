@@ -394,7 +394,7 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 
 	// Load all textures from folder
 	std::vector<std::filesystem::path> texturePaths;
-	for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(basePath)) {
+	for (const auto& dirEntry : std::filesystem::directory_iterator(basePath)) {
 
 		if (!dirEntry.is_regular_file())
 			continue;

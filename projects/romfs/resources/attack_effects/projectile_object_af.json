@@ -4,6 +4,7 @@
       "type": "ProjectileObject",
       "name": "garchomp_shot",
       "visualAnimation": "garchomp_idle",
+	  "visualAnimationPath": "sprites/garchomp/idle",
       "width": 50,
       "height": 50,
       "lifetimeSec": 3

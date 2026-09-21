@@ -272,8 +272,11 @@ int main(void)
 	//animDatabase.LoadAnimDataFromFolder("sprites/garchomp/attack/right_up", "garchomp_attack_right_up");
 
 	//animDatabase.LoadAnimDataFromFolder("sprites/garchomp/run", "garchomp_run");
+	
+	//TODO: it is technically redudant with 	AttackEffectDatabase::Instance().LoadFromFolder(RESOURCES_FOLDER + std::string("attack_effects"));
+	// but load time is TOO MUCH
 	//animDatabase.LoadAnimDataFromFolder("sprites/garchomp/idle","garchomp_idle");
-
+	//animDatabase.LoadAnimDataFromFolder("sprites/special_effects/thunderjolt", "thunderjolt");
 
 	const Json pikachuAnimationManifest = LoadJson(
 		RESOURCES_FOLDER + std::string("sprites/pikachu/animations.json"));
@@ -560,7 +563,7 @@ int main(void)
 				//DestroyStackNoDepth(&enclosingParticles.enclosedPoly);
 				//DestroyStackNoDepth(&yellowTransitionParticles.enclosedPoly);
 				
-				yellowTransitionParticles.Reset();
+				//yellowTransitionParticles.Reset();
 
 				//printf("\nReset");
 
