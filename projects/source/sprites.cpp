@@ -9,11 +9,14 @@
 
 SpriteAnimation::SpriteAnimation(AnimationData* animData) : animData_(animData)
 {
+	if (animData_)
+		loop = animData_->loop;
 }
 
 SpriteAnimation::SpriteAnimation(const SpriteAnimation& other)
 {
 	this->loop = other.loop;
+	this->eventsEnabled = other.eventsEnabled;
 	this->animData_ = other.animData_;
 
 	this->currentFrame = other.currentFrame;
@@ -92,7 +95,11 @@ void SpriteAnimation::SetAnimationData(AnimationData* animData, bool preservePla
 	if (!animData || animData->keyframes.empty() || animData->textures.empty())
 		return;
 
+	const bool animationChanged = animData_ != animData;
 	animData_ = animData;
+	if (animationChanged)
+		loop = animData_->loop;
+
 	if (!preservePlayback)
 	{
 		ClearKeyframeHitboxes();
@@ -114,7 +121,7 @@ void SpriteAnimation::Update(int posX, int posY)
 
 	if (!animData_ || animData_->keyframes.empty())
 		return;
-	if (finished && !animData_->loop)
+	if (finished && !loop)
 		return;
 
 	float deltaTime = Timer::GetInstance().GetDeltaTime();
@@ -142,7 +149,7 @@ void SpriteAnimation::Update(int posX, int posY)
 			enteredNewFrame = true;
 			if (currentFrame >= animData_->totalFrames)
 			{
-				if (animData_->loop) {
+				if (loop) {
 					currentFrame = 0;
 				}
 				else currentFrame = animData_->totalFrames - 1;
@@ -158,7 +165,7 @@ void SpriteAnimation::Update(int posX, int posY)
 	}
 
 	// === SPAWN KEYFRAME HITBOXES ===
-	if (enteredNewFrame)
+	if (enteredNewFrame && eventsEnabled)
 		SpawnCurrentKeyframeHitboxes(posX, posY);
 
 }
@@ -205,6 +212,30 @@ void SpriteAnimation::DrawRotScaleCentered(float centerX, float centerY, float r
 	const int textureIndex = animData_->keyframes[currentFrame].textureIndex;
 	const TextureData& textureData = animData_->textures[textureIndex];
 	const Texture2D texture = textureData.texture;
+
+	float frameOffsetX = 0.0f;
+	float frameOffsetY = 0.0f;
+	float frameScale = 1.0f;
+	float frameRotationDeg = 0.0f;
+	for (const std::unique_ptr<AnimationEvent>& event : animData_->keyframes[currentFrame].events) {
+		if (event->type != AnimationEventType::Transform)
+			continue;
+
+		const TransformAnimationEvent* transform =
+			static_cast<const TransformAnimationEvent*>(event.get());
+		frameOffsetX = transform->offsetX;
+		frameOffsetY = transform->offsetY;
+		frameScale = std::max(0.0f, transform->scale);
+		frameRotationDeg = transform->rotationDeg;
+	}
+	if (flipX) {
+		frameOffsetX = -frameOffsetX;
+		frameRotationDeg = -frameRotationDeg;
+	}
+
+	const float effectiveScale = scale * frameScale;
+	const float finalRotationDeg = rotDeg + frameRotationDeg;
+
 	const Rectangle source = {
 		0.0f,
 		0.0f,
@@ -214,23 +245,32 @@ void SpriteAnimation::DrawRotScaleCentered(float centerX, float centerY, float r
 
 	const float visibleCenterX = textureData.visibleBounds.x
 		+ textureData.visibleBounds.width * 0.5f;
-	float centerCorrectionX = (texture.width * 0.5f - visibleCenterX) * scale;
+	float centerCorrectionX = (texture.width * 0.5f - visibleCenterX) * effectiveScale;
 	if (flipX)
 		centerCorrectionX = -centerCorrectionX;
-	const float rotationRadians = rotDeg * DEG2RAD;
+	const float parentRotationRadians = rotDeg * DEG2RAD;
+	const float finalRotationRadians = finalRotationDeg * DEG2RAD;
+	const float transformedOffsetX = frameOffsetX * scale;
+	const float transformedOffsetY = frameOffsetY * scale;
 
 	const Rectangle destination = {
-		centerX + centerCorrectionX * cosf(rotationRadians),
-		centerY + centerCorrectionX * sinf(rotationRadians),
-		static_cast<float>(texture.width) * scale,
-		static_cast<float>(texture.height) * scale
+				centerX
+			+ transformedOffsetX * cosf(parentRotationRadians)
+			- transformedOffsetY * sinf(parentRotationRadians)
+			+ centerCorrectionX * cosf(finalRotationRadians),
+		centerY
+			+ transformedOffsetX * sinf(parentRotationRadians)
+			+ transformedOffsetY * cosf(parentRotationRadians)
+			+ centerCorrectionX * sinf(finalRotationRadians),
+		static_cast<float>(texture.width) * effectiveScale,
+		static_cast<float>(texture.height) * effectiveScale
 	};
 	const Vector2 origin = {
 		destination.width / 2.0f,
 		destination.height / 2.0f
 	};
 
-	DrawTexturePro(texture, source, destination, origin, rotDeg, WHITE);
+	DrawTexturePro(texture, source, destination, origin, finalRotationDeg, WHITE);
 }
 
 Vector2 SpriteAnimation::GetCurrentTextureSize() const

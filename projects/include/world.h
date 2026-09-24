@@ -8,6 +8,7 @@ class Hitbox; //fd
 class HazardObject;
 class WorldObject;
 class EnclosableObject;
+class VisualEffect;
 
 
 class GameManager {
@@ -25,6 +26,7 @@ public:
 	std::vector<HazardObject*> activeHazardObjects;
 	std::vector<WorldObject*> allWorldObjs;
 	std::vector<EnclosableObject*> allEnclosableObjs;
+	std::vector<VisualEffect*> activeVisualEffects;
 	WorldObject* topObjectPtr = nullptr;
 	Rectangle playableArea = {0.0f,0.0f,0.0f,0.0f};
 

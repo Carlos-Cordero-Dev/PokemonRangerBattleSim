@@ -23,6 +23,7 @@ public:
 	void SetFacingDirection(FacingDirection direction);
 	bool IsAnimationFinished() const;
 	const AnimationVariant* ResolveAnimation() const;
+	const AnimationVariant* ResolveAnimation(const std::string& animationName) const;
 
 	StateMachine* stateMachine = nullptr;
 

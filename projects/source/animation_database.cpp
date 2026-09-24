@@ -80,20 +80,20 @@ static TextureData LoadSpriteTexture(const std::string& filePath, const std::str
 
 static FacingDirection ParseDirection(const std::string& name)
 {
-    if (name == "up_left")
-        return FacingDirection::UpLeft;
+	if (name == "up_left")
+		return FacingDirection::UpLeft;
 
-    if (name == "up_right")
-        return FacingDirection::UpRight;
+	if (name == "up_right")
+		return FacingDirection::UpRight;
 
-    if (name == "down_left")
-        return FacingDirection::DownLeft;
+	if (name == "down_left")
+		return FacingDirection::DownLeft;
 
-    if (name == "down_right")
-        return FacingDirection::DownRight;
+	if (name == "down_right")
+		return FacingDirection::DownRight;
 
 	//default
-    return FacingDirection::DownLeft;
+	return FacingDirection::DownLeft;
 }
 
 AnimationSet AnimationDatabase::LoadAnimationSet(const Json& json)
@@ -105,7 +105,13 @@ AnimationSet AnimationDatabase::LoadAnimationSet(const Json& json)
 		return set;
 	}
 
-	const std::string pokemonId = json.value("id", "");
+	if (!json.contains("id") || !json["id"].is_string()) {
+		printf("\nAnimation manifest requires a string 'id'");
+		return set;
+	}
+
+	const std::string pokemonId = json["id"].get<std::string>();
+
 
 	for (const auto& [action, directions] : json["animations"].items())
 	{
@@ -129,21 +135,12 @@ AnimationSet AnimationDatabase::LoadAnimationSet(const Json& json)
 				continue;
 			}
 
-			std::string path = config["path"].get<std::string>();
-			if (path.rfind("sprites/", 0) != 0) {
-				if (pokemonId.empty()) {
-					printf("\nAnimation '%s/%s' uses a relative path but the manifest has no 'id'",
-						action.c_str(), directionName.c_str());
-					continue;
-				}
-
-				path = "sprites/" + pokemonId + "/" + path;
-			}
+			const std::string path = pokemonId + "/" + config["path"].get<std::string>();
 			const std::string animationName = config["animation"].get<std::string>();
 			AnimationData* animation = GetAnimationDataFromName(animationName);
 
 			if (!animation) {
-				LoadAnimDataFromFolder(path, animationName);
+				LoadAnimDataFromSpritesFolder(path, animationName);
 				animation = GetAnimationDataFromName(animationName);
 			}
 
@@ -231,6 +228,20 @@ std::vector<std::vector<KeyFrame>> LoadKeyframesFromFile(const std::string& file
 
 				kf.events.push_back(std::move(hitboxEvent));
 
+			}
+			else if (eventName == "transform") {
+				auto transformEvent = std::make_unique<TransformAnimationEvent>();
+
+				if (!(eventStream >> transformEvent->offsetX
+					>> transformEvent->offsetY
+					>> transformEvent->scale
+					>> transformEvent->rotationDeg)) {
+					printf("\nInvalid transform event in %s: %s",
+						file_path.c_str(), line.c_str());
+					continue;
+				}
+
+				kf.events.push_back(std::move(transformEvent));
 			}
 			else
 			{
@@ -415,11 +426,11 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 			const bool rightIsNumber = !rightStem.empty() && std::all_of(
 				rightStem.begin(), rightStem.end(), [](unsigned char c) { return std::isdigit(c); });
 
-		if (leftIsNumber && rightIsNumber && leftStem.size() != rightStem.size())
-			return leftStem.size() < rightStem.size();
+			if (leftIsNumber && rightIsNumber && leftStem.size() != rightStem.size())
+				return leftStem.size() < rightStem.size();
 
-		return leftStem < rightStem;
-	});
+			return leftStem < rightStem;
+		});
 
 	for (const std::filesystem::path& texturePath : texturePaths) {
 
@@ -447,6 +458,18 @@ void AnimationDatabase::LoadAnimDataFromFolder(const std::string& basePathFromRe
 
 	// Store in animation map
 	animData.emplace(animName, anim);
+}
+
+void AnimationDatabase::LoadAnimDataFromSpritesFolder(
+	const std::string& pathFromSpritesFolder,
+	const std::string& animName)
+{
+	std::string relativePath = pathFromSpritesFolder;
+	std::replace(relativePath.begin(), relativePath.end(), '\\', '/');
+	if (relativePath.rfind("sprites/", 0) == 0)
+		relativePath.erase(0, std::string("sprites/").size());
+
+	LoadAnimDataFromFolder("sprites/" + relativePath, animName);
 }
 
 

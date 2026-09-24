@@ -20,6 +20,13 @@
         { "type": "MoveTowardsTarget", "speed": 120 }
       ]
     },
+	{
+      "name": "PrepareAttack",
+      "onEnter": [
+	    { "type": "SetAnimation", "animation": "prepare_attack" },
+		{ "type": "FaceCenter" }
+      ]
+    },
     {
 	  "name": "Attack_0",
 	  "onEnter": [
@@ -28,6 +35,16 @@
 		  "type": "SetTarget",
 		  "area": "through_playable_center",
 		  "travelDistance": 300
+		},
+		{
+		  "type": "SpawnVisualEffect",
+		  "animation": "attack_0_effect",
+		  "offsetX": 0,
+		  "offsetY": 0,
+		  "scale": 1,
+		  "rotationDeg": 0,
+		  "followOwner": true,
+		  "layer": "front"
 		}
 	  ],
 	  "onUpdate": [
@@ -57,8 +74,7 @@
 	  "to": [
 			{ "state": "Idle", "weight": 35 },
 			{ "state": "Move", "weight": 60 },
-			{ "state": "Attack_0", "weight": 2.5 },
-			{ "state": "Attack_1", "weight": 2.5 }
+			{ "state": "PrepareAttack", "weight": 5 }
 	   ],      
 	   "conditions": [
        { "type": "DistanceToTargetLess", "value": 0.1 }
@@ -67,13 +83,22 @@
     {
       "from": "Idle",
 	  "to": [
-			{ "state": "Move", "weight": 70 },
-			{ "state": "Attack_0", "weight": 15 },
-			{ "state": "Attack_1", "weight": 15 }
-		
+			{ "state": "Move", "weight": 15 },
+			{ "state": "PrepareAttack", "weight": 85 }
 	   ],      
 	   "conditions": [
        { "type": "TimerFinished", "name": "idleTimer" }
+      ]
+    },
+    {
+      "from": "PrepareAttack",
+	  "to": [
+			{ "state": "Attack_0", "weight": 60 },
+			{ "state": "Attack_1", "weight": 40 }
+		
+	   ],      
+	   "conditions": [
+       { "type": "AnimationFinished" }
       ]
     },
 	{

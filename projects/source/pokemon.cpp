@@ -70,7 +70,12 @@ bool Pokemon::IsAnimationFinished() const
 
 const AnimationVariant* Pokemon::ResolveAnimation() const
 {
-	auto actionIt = animationSet.find(animationState);
+	return ResolveAnimation(animationState);
+}
+
+const AnimationVariant* Pokemon::ResolveAnimation(const std::string& animationName) const
+{
+	auto actionIt = animationSet.find(animationName);
 	if (actionIt == animationSet.end() || actionIt->second.empty())
 		return nullptr;
 

@@ -4,7 +4,7 @@
       "type": "ProjectileObject",
       "name": "pikachu_thunderjolt",
       "visualAnimation": "thunderjolt",
-      "visualAnimationPath": "sprites/special_effects/thunderjolt",
+      "visualAnimationPath": "special_effects/thunderjolt",
       "scale": 1.0,
 	  "rotationDeg": -90,
       "lifetimeSec": 7

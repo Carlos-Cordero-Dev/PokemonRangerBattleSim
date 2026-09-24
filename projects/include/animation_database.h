@@ -11,7 +11,8 @@
 struct TextureData;
 
 enum class AnimationEventType {
-	MeleeHitbox
+	MeleeHitbox,
+	Transform
 };
 
 struct AnimationEvent {
@@ -29,6 +30,16 @@ struct HitboxAnimationEvent : AnimationEvent {
 	float offsetY = 0.0f;
 	float height = 0.0f;
 	float width = 0.0f;
+};
+
+struct TransformAnimationEvent : AnimationEvent {
+	TransformAnimationEvent() : AnimationEvent() {
+		type = AnimationEventType::Transform;
+	}
+	float offsetX = 0.0f;
+	float offsetY = 0.0f;
+	float scale = 1.0f;
+	float rotationDeg = 0.0f;
 };
 
 struct KeyFrame
@@ -84,6 +95,9 @@ public:
 	//animName must match .prkf name file for propper keyframe data loading
 	void LoadAnimDataFromFolder(const std::string& basePathFromResourceFolder,
 		const std::string& animName);
+	void LoadAnimDataFromSpritesFolder(const std::string& pathFromSpritesFolder,
+		const std::string& animName);
+
 
 	AnimationData* LoadAnimDataByName(const std::string& animName);
 

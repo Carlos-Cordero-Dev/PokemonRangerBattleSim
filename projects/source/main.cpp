@@ -50,6 +50,7 @@
 #include "world.h"
 #include "world_object.h"
 #include "hitbox.h"
+#include "visual_effect.h"
 #include "pokemon.h"
 
 #include "state_machine.h"
@@ -68,7 +69,10 @@
 #include "actions/set_animation_action.h"
 #include "actions/spawn_hazard_object_action.h"
 #include "actions/spawn_projectile_object_action.h"
+#include "actions/spawn_visual_effect_action.h"
 #include "actions/set_target_to_touch_action.h"
+#include "actions/face_target_action.h"
+#include "actions/face_center_action.h"
 
 #include "conditions/condition_factory.h"
 
@@ -382,6 +386,15 @@ int main(void)
 		return a;
 		});
 
+	actionFactory.Register("FaceTarget", [](const Json& j) {
+		auto a = std::make_unique<FaceTargetAction>();
+		return a;
+		});
+	actionFactory.Register("FaceCenter", [](const Json& j) {
+		auto a = std::make_unique<FaceCenterAction>();
+		return a;
+		});
+
 	actionFactory.Register("SpawnHitbox", [](const Json& j) {
 		auto a = std::make_unique<SpawnHitboxAction>();
 
@@ -392,6 +405,18 @@ int main(void)
 		a->dirY = ParseFloatValue(j["dirY"]);
 		a->delaySec = ParseFloatValue(j["delaySec"]);
 
+		return a;
+		});
+
+	actionFactory.Register("SpawnVisualEffect", [](const Json& j) {
+		auto a = std::make_unique<SpawnVisualEffectAction>();
+		a->animationName = j["animation"];
+		a->offsetX = ParseFloatValue(j.value("offsetX", Json(0.0f)));
+		a->offsetY = ParseFloatValue(j.value("offsetY", Json(0.0f)));
+		a->scale = ParseFloatValue(j.value("scale", Json(1.0f)));
+		a->rotationDeg = ParseFloatValue(j.value("rotationDeg", Json(0.0f)));
+		a->followOwner = j.value("followOwner", true);
+		a->drawBehindOwner = j.value("layer", "behind") != "front";
 		return a;
 		});
 
@@ -738,6 +763,11 @@ int main(void)
 			}
 		}
 
+		for (VisualEffect* effect : gameManager.activeVisualEffects)
+		{
+			effect->Update();
+		}
+
 
 		ui.Update();
 
@@ -889,10 +919,21 @@ int main(void)
 
 
 		//draw every world object
+		for (VisualEffect* effect : gameManager.activeVisualEffects)
+		{
+			if (effect->DrawsBehindOwner())
+				effect->Draw();
+		}
 
 		for (WorldObject* wobj :gameManager.allWorldObjs)
 		{
 			wobj->Draw();
+		}
+
+		for (VisualEffect* effect : gameManager.activeVisualEffects)
+		{
+			if (!effect->DrawsBehindOwner())
+				effect->Draw();
 		}
 
 		//debug draw hitboxes

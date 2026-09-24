@@ -4,7 +4,7 @@
       "type": "HazardObject",
       "name": "garchomp_claw",
       "visualAnimation": "garchomp_idle",
-      "visualAnimationPath": "sprites/garchomp/idle",
+      "visualAnimationPath": "garchomp/idle",
       "width": 50,
       "height": 50,
       "lifetimeSec": 0.1

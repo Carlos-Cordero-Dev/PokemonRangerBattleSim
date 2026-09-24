@@ -10,6 +10,7 @@ obj/
 build/
 bin/
 tmp/
+__pycache__/
 *.ini
 
 #switch stuff

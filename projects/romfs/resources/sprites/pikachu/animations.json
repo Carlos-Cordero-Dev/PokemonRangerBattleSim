@@ -25,6 +25,18 @@
 		"loop": true
       }
     },
+	"prepare_attack": {
+      "down_left": {
+        "path": "prepare_attack/down_left",
+        "animation": "pikachu_prepare_attack_down_left",
+		"loop": true
+      },
+      "up_left": {
+        "path": "prepare_attack/up_left",
+        "animation": "pikachu_prepare_attack_up_left",
+		"loop": true
+      }
+    },
     "attack_0": {
       "down_left": {
         "path": "run/down_left",
@@ -34,6 +46,18 @@
       "up_left": {
         "path": "run/up_left",
         "animation": "pikachu_attack_0_up_left",
+  		"loop": true
+      }
+    },
+    "attack_0_effect": {
+      "down_left": {
+      "path": "special_effects/tackle",
+        "animation": "tackle_effect_down_left",
+  		"loop": true
+      },
+      "up_left": {
+      "path": "special_effects/tackle",
+        "animation": "tackle_effect_up_left",
   		"loop": true
       }
     },

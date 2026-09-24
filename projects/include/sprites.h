@@ -36,6 +36,8 @@ public:
 	void DrawRotScale(int posX, int posY, float rotDeg, float scale, bool flipX = false);
 	void DrawRotScaleCentered(float centerX, float centerY, float rotDeg = 0.0f, float scale = 1.0f, bool flipX = false);
 	Vector2 GetCurrentTextureSize() const;
+	void SetLoop(bool shouldLoop) { loop = shouldLoop; }
+	void SetEventsEnabled(bool enabled) { eventsEnabled = enabled; }
 
 	bool IsFinished() const { return finished; }
 	void Reset();
@@ -62,6 +64,7 @@ private:
 	Vector2 keyframeHitboxOwnerPosition = { 0.0f, 0.0f };
 
 	bool frameEventPending = true;
+	bool eventsEnabled = true; // visual effects ignore events (like hitboxes)
 
 	int framesPassedSinceLastAnimUpdate = 0;
 	int lastRealFrame = 0;

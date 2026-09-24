@@ -30,6 +30,11 @@ public:
     virtual void OnExit() {
         for (auto& a : onExitActions)
             a->Execute(owner, 0.0f);
+        //action specific on_exit triggered at state level
+        for (auto& a : onEnterActions)
+            a->OnStateExit(owner);
+        for (auto& a : onUpdateActions)
+            a->OnStateExit(owner);
     }
 
     virtual ~State() = default;

@@ -48,7 +48,7 @@ public:
                 const std::string animationName = effectJson["visualAnimation"];
                 const std::string animationPath = effectJson["visualAnimationPath"];
                 AnimationDatabase& animationDatabase = AnimationDatabase::Instance();
-                animationDatabase.LoadAnimDataFromFolder(animationPath, animationName);
+                animationDatabase.LoadAnimDataFromSpritesFolder(animationPath, animationName);
                 if (!animationDatabase.GetAnimationDataFromName(animationName)) {
                     printf("Attack effect '%s' could not load animation '%s' from '%s'\n",
                         name.c_str(), animationName.c_str(), animationPath.c_str());
