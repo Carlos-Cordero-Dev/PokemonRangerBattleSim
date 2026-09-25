@@ -244,15 +244,19 @@ int pnpoly(Point P, Point* V, int polyNodeCount)
 
 Point* CoordListToPointList(Coord* poly_start, Coord* poly_end)
 {
-	int count = poly_start->depth - poly_end->depth;
+	int count = 0;
+	for (Coord* current = poly_start; current && current != poly_end; current = current->nextCoord)
+	{
+		count++;
+	}
 	//printf("Depth %d", count);
 
 	//Im sure this will crash at some point
-	Point* pointList = (Point*) malloc(count * sizeof(Point));
+	Point* pointList = (Point*)malloc(count * sizeof(Point));
 
 	Coord* current = poly_start;
 
-	for(int i = 0; i < count ; i++)
+	for (int i = 0; i < count; i++)
 	{
 		if (current)
 		{
@@ -263,4 +267,3 @@ Point* CoordListToPointList(Coord* poly_start, Coord* poly_end)
 
 	return pointList;
 }
-

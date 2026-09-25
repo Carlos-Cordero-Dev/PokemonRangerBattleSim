@@ -156,9 +156,9 @@ static bool onSegment(Coord* p, Coord* q, Coord* r) {
 // Determine the orientation of the triplet (p, q, r)
 // 0 -> collinear, 1 -> clockwise, 2 -> counterclockwise
 static int orientation(Coord* p, Coord* q, Coord* r) {
-	int val = (q->y - p->y) * (r->x - q->x) -
+	double val = (q->y - p->y) * (r->x - q->x) -
 		(q->x - p->x) * (r->y - q->y);
-	if (val == 0) return 0;           // Collinear
+	if (std::fabs(val) < 0.000001) return 0; // Collinear
 	return (val > 0) ? 1 : 2;         // Clockwise or Counterclockwise
 }
 
@@ -184,17 +184,17 @@ static bool doIntersect(Coord* p1, Coord* q1, Coord* p2, Coord* q2) {
 
 static bool getIntersectionPoint(Coord* p1, Coord* q1, Coord* p2, Coord* q2, Coord& intersection) {
 	// Line equations: p1 + t1 * (q1 - p1) = p2 + t2 * (q2 - p2)
-	int a1 = q1->y - p1->y;
-	int b1 = p1->x - q1->x;
-	int c1 = a1 * p1->x + b1 * p1->y;
+	double a1 = q1->y - p1->y;
+	double b1 = p1->x - q1->x;
+	double c1 = a1 * p1->x + b1 * p1->y;
 
-	int a2 = q2->y - p2->y;
-	int b2 = p2->x - q2->x;
-	int c2 = a2 * p2->x + b2 * p2->y;
+	double a2 = q2->y - p2->y;
+	double b2 = p2->x - q2->x;
+	double c2 = a2 * p2->x + b2 * p2->y;
 
-	int determinant = a1 * b2 - a2 * b1;
+	double determinant = a1 * b2 - a2 * b1;
 
-	if (determinant == 0) return false; // Parallel lines
+	if (std::fabs(determinant) < 0.000001) return false; // Parallel lines
 
 	// Calculate intersection point
 	intersection.x = (b2 * c1 - b1 * c2) / determinant;
@@ -225,7 +225,7 @@ static double calculatePolygonArea(Coord* start, Coord* end) {
 	return fabs(area) / 2.0;
 }
 
-Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord *endNode)
+Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord* endNode)
 {
 	Coord* newPoly;
 	Coord* aux = startNode;
@@ -236,15 +236,15 @@ Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord *endNode)
 	newPoly->y = startNode->y;
 
 	while (aux != endNode)
-	{ 
-	  aux = aux->nextCoord;
+	{
+		aux = aux->nextCoord;
 
-	  if (newPolyAux == nullptr) newPolyAux = newPoly;
-	  newPolyAux->nextCoord = (Coord*)malloc(sizeof(Coord));
-	  newPolyAux = newPolyAux->nextCoord;
+		if (newPolyAux == nullptr) newPolyAux = newPoly;
+		newPolyAux->nextCoord = (Coord*)malloc(sizeof(Coord));
+		newPolyAux = newPolyAux->nextCoord;
 
-	  newPolyAux->x = aux->x;
-	  newPolyAux->y = aux->y;
+		newPolyAux->x = aux->x;
+		newPolyAux->y = aux->y;
 	}
 
 	newPolyAux->nextCoord = nullptr;
@@ -281,10 +281,10 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEncl
 				current = current->nextCoord;
 				continue;
 			}
-			int oldHeadX = head->x;
-			int oldHeadY = head->y;
-			int oldcurrentX = current->x;
-			int oldcurrentY = current->y;
+			float oldHeadX = head->x;
+			float oldHeadY = head->y;
+			float oldcurrentX = current->x;
+			float oldcurrentY = current->y;
 
 			head->x = intersection.x;
 			head->y = intersection.y;
@@ -293,17 +293,29 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEncl
 
 			double area = calculatePolygonArea(head, current);
 
-			head->x = oldHeadX;
-			head->y = oldHeadY;
-			current->x = oldcurrentX;
-			current->y = oldcurrentY;
-
 			if (area < kMinArea)
 			{
+				head->x = oldHeadX;
+				head->y = oldHeadY;
+				current->x = oldcurrentX;
+				current->y = oldcurrentY;
 				current = current->nextCoord;
 				printf("\nmin area not valid");
 				continue;
 			}
+
+			Coord* enclosedPolygon = DeepcopyPolyStartEnd(head, current);
+			Point* enclosedPoints = CoordListToPointList(head, current);
+			int polyNodeCount = 0;
+			for (Coord* polygonNode = head; polygonNode && polygonNode != current; polygonNode = polygonNode->nextCoord)
+			{
+				polyNodeCount++;
+			}
+
+			head->x = oldHeadX;
+			head->y = oldHeadY;
+			current->x = oldcurrentX;
+			current->y = oldcurrentY;
 
 			head->intersected = true;
 			headNext->intersected = true;
@@ -311,9 +323,6 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEncl
 			current->nextCoord->intersected = true;
 			printf("intersected %d %d %d %d  point %d %d area %f\n", head->depth, headNext->depth,
 				current->depth, current->nextCoord->depth, intersection.x, intersection.y, area);
-
-			Coord* enclosedPolygon = DeepcopyPolyStartEnd(head,current);
-			
 
 			//run enclosed logic
 			for (EnclosableObject* enclosableObj : inEnclosableObjs)
@@ -325,9 +334,7 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEncl
 				//	enclosableObj->OnEnclosed(); // This will call Pokemon::onEnclosed()
 				//}
 
-				int polyNodeCount = head->depth - current->depth;
-
-				if (pnpoly({ centerX,centerY }, CoordListToPointList(head, current), polyNodeCount) != 0)
+				if (pnpoly({ centerX,centerY }, enclosedPoints, polyNodeCount) != 0)
 				{
 					Pokemon* pokemonEnclosable = dynamic_cast<Pokemon*>(enclosableObj);
 					if (pokemonEnclosable)
@@ -346,6 +353,7 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEncl
 				}
 
 			}
+			free(enclosedPoints);
 
 			//printf("depth headnext %d current %d \n", headNext->depth, current->depth);
 			freeCoordsBackward(headNext, current);
@@ -359,11 +367,10 @@ bool checkTopIntersection(Top* top, const std::vector<EnclosableObject*>& inEncl
 			//UpdateStackDepths(head);
 
 
-			outEnclosedPolygon =  enclosedPolygon;
+			outEnclosedPolygon = enclosedPolygon;
 			return true;
 		}
 		current = current->nextCoord;
 	}
 	return false;
 }
-

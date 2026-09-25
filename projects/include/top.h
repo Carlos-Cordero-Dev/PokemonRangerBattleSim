@@ -50,7 +50,7 @@ void ResetTop(Top* top);
 //======= intersection stuff  =============================================
 
 const int kMinDepth = 10; // min number of nodes to consider a closed polygon
-const double kMinArea = 1000; //min area to consider close polygon
+const double kMinArea = 500; //min area to consider close polygon
 
 Coord* DeepcopyPolyStartEnd(Coord* startNode, Coord* endNode);
 
