@@ -692,7 +692,7 @@ int main(void)
 				damagedParticles.calc_positions_from_enclosed_points(top.stack);
 
 				enclosingParticles.Reset();
-				yellowTransitionParticles.Reset();
+				yellowTransitionParticles.on_trail_break(top.stack);
 
 				ResetTop(&top);
 				top.wo->position.x = -100;
@@ -716,7 +716,7 @@ int main(void)
 				damagedParticles.calc_positions_from_enclosed_points(top.stack);
 
 				enclosingParticles.Reset();
-				yellowTransitionParticles.Reset();
+				yellowTransitionParticles.on_trail_break(top.stack);
 
 				ResetTop(&top);
 				top.wo->position.x = -100;
@@ -740,7 +740,7 @@ int main(void)
 				damagedParticles.calc_positions_from_enclosed_points(top.stack);
 
 				enclosingParticles.Reset();
-				yellowTransitionParticles.Reset();
+				yellowTransitionParticles.on_trail_break(top.stack);
 
 				ResetTop(&top);
 				top.wo->position.x = -100;
@@ -766,7 +766,7 @@ int main(void)
 				damagedParticles.calc_positions_from_enclosed_points(top.stack);
 
 				enclosingParticles.Reset();
-				yellowTransitionParticles.Reset();
+				yellowTransitionParticles.on_trail_break(top.stack);
 
 				ResetTop(&top);
 				top.wo->position.x = -100;

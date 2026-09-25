@@ -10,6 +10,7 @@ public:
 	void Reset() override;
 	void Draw() override;
 	void on_intersection(Coord* enclosedPolygon);
+	void on_trail_break(Coord* trail);
 
 private:
 	Coord* ownedEnclosedPolygon = nullptr;
@@ -80,22 +81,14 @@ inline void YellowTransitionParticles::Draw()
 }
 
 static void CalculateEnclosedShaderAreaPoints(
-	Coord* enclosedPoints, std::vector<Vector2>& vectorToFill, float thickness)
+	Coord* enclosedPoints, std::vector<Vector2>& vectorToFill, float thickness, bool closeLoop)
 {
 	const float halfThickness = thickness * 0.5f;
 
 	Coord* aux = enclosedPoints;
-	Coord* auxNext = enclosedPoints->nextCoord;
-	bool completed = false;
-
-	while (!completed)
+	while (aux && aux->nextCoord)
 	{
-		if (aux->nextCoord == nullptr)
-		{
-			//circle back to begginig
-			auxNext = enclosedPoints;
-			completed = true;
-		}
+		Coord* auxNext = aux->nextCoord;
 
 		Vector2 topLeft = { aux->x,aux->y + halfThickness };
 		Vector2 topRight = { auxNext->x,auxNext->y + halfThickness };
@@ -108,7 +101,14 @@ static void CalculateEnclosedShaderAreaPoints(
 		vectorToFill.emplace_back(botRight);
 
 		aux = auxNext;
-		auxNext = auxNext->nextCoord;
+	}
+
+	if (closeLoop && aux && aux != enclosedPoints)
+	{
+		vectorToFill.emplace_back(Vector2{ aux->x, aux->y + halfThickness });
+		vectorToFill.emplace_back(Vector2{ enclosedPoints->x, enclosedPoints->y + halfThickness });
+		vectorToFill.emplace_back(Vector2{ aux->x, aux->y - halfThickness });
+		vectorToFill.emplace_back(Vector2{ enclosedPoints->x, enclosedPoints->y - halfThickness });
 	}
 }
 
@@ -116,5 +116,11 @@ inline void YellowTransitionParticles::on_intersection(Coord* enclosedPolygon)
 {
 	Reset();
 	ownedEnclosedPolygon = enclosedPolygon;
-	CalculateEnclosedShaderAreaPoints(ownedEnclosedPolygon, areaPoints, kInitialThickness);
+	CalculateEnclosedShaderAreaPoints(ownedEnclosedPolygon, areaPoints, kInitialThickness, true);
+}
+
+inline void YellowTransitionParticles::on_trail_break(Coord* trail)
+{
+	Reset();
+	CalculateEnclosedShaderAreaPoints(trail, areaPoints, kInitialThickness, false);
 }
