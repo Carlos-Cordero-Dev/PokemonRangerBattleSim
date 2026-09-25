@@ -26,6 +26,9 @@ prbs_log.txt
 *.swo
 *~
 
+# Generated zips
+*.zip
+
 # Ignore thumbnails created by windows
 Thumbs.db
 

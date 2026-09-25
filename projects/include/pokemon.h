@@ -40,6 +40,11 @@ public:
 	// must match one of the animation names in the state machine
 	std::string animationState;
 
+	//same warning sign sprite for every pokemon
+	static inline SpriteAnimation* warningSignSprite;
+	bool drawWariningSign = false;
+	Vector2 warningSignOffset = { 0.0f, 0.0f };
+
 private:
 	void DrawShadow();
 

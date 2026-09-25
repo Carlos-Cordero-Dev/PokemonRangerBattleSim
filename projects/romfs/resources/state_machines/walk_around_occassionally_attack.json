@@ -25,6 +25,13 @@
       "onEnter": [
 	    { "type": "SetAnimation", "animation": "prepare_attack" },
 		{ "type": "FaceCenter" }
+      ],
+      "onUpdate": [
+        { 
+		  "type": "DrawWarningSign", 		  
+	      "offsetX": -10,
+		  "offsetY": -50
+		}
       ]
     },
     {

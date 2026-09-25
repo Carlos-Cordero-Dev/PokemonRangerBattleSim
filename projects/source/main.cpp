@@ -73,6 +73,7 @@
 #include "actions/set_target_to_touch_action.h"
 #include "actions/face_target_action.h"
 #include "actions/face_center_action.h"
+#include "actions/draw_warning_action.h"
 
 #include "conditions/condition_factory.h"
 
@@ -290,6 +291,9 @@ int main(void)
 	animDatabase.LoadAnimDataFromFolder("sprites/stylus/top", "top_idle_spin");
 	animDatabase.LoadAnimDataFromFolder("sprites/stylus/tail_start_end","tail_start_end");
 
+	//warning sign is always loaded (used for draw_warning_action)
+	animDatabase.LoadAnimDataFromFolder("sprites/special_effects/warning_signs", "warning_sign");
+
 	//TODO: A bit lengthy, you have to make it so animations can only be in one folder so instead of all 4 attack anim in the same folder
 	// there must be 1 folder per anim and so when you call GetAnimationDataFromName make it match to the one at LoadAnimDataFromFolder you gave it.
 	// prkf files should be fine cause they support single anims
@@ -308,6 +312,9 @@ int main(void)
 	// Main game loop
 	GameManager& gameManager = GameManager::GetInstance();
 	gameManager.playableArea = backdrop.GetPlayableArea(renderWidth, renderHeight);
+
+	// load warning signs (TODO: this probably will need to be abstracted 
+	Pokemon::warningSignSprite = new SpriteAnimation{ animDatabase.GetAnimationDataFromName("warning_sign") };
 
 	std::string text = "Frame ";
 	SetTargetFPS(500);
@@ -436,6 +443,13 @@ int main(void)
 	actionFactory.Register("SetAnimation", [](const Json& j) {
 		auto a = std::make_unique<SetAnimationAction>();
 		a->animationName = j["animation"];
+		return a;
+		});
+
+	actionFactory.Register("DrawWarningSign", [](const Json& j) {
+		auto a = std::make_unique<DrawWarningAction>();
+		a->offsetX = ParseFloatValue(j["offsetX"]);
+		a->offsetY = ParseFloatValue(j["offsetY"]);
 		return a;
 		});
 

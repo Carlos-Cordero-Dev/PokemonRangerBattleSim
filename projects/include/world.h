@@ -10,7 +10,6 @@ class WorldObject;
 class EnclosableObject;
 class VisualEffect;
 
-
 class GameManager {
 
 public:

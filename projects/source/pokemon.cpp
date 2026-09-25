@@ -142,6 +142,16 @@ void Pokemon::Draw()
 			isEnclosed = false;
 		}
 	}
+	
+	//warning sign
+	if (drawWariningSign)
+	{
+		Pokemon::warningSignSprite->DrawRotScaleCentered(
+			position.x + warningSignOffset.x,
+			position.y + warningSignOffset.y,
+			0.0f, 2.5f);
+		drawWariningSign = false; //always self-disable, will be re-enabled during update every frame
+	}
 
 	//debug draw bounding box
 	//DrawRectangleLines(
