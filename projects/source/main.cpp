@@ -151,7 +151,7 @@ int main(void)
     bool textBoxEditMode = false;
 
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
+    InitWindow(screenWidth, screenHeight, "Pokemon Ranger Battle Simulator");
 
 #ifdef WINDOWS_BUILD
 	HWND windowHandle = reinterpret_cast<HWND>(GetWindowHandle());
@@ -225,6 +225,12 @@ int main(void)
 	const int trailRenderHeight = renderHeight / trailPixelScale;
 	RenderTexture2D stylusTrailRenTex = LoadRenderTexture(trailRenderWidth, trailRenderHeight);
 	SetTextureFilter(stylusTrailRenTex.texture, TEXTURE_FILTER_POINT);
+
+	constexpr int yellowPixelScale = 3;
+	const int yellowRenderWidth = renderWidth / yellowPixelScale;
+	const int yellowRenderHeight = renderHeight / yellowPixelScale;
+	RenderTexture2D yellowTransitionRenTex = LoadRenderTexture(yellowRenderWidth, yellowRenderHeight);
+	SetTextureFilter(yellowTransitionRenTex.texture, TEXTURE_FILTER_POINT);
 
 	//texture of stylus shader in Texture2D version to be able to do DrawTexture
 	//Texture2D stylusOverlay;
@@ -797,6 +803,19 @@ int main(void)
 
 		rlDisableDepthTest();
 
+		// === YELLOW PARTICLES TEXTURE === 
+
+		BeginTextureMode(yellowTransitionRenTex);
+		ClearBackground(BLANK);
+		BeginBlendMode(BLEND_ALPHA);
+		Camera2D yellowCamera = {};
+		yellowCamera.zoom = 1.0f / static_cast<float>(yellowPixelScale);
+		BeginMode2D(yellowCamera);
+		yellowTransitionParticles.Draw(static_cast<float>(yellowPixelScale));
+		EndMode2D();
+		EndBlendMode();
+		EndTextureMode();
+
 		// === STYLUS TEXTURE === 
 
 		BeginTextureMode(stylusTrailRenTex);
@@ -811,7 +830,7 @@ int main(void)
 		BeginMode2D(trailCamera);
 
 		// yellow particles (must be behind stylus tail)
-		yellowTransitionParticles.Draw();
+		//yellowTransitionParticles.Draw();
 
 
 		//draw stlyus tail
@@ -1003,6 +1022,15 @@ int main(void)
 			BeginScissorMode(clipX, clipY, clipWidth, clipHeight);
 		
 			DrawTexturePro(mainTexOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
+			const Rectangle yellowSourceRec = {
+				0,
+				0,
+				static_cast<float>(yellowRenderWidth),
+				static_cast<float>(-yellowRenderHeight)
+			};
+			DrawTexturePro(yellowTransitionRenTex.texture, yellowSourceRec, destRec, origin, 0.0f,
+				Fade(WHITE, yellowTransitionParticles.GetFadeFactor()));
+
 			DrawTexturePro(stylusOverlayRenTex.texture, sourceRec, destRec, origin, 0.0f, WHITE);
 			
 			EndScissorMode();

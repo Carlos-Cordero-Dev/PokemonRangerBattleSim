@@ -3,14 +3,18 @@
 #include "particle_system.h"
 #include "top.h"
 
+#include <cmath>
+
 class YellowTransitionParticles : public ParticleSystem
 {
 public:
 	void step(float dt) override;
 	void Reset() override;
 	void Draw() override;
+	void Draw(float pixelSize);
 	void on_intersection(Coord* enclosedPolygon);
 	void on_trail_break(Coord* trail);
+	float GetFadeFactor() const { return currentFadeFactor; }
 
 private:
 	Coord* ownedEnclosedPolygon = nullptr;
@@ -21,8 +25,8 @@ private:
 	static constexpr float kYellowTransitionShrinkingSpeed = 50.0f;
 	static constexpr float kInitialThickness = 30.0f;
 
-	static constexpr float kInitialFadeFactor = 0.95f;
-	static constexpr float kFadeSpeed = 0.25f;
+	static constexpr float kInitialFadeFactor = 0.85f;
+	static constexpr float kFadeSpeed = 2.525f;
 };
 
 inline void YellowTransitionParticles::step(float dt)
@@ -62,9 +66,18 @@ inline void YellowTransitionParticles::Reset()
 
 inline void YellowTransitionParticles::Draw()
 {
+	Draw(1.0f);
+}
 
-	Color particleColor = { 255, 255, 0, 255 };
-	particleColor.a = static_cast<unsigned char>(255.0f * currentFadeFactor);
+inline void YellowTransitionParticles::Draw(float pixelSize)
+{
+	const Color particleColor = { 255, 255, 0, 255 };
+	const auto snapToPixelCenter = [pixelSize](Vector2 point) {
+		return Vector2{
+			(std::floor(point.x / pixelSize) + 0.5f) * pixelSize,
+			(std::floor(point.y / pixelSize) + 0.5f) * pixelSize
+		};
+		};
 
 	for (size_t i = 0; i + 3 < areaPoints.size(); i += 4)
 	{
@@ -72,11 +85,19 @@ inline void YellowTransitionParticles::Draw()
 		const Vector2 topRight = areaPoints[i + 1];
 		const Vector2 bottomLeft = areaPoints[i + 2];
 		const Vector2 bottomRight = areaPoints[i + 3];
+		if (topLeft.y == bottomLeft.y && topRight.y == bottomRight.y) continue;
 
 		DrawTriangle(topLeft, bottomLeft, topRight, particleColor);
 		DrawTriangle(topLeft, topRight, bottomLeft, particleColor);
 		DrawTriangle(topRight, bottomLeft, bottomRight, particleColor);
 		DrawTriangle(topRight, bottomRight, bottomLeft, particleColor);
+
+		const Vector2 centerStart = snapToPixelCenter(Vector2Scale(Vector2Add(topLeft, bottomLeft), 0.5f));
+		const Vector2 centerEnd = snapToPixelCenter(Vector2Scale(Vector2Add(topRight, bottomRight), 0.5f));
+		if (centerStart.x != centerEnd.x || centerStart.y != centerEnd.y)
+			DrawLineEx(centerStart, centerEnd, pixelSize, particleColor);
+		DrawCircleV(centerStart, pixelSize * 0.5f, particleColor);
+		DrawCircleV(centerEnd, pixelSize * 0.5f, particleColor);
 	}
 }
 
