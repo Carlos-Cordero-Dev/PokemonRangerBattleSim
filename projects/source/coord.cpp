@@ -155,7 +155,7 @@ void DestroyStackNoDepth(Coord** stack)
 {
 	while (*stack != nullptr)
 	{
-		Coord* aux = ExtractFIFO(&*stack);
+		Coord* aux = ExtractFIFONoDepth(&*stack);		
 		//printf("\nDestroyed");
 		free(aux);
 	}
