@@ -19,4 +19,7 @@ public:
 	float spawnDelaySec = 0.0f;
 	float spawnDelayElapsedSec = 0.0f;
 	bool isActive = false;
+
+	// 0 == non-damaging
+	int damage = 0;
 };

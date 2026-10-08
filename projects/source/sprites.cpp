@@ -46,7 +46,7 @@ void SpriteAnimation::ClearKeyframeHitboxes()
 	keyframeHitboxes.clear();
 }
 
-void SpriteAnimation::SpawnCurrentKeyframeHitboxes(int posX, int posY)
+void SpriteAnimation::SpawnCurrentKeyframeHitboxes(int posX, int posY, int damage)
 {
 	ClearKeyframeHitboxes();
 	keyframeHitboxOwnerPosition = {
@@ -68,6 +68,7 @@ void SpriteAnimation::SpawnCurrentKeyframeHitboxes(int posX, int posY)
 			hitboxEvent->height,
 			Vector2{ 0.0f, 0.0f },
 			0.0f);
+		hitbox->damage = damage;
 
 		gameManager.singleKeyframeHitboxes.push_back(hitbox.get());
 		keyframeHitboxes.push_back(std::move(hitbox));
@@ -115,7 +116,7 @@ void SpriteAnimation::SetAnimationData(AnimationData* animData, bool preservePla
 		currentFrame = static_cast<int>(animData_->keyframes.size()) - 1;
 }
 
-void SpriteAnimation::Update(int posX, int posY)
+void SpriteAnimation::Update(int posX, int posY, int damage)
 {
 	//inspired by: https://github.com/jkatsanis/SpriteEngineUI/blob/main/Engine/Engine/Core/Source/Sprite/Components/Animator/Animation.cpp
 
@@ -166,7 +167,7 @@ void SpriteAnimation::Update(int posX, int posY)
 
 	// === SPAWN KEYFRAME HITBOXES ===
 	if (enteredNewFrame && eventsEnabled)
-		SpawnCurrentKeyframeHitboxes(posX, posY);
+		SpawnCurrentKeyframeHitboxes(posX, posY, damage);
 
 }
 void SpriteAnimation::Draw(int posX, int posY)

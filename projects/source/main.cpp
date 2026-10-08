@@ -619,9 +619,9 @@ int main(void)
 				printf("\nA end");
 			}
 			// reset damaged flag on touch up
-			if (top.wasDamaged) top.wasDamaged = false;
+			if (top.collided_last_update) top.collided_last_update = false;
 		}
-		else if(!top.wasDamaged)
+		else if(!top.collided_last_update)
 		{
 			// touch detected
 			InsertTopCoord(&top, touch.x, touch.y);
@@ -704,7 +704,8 @@ int main(void)
 				top.wo->position.x = -100;
 				top.wo->position.y = -100;
 
-				top.wasDamaged = true;
+				top.Damage(hitbox->damage);
+
 				break;
 
 			}
@@ -728,7 +729,7 @@ int main(void)
 				top.wo->position.x = -100;
 				top.wo->position.y = -100;
 
-				top.wasDamaged = true;
+				top.Damage(hitbox->damage);
 				break;
 
 			}
@@ -752,7 +753,7 @@ int main(void)
 				top.wo->position.x = -100;
 				top.wo->position.y = -100;
 
-				top.wasDamaged = true;
+				top.Damage(hitbox->damage);
 				break;
 			}
 		}
@@ -778,7 +779,8 @@ int main(void)
 				top.wo->position.x = -100;
 				top.wo->position.y = -100;
 
-				top.wasDamaged = true;
+				top.collided_last_update = true;
+
 				break;
 			}
 		}

@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "animation_database.h"
 #include "sprites.h"
 #include "enclosable_object.h"
@@ -31,6 +34,7 @@ public:
 	bool isEnclosed = false; //lasts for enclosedTimer seconds after OnEnclosed is called, then it goes back to false
 	float currHealth = 100.0f;
 	float maxHealth = 100.0f;
+	std::vector<std::string> types; //TODO: in case type effectiveness is a thing, just an example of attributes to add to .sm
 
 	SpriteAnimation animationPlayer;
 	AnimationSet animationSet;

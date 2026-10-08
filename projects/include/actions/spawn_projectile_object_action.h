@@ -107,11 +107,10 @@ public:
                     : FacingDirection::DownRight);
         }
 
-
 		SpriteAnimation* anim = new SpriteAnimation(animDB.GetAnimationDataFromName(po_af->visualAnimation));
         ProjectileObject* po = new ProjectileObject(
             anim,
-            0.0f,
+            p->stateMachine->GetCurrentDamage(),
             po_af->lifetimeSec
         );
         po->position.x = p->position.x + offsetX->Get() * po_af->scale;

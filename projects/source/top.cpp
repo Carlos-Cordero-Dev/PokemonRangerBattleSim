@@ -7,6 +7,8 @@
 
 Top::Top()
 {
+	currHealth = kMaxHealth;
+	lastDamageAmmount = 0;
 }
 
 void Top::Update()
@@ -17,10 +19,21 @@ void Top::Update()
 	}
 }
 
+void Top::Damage(int damageAmmount)
+{
+	collided_last_update = true;
+
+	if (damageAmmount > 0)
+	{
+		lastDamageAmmount = damageAmmount;
+		currHealth -= damageAmmount;
+		currHealth = std::max<int>(currHealth, 0);
+	}
+}
 
 void Top::Draw()
 {
-
+	//trail
 	if (stack)
 	{
 		//update animation
@@ -30,10 +43,16 @@ void Top::Draw()
 		trail_end_anim->Update(lastCoord->x, lastCoord->y);
 		trail_end_anim->DrawRotScaleCentered(lastCoord->x, lastCoord->y, 0.0f, tail_anim_scale);
 	}
-
+	//top
 	if (wo)
 	{
 		wo->Draw();
+	}
+	//damage indicator
+	if (collided_last_update)
+	{
+		printf("DAMAGE: %d\n", lastDamageAmmount);
+		DrawText(TextFormat("DAMAGE: %d", lastDamageAmmount), 10, 10, 20, RED);
 	}
 }
 

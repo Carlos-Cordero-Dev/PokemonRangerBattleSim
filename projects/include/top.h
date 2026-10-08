@@ -23,6 +23,7 @@ public:
 	Top();
 	void Update();
 	void Draw();
+	void Damage(int damageAmmount);
 
 	WorldObject* wo = nullptr;
 	SpriteAnimation* trail_start_anim = nullptr;
@@ -34,8 +35,11 @@ public:
 	Coord* stack = nullptr;
 	float distance = 0.0f;
 	
-	bool wasDamaged = false; // true when last update top hit a hibox/world object , resets on touch up
-
+	bool collided_last_update = false; // true when last update top hit a hibox/world object , resets on touch up
+private:
+	int lastDamageAmmount = 0;
+	int currHealth = 0;
+	constexpr static int kMaxHealth = 10;
 };
 
 void InsertTopCoord(Top* top, int x, int y);

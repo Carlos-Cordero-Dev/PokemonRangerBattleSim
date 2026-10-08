@@ -75,59 +75,117 @@
 	  ]
 	}
   ],
-  "transitions": [
-	{
-      "from": "Move",
-	  "to": [
-			{ "state": "Idle", "weight": 35 },
-			{ "state": "Move", "weight": 60 },
-			{ "state": "PrepareAttack", "weight": 5 }
-	   ],      
-	   "conditions": [
-       { "type": "DistanceToTargetLess", "value": 0.1 }
-      ]
-    },
-    {
-      "from": "Idle",
-	  "to": [
-			{ "state": "Move", "weight": 15 },
-			{ "state": "PrepareAttack", "weight": 85 }
-	   ],      
-	   "conditions": [
-       { "type": "TimerFinished", "name": "idleTimer" }
-      ]
-    },
-    {
-      "from": "PrepareAttack",
-	  "to": [
-			{ "state": "Attack_0", "weight": 60 },
-			{ "state": "Attack_1", "weight": 40 }
-		
-	   ],      
-	   "conditions": [
-       { "type": "AnimationFinished" }
-      ]
-    },
-	{
-	  "from":"Attack_0",
-      "to": [
-			{ "state": "Move", "weight": 40 },
-			{ "state": "Idle", "weight": 60 }
-	   ],  
-	  "conditions":[
-       { "type": "DistanceToTargetLess", "value": 0.1 }
-	  ]
-	},
-	{
-	  "from":"Attack_1",
-      "to": [
-			{ "state": "Move", "weight": 40 },
-			{ "state": "Idle", "weight": 60 }
-	   ],  
-	  "conditions":[
-	    {"type":"AnimationFinished"}
-	  ]
-	}
-  ],
+	"transitions": [
+		{
+			"from": "Move",
+			"to": [
+				{
+					"state": "Idle",
+					"weight": 35
+				},
+				{
+					"state": "Move",
+					"weight": 60
+				},
+				{
+					"state": "PrepareAttack",
+					"weight": 5
+				}
+			],
+			"conditions": [
+				{
+					"type": "DistanceToTargetLess",
+					"value": 0.1
+				}
+			]
+		},
+		{
+			"from": "Idle",
+			"to": [
+				{
+					"state": "Move",
+					"weight": 15
+				},
+				{
+					"state": "PrepareAttack",
+					"weight": 85
+				}
+			],
+			"conditions": [
+				{
+					"type": "TimerFinished",
+					"name": "idleTimer"
+				}
+			]
+		},
+		{
+			"from": "PrepareAttack",
+			"to": [
+				{
+					"state": "Attack_0",
+					"weight": 60
+				},
+				{
+					"state": "Attack_1",
+					"weight": 40
+				}
+
+			],
+			"conditions": [
+				{ "type": "AnimationFinished" }
+			]
+		},
+		{
+			"from": "Attack_0",
+			"to": [
+				{
+					"state": "Move",
+					"weight": 40
+				},
+				{
+					"state": "Idle",
+					"weight": 60
+				}
+			],
+			"conditions": [
+				{
+					"type": "DistanceToTargetLess",
+					"value": 0.1
+				}
+			]
+		},
+		{
+			"from": "Attack_1",
+			"to": [
+				{
+					"state": "Move",
+					"weight": 40
+				},
+				{
+					"state": "Idle",
+					"weight": 60
+				}
+			],
+			"conditions": [
+				{ "type": "AnimationFinished" }
+			]
+		}
+	],
+	"attributes": [
+		{
+			"health": 100,
+			"damage": [
+				{
+					"state_name": "Attack_0",
+					"damage": 1
+				},
+				{
+					"state_name": "Attack_1",
+					"damage": 1
+				}
+			 ],
+			"types": ["electric"]
+		}
+	],
   "initialState": "Move"
 }

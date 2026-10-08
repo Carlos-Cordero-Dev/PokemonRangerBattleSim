@@ -39,7 +39,17 @@ void Pokemon::AssignStateMachine(StateMachine* stateMachine)
 		this->stateMachine = stateMachine;
 		stateMachine->owner = this;
 		for (State* ownedState : stateMachine->ownedStates)
+		{
 			ownedState->owner = this;
+		}
+		if (stateMachine->attributes.health) {
+			maxHealth = *stateMachine->attributes.health;
+			currHealth = maxHealth;
+		}
+		if (stateMachine->attributes.types)
+		{
+			types = *stateMachine->attributes.types;
+		}
 	}
 	else printf("tried to assign null state machine\n");
 }
@@ -103,10 +113,8 @@ void Pokemon::Update()
 
 	animationPlayer.SetAnimationData(animation->data, !restartAnimation);
 	restartAnimation = false;
-	animationPlayer.Update(position.x, position.y);
 
-
-
+	animationPlayer.Update(position.x, position.y, stateMachine->GetCurrentDamage());
 }
 
 void Pokemon::Draw()

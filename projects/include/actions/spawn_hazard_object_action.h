@@ -38,7 +38,7 @@ public:
             spawnDelaySec->Get()
         );
 		SpriteAnimation* anim = new SpriteAnimation(animDB.GetAnimationDataFromName(ho_af->visualAnimation));
-		HazardObject* ho = new HazardObject(anim,0.0f, ho_af->lifetimeSec,h);
+		HazardObject* ho = new HazardObject(anim, p->stateMachine->GetCurrentDamage(), ho_af->lifetimeSec,h);
 		
         ho->position.x = p->position.x + offsetX->Get() * p->scale;
 		ho->position.y = p->position.y + offsetY->Get() * p->scale;

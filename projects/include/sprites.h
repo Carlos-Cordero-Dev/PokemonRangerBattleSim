@@ -31,7 +31,9 @@ public:
 	~SpriteAnimation();
 
 	void SetAnimationData(AnimationData* animData, bool preservePlayback);
-	void Update(int posX, int posY);
+	//note that dmg is the current damage the hitboxes for this current animation at the current state will do (comes from state machine),
+	//nothing to do with animation
+	void Update(int posX, int posY,int damage = 0);
 	void Draw(int posX, int posY);
 	void DrawRotScale(int posX, int posY, float rotDeg, float scale, bool flipX = false);
 	void DrawRotScaleCentered(float centerX, float centerY, float rotDeg = 0.0f, float scale = 1.0f, bool flipX = false);
@@ -58,7 +60,7 @@ public:
 
 private:
 	void ClearKeyframeHitboxes();
-	void SpawnCurrentKeyframeHitboxes(int posX, int posY);
+	void SpawnCurrentKeyframeHitboxes(int posX, int posY, int damage);
 	void MoveKeyframeHitboxes(int posX, int posY);
 	std::vector<std::unique_ptr<Hitbox>> keyframeHitboxes;
 	Vector2 keyframeHitboxOwnerPosition = { 0.0f, 0.0f };

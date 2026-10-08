@@ -14,6 +14,8 @@ Hitbox::Hitbox(float centerX, float centerY, float width, float height,Vector2 v
 	spawnDelaySec = delaySec;
 	spawnDelayElapsedSec = 0.0f;
 
+	damage = 0;
+
 	// false if delay exists, true otherwise
 	isActive = (delaySec <= 0.0f);
 }

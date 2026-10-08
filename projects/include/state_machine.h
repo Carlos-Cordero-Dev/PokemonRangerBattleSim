@@ -3,9 +3,17 @@
 
 #include <vector>
 #include <memory>
+#include <cmath>
+#include <limits>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
 #include "blackboard.h"
 #include "states/state.h"
+#include "states/damaging_state.h"
 #include "transitions/transition.h"
 #include "actions/action.h"
 #include "json_loader.h"
@@ -22,10 +30,32 @@ public:
 
     Blackboard blackboard;
 
+    struct Attributes {
+        std::optional<float> health;
+        std::optional<std::vector<std::string>> types;
+        std::unordered_map<std::string, int> damageByState;
+    };
+
+    Attributes attributes;
+
 private:
+
     bool running = false;
 
 public:
+    int GetDamageForState(const std::string& stateName) const {
+        const auto entry = attributes.damageByState.find(stateName);
+        return entry != attributes.damageByState.end() ? entry->second : 0;
+    }
+
+    // TODO: maybe this can be a bottleneck cause why tf is this on update bro, just cache the damage on state change
+    inline int GetCurrentDamage() const {
+		DamagingState* currentState = dynamic_cast<DamagingState*>(this->currentState);
+        return currentState ? currentState->damage : 0;
+    }
+
+    Attributes ParseAttributes(const Json& document);
+
     void Update(float dt) {
         if (!running) {
             currentState->OnEnter();
@@ -67,6 +97,7 @@ inline StateMachine* BuildStateMachine(const Json& j, WorldObject* owner)
 {
     auto* sm = new StateMachine();
     sm->owner = owner;
+    sm->attributes = sm->ParseAttributes(j);
 
     std::unordered_map<std::string, State*> stateMap;
 
@@ -75,7 +106,16 @@ inline StateMachine* BuildStateMachine(const Json& j, WorldObject* owner)
         std::string name = s["name"];
         State* state = BuildState(s,owner);
         stateMap[name] = state;
-        sm->ownedStates.push_back(state);
+
+        //optional damage for damaging states
+		DamagingState* damagingState = dynamic_cast<DamagingState*>(state);
+        if (damagingState)
+        {
+            damagingState->damage = sm->GetDamageForState(name);
+
+            sm->ownedStates.push_back(damagingState);
+        }
+        else sm->ownedStates.push_back(state);
     }
 
     // transitions
